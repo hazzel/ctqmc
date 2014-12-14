@@ -13,8 +13,6 @@
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
 #include "Eigen/SVD"
-#include <flens/flens.cxx>
-#include "Permutation.h"
 #include "measurements.h"
 #include "random.h"
 #include "parser.h"
@@ -36,91 +34,58 @@ class UpdateHandler
 		typedef typename ConfigSpace_t::int_t int_t;
 		typedef typename ConfigSpace_t::value_t value_t;
 		typedef VertexHandler<ConfigSpace_t> VertexHandler_t;
-		
-		typedef flens::GeMatrix< flens::FullStorage<value_t, flens::ColMajor> > GeMatrix;
-		typedef typename GeMatrix::IndexType IndexType;
-		typedef flens::DenseVector< flens::Array<IndexType> > IndexVector;
+		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M>;
 		
 		UpdateHandler(ConfigSpace_t& configSpace)
-			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace)), invG(GeMatrix(0, 0))
+			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
 		{}
 		
-		void Init()
+		template<typename Matrix_t>
+		void PrintMatrix(const Matrix_t& M)
 		{
-			for (int_t n = 1; n <= 2; ++n)
-				prefactor.push_back(std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), n));
+			using namespace Eigen;
+			IOFormat CommaInitFmt(StreamPrecision, DontAlignCols, ", ", ", ", "", "", " << ", ";");
+			IOFormat CleanFmt(FullPrecision, 0, ", ", "\n", "[", "]");
+			IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
+			IOFormat HeavyFmt(FullPrecision, 0, ", ", ",\n", "{", "}", "{", "}");
+			//std::cout << M.format(CommaInitFmt) << std::endl;
+			//std::cout << M.format(CleanFmt) << std::endl;
+			//std::cout << M.format(OctaveFmt) << std::endl;
+			std::cout << M.format(HeavyFmt) << std::endl;
 		}
 		
-		//Performs an LU factorizatin on M
-		value_t Determinant(GeMatrix& M, IndexVector& piv)
-		{
-			//Calculate LU factorization
-			flens::lapack::trf(M, piv);
-			value_t det = 1.0;
-			for (int_t i = M.firstCol(); i <= M.lastCol(); ++i)
-				det *= M(i, i) * ((piv(i) != i) ? -1.0 : 1.0);
-			return det;
-		}
-
-		//Specialized version does not perform LU factorization
-		value_t Determinant2x2(GeMatrix& M)
-		{
-			return M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1);
-		}
-
-		//Computes inverse from LU factorization as input
-		void Inverse(GeMatrix& M, IndexVector& piv)
-		{
-			//Use LU factorization to calculate inverse
-			flens::lapack::tri(M, piv);
-		}
-
-		//Specialized version does require LU factorization as input
-		void Inverse2x2(GeMatrix& M)
-		{
-			value_t det = Determinant2x2(M);
-			value_t a = M(1, 1);
-			M(1, 1) = M(2, 2) / det;
-			M(1, 2) = -M(1, 2) / det;
-			M(2, 1) = -M(2, 1) / det;
-			M(2, 2) = a / det;
-		}
-
 		template<int_t N>
 		bool AddVertices()
 		{
 			uint_t k = vertexHandler.Vertices();
-			GeMatrix u(2 * k, 2 * N);
-			GeMatrix v(2 * N, 2 * k);
-			GeMatrix a(2 * N, 2 * N);
+			matrix_t<Eigen::Dynamic, 2 * N> u(2 * k, 2 * N);
+			matrix_t<2 * N, Eigen::Dynamic> v(2 * N, 2 * k);
+			matrix_t<2 * N, 2 * N> a(2 * N, 2 * N);
 			vertexHandler.template ComputeWoodburyMatrices<N>(u, v, a);
 
-			GeMatrix invGu = invG * u;
-			GeMatrix S = a - v * invGu;
-			IndexVector pivS(2 * N);
-			
-			value_t detS = (N == 1 ? Determinant2x2(S) : Determinant(S, pivS));
-			value_t preFactor = configSpace.AdditionFactorialRatio(k, N) * prefactor[N-1];
-			value_t acceptRatio = preFactor * detS;
+			matrix_t<2 * N, 2 * N> invS;
+			matrix_t<Eigen::Dynamic, 2 * N> invGu = invG * u;
+			invS.noalias() = a - v * invGu;
+			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), N) * configSpace.AdditionFactorialRatio(k, N);
+			value_t acceptRatio = preFactor * invS.determinant();
 			if (acceptRatio < 0.0)
 				std::cout << "AddVertices: AcceptRatio: " << acceptRatio << std::endl;
 			if (configSpace.rng() < acceptRatio)
 			{
-				if(N == 1)
-					Inverse2x2(S);
-				else
-					Inverse(S, pivS);
-				GeMatrix Q = -invGu * S;
-				GeMatrix vinvG = v * invG;
-				GeMatrix R = -S * vinvG;
-				GeMatrix P = invG - invGu * R;
+				matrix_t<2 * N, 2 * N> S = invS.inverse();
+				matrix_t<Eigen::Dynamic, 2 * N> Q;
+				Q.noalias() = -invGu * S;
+				matrix_t<2 * N, Eigen::Dynamic> R;
+				R.noalias() = -S * v * invG;
+				matrix_t<Eigen::Dynamic, Eigen::Dynamic> P;
+				P.noalias() = invG - invGu * R;
 				
 				invG.resize(2 * (k + N), 2 * (k + N));
-				const flens::Underscore<IndexType> _;
-				invG(_(1, 2 * k), _(1, 2 * k)) = P;
-				invG(_(1, 2 * k), _(2 * k + 1, 2 * (k + N))) = Q;
-				invG(_(2 * k + 1, 2 * (k + N)), _(1, 2 * k)) = R;
-				invG(_(2 * k + 1, 2 * (k + N)), _(2 * k + 1, 2 * (k + N))) = S;
+				invG.topLeftCorner(2 * k, 2 * k) = P;
+				invG.topRightCorner(2 * k, 2 * N) = Q;
+				invG.bottomLeftCorner(2 * N, 2 * k) = R;
+				invG.template bottomRightCorner<2 * N, 2 * N>() = S;
+				
 				vertexHandler.AddBufferedVertices();
 				return true;
 			}
@@ -134,40 +99,28 @@ class UpdateHandler
 			if (k < N)
 				return false;
 			
-			GeMatrix perm(2 * k, 2 * k);
-			vertexHandler.PermutationMatrix(perm);
-			GeMatrix P = invG * perm;
-			invG = flens::transpose(perm) * P;
+			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm = vertexHandler.PermutationMatrix();
+			invG = perm.transpose() * invG * perm;
 			
-			const flens::Underscore<IndexType> _;
-			GeMatrix S = invG(_(2 * (k - N) + 1, 2 * k), _(2 * (k - N) + 1, 2 * k));
-			IndexVector pivS(2 * N);
-			value_t detS = (N == 1 ? Determinant2x2(S) : Determinant(S, pivS));
-			value_t preFactor = configSpace.RemovalFactorialRatio(k, N) / prefactor[N-1];
-			value_t acceptRatio = preFactor * detS;
+			matrix_t<2 * N, 2 * N> S = invG.template bottomRightCorner<2 * N, 2 * N>();
+			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), -N) * configSpace.RemovalFactorialRatio(k, N);
+			value_t acceptRatio = preFactor * S.determinant();
 			if (acceptRatio < 0.0)
 				std::cout << "RemoveVertex: AcceptRatio" << acceptRatio << std::endl;
 			if (configSpace.rng() < acceptRatio)
 			{
-				GeMatrix P = invG(_(1, 2 * (k - N)), _(1, 2 * (k - N)));
-				GeMatrix Q = invG(_(1, 2 * (k - N)), _(2 * (k - N) + 1, 2 * k));
-				GeMatrix R = invG(_(2 * (k - N) + 1, 2 * k), _(1, 2 * (k - N)));
-				if(N == 1)
-					Inverse2x2(S);
-				else
-					Inverse(S, pivS);
-				
+				matrix_t<Eigen::Dynamic, Eigen::Dynamic> P = invG.topLeftCorner(2 * (k - N), 2 * (k - N));
+				matrix_t<Eigen::Dynamic, 2 * N> Q = invG.topRightCorner(2 * (k - N), 2 * N);
+				matrix_t<2 * N, Eigen::Dynamic> R = invG.bottomLeftCorner(2 * N, 2 * (k - N));
 				invG.resize(2 * (k - N), 2 * (k - N));
-				GeMatrix SR = S * R;
-				invG = P - Q * SR;
+				invG.noalias() = P - Q * S.inverse() * R;
 				
 				vertexHandler.RemoveBufferedVertices();
 				return true;
 			}
 			else
 			{
-				GeMatrix O = perm * invG;
-				invG = O * flens::transpose(perm);
+				invG = perm * invG * perm.transpose();
 				return false;
 			}
 		}
@@ -177,11 +130,12 @@ class UpdateHandler
 			SymmetrizeMatrix(invG);
 		}
 		
-		void SymmetrizeMatrix(GeMatrix& M)
+		template<typename Matrix>
+		void SymmetrizeMatrix(Matrix& M)
 		{	
-			for (uint_t i = M.firstRow(); i <= M.lastRow(); ++i)
+			for (uint_t i = 0; i < M.rows(); ++i)
 			{
-				for (uint_t j = M.firstCol(); j <= i; ++j)
+				for (uint_t j = 0; j < i; ++j)
 				{
 					value_t mean = (std::abs(M(i, j)) + std::abs(M(j, i))) / 2.0;
 					M(i, j) = sgn(M(i, j)) * mean;
@@ -199,6 +153,6 @@ class UpdateHandler
 	private:
 		ConfigSpace_t& configSpace;
 		VertexHandler_t vertexHandler;
-		GeMatrix invG;
-		std::vector<value_t> prefactor;
+		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
+		Eigen::FullPivLU< matrix_t<Eigen::Dynamic, Eigen::Dynamic> > invSolver;
 };

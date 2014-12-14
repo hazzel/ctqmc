@@ -13,8 +13,6 @@
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
 #include "Eigen/SVD"
-#include <flens/flens.cxx>
-#include "Permutation.h"
 #include "measurements.h"
 #include "random.h"
 #include "parser.h"
@@ -43,11 +41,8 @@ class VertexHandler
 		typedef typename ConfigSpace_t::uint_t uint_t;
 		typedef typename ConfigSpace_t::int_t int_t;
 		typedef typename ConfigSpace_t::value_t value_t;
+		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M>;
 		typedef Node<uint_t, value_t> node_t;
-		
-		typedef flens::GeMatrix< flens::FullStorage<value_t, flens::ColMajor> > GeMatrix;
-		typedef typename GeMatrix::IndexType IndexType;
-		typedef flens::DenseVector< flens::Array<IndexType> > IndexVector;
 		
 		VertexHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace)
@@ -61,7 +56,6 @@ class VertexHandler
 		
 		void PrintVertices()
 		{
-			std::cout << std::endl;
 			for (uint_t i = 0; i < nodes.size(); i+=2)
 				std::cout << "(" << nodes[i].Site << " , " << nodes[i+1].Site << ", " << nodes[i].Tau << ") ";
 			std::cout << std::endl;
@@ -69,7 +63,6 @@ class VertexHandler
 		
 		void PrintVertexBuffer()
 		{
-			std::cout << std::endl;
 			for (auto node : nodeBuffer)
 				std::cout << "(" << node.Site << " , " << node.Tau << ") ";
 			std::cout << std::endl;
@@ -77,10 +70,15 @@ class VertexHandler
 		
 		void PrintIndexBuffer()
 		{
-			std::cout << std::endl;
 			for (auto index : indexBuffer)
 				std::cout << index << " ";
 			std::cout << std::endl;
+		}
+		
+		void AddVertex(uint_t site1, uint_t site2, value_t tau)
+		{
+			nodes.push_back(note_t(site1, tau));
+			nodes.push_back(note_t(site2, tau));
 		}
 		
 		void AddBufferedVertices()
@@ -99,6 +97,12 @@ class VertexHandler
 				nodeBuffer[2*i+1] = node_t(configSpace.lattice.RandomWalk(site, 1, configSpace.rng), tau);
 			}
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
+		}
+		
+		void RemoveVertex(std::size_t index)
+		{
+			auto it = nodes.erase(nodes.begin() + 2 * index);
+			nodes.erase(it);
 		}
 		
 		void RemoveBufferedVertices()
@@ -132,45 +136,47 @@ class VertexHandler
 		}
 		
 		template<int_t N>
-		void ComputeWoodburyMatrices(GeMatrix& u, GeMatrix& v, GeMatrix& a)
+		void ComputeWoodburyMatrices(matrix_t<Eigen::Dynamic, 2 * N>& u, matrix_t<2 * N, Eigen::Dynamic>& v, matrix_t<2 * N, 2 * N>& a)
 		{
 			for (uint_t i = 0; i < 2 * N; ++i)
 			{
 				for (uint_t j = 0; j < nodes.size(); ++j)
 				{
-					u(1+j, 1+i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-					v(1+i, 1+j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
+					u(j, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					v(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
 				for (uint_t j = 0; j < 2 * N; ++j)
 				{
 					if (i < j)
 					{
-						a(1+i, 1+j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
-						a(1+j, 1+i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
+						a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 					}
 				}
-				a(1+i, 1+i) = 0.0;
+				a(i, i) = 0.0;
 			}
 		}
 		
-		void PermutationMatrix(GeMatrix& perm)
+		Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> PermutationMatrix()
 		{
-			perm = 0.0;
-			int cnt = perm.firstRow();
-			for (int i = perm.firstRow(); i <= perm.lastRow(); ++i)
+			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(nodes.size());
+			perm.setIdentity();
+			uint_t cnt = 0;
+			for (uint_t i = 0; i < perm.indices().size(); ++i)
 			{
-				if (find(indexBuffer.begin(), indexBufferEnd, i-1) == indexBufferEnd)
+				if (find(indexBuffer.begin(), indexBufferEnd, i) == indexBufferEnd)
 				{
-					perm(i, cnt) = 1.0;
+					perm.indices()[cnt] = i;
 					++cnt;
 				}
 			}
 			int i = 0;
 			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 			{
-				perm(*it+1, cnt + i) = 1.0;
+				perm.indices()[cnt + i] = *it;
 				++i;
 			}
+			return perm;
 		}
 	private:
 		ConfigSpace_t& configSpace;

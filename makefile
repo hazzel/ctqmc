@@ -24,7 +24,7 @@ ifeq ($(MODE),PT)
 endif
 
 MCLL  = $(HOME)/mc/load_leveller/trunk
-APPMCLL = $(HOME)/mc/ctqmc/trunk
+APPMCLL = $(HOME)/mc/ctqmc_eigen/trunk
 
 ifeq ($(MPICC),)
   MPICC = /usr/lib64/mpi/gcc/openmpi/bin/mpiCC
@@ -37,8 +37,8 @@ ifeq ($(MODE),SINGLE)
   LD=g++
 endif
 CFLAGS  = -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
-INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/ -I$(HOME)/libs/FLENS -DWITH_ATLAS -DALWAYS_USE_CXXLAPACK
-LDFLAGS = -L/usr/lib64/atlas/ -fopenmp -llapack -lf77blas -lcblas -latlas
+INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
+LDFLAGS = -fopenmp
 SUPERLP = 
 
 CCLN = g++
