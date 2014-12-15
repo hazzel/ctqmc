@@ -75,9 +75,8 @@ class UpdateHandler
 		}
 
 		//Specialized version does require LU factorization as input
-		void Inverse2x2(GeMatrix& M)
+		void Inverse2x2(GeMatrix& M, value_t det)
 		{
-			value_t det = Determinant2x2(M);
 			value_t a = M(1, 1);
 			M(1, 1) = M(2, 2) / det;
 			M(1, 2) = -M(1, 2) / det;
@@ -106,7 +105,7 @@ class UpdateHandler
 			if (configSpace.rng() < acceptRatio)
 			{
 				if(N == 1)
-					Inverse2x2(S);
+					Inverse2x2(S, detS);
 				else
 					Inverse(S, pivS);
 				GeMatrix Q = -invGu * S;
