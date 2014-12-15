@@ -13,9 +13,12 @@
 #include "Eigen/Eigenvalues"
 #include "Eigen/SVD"
 
-template<typename Value_t>
+template<typename Value_t, int N, int M>
 class MemoryPool
 {
-
-	
+	using matrix_t = Eigen::Matrix<value_t, N, M>;
+	public:
+		MemoryPool() {}
+	private:
+		std::vector<matrix_t>3
 };

@@ -19,6 +19,7 @@
 #include "types.h"
 #include "ConfigSpace.h"
 #include "VertexHandler.h"
+#include "MemoryPool.h"
 
 template <typename T>
 int sgn(T val)
