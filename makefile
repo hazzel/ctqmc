@@ -43,8 +43,8 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	SUPERLP = 
 else
         CFLAGS  = -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
-        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_MKL -DALWAYS_USE_CXXLAPACK
-        LDFLAGS = -fopenmp -llapack -lcblas
+        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DUSE_CXXLAPACK
+        LDFLAGS = -fopenmp -llapack
         SUPERLP =
 endif
 
