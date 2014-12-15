@@ -14,7 +14,6 @@
 #include "Eigen/Eigenvalues"
 #include "Eigen/SVD"
 #include <flens/flens.cxx>
-#include "Permutation.h"
 #include "measurements.h"
 #include "random.h"
 #include "parser.h"
