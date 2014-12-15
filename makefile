@@ -2,8 +2,8 @@ DEFINES+= -DMCL_DUMP_BUFFER=0
 DEFINES+= -DMCL_MEASUREMENTS_APPEND=0
 DEFINES+= -DMCL_MCL_RNG_MT
 
-#MODE=MPI
-MODE=SINGLE
+MODE=MPI
+#MODE=SINGLE
 #MODE=PT
 
 OBJS = dump.o parser.o measurements.o evalable.o observable.o random.o mc.o ConfigSpace.o main.o
@@ -24,7 +24,7 @@ ifeq ($(MODE),PT)
 endif
 
 MCLL  = $(HOME)/mc/load_leveller/trunk
-APPMCLL = $(HOME)/mc/ctqmc/trunk
+APPMCLL = $(HOME)/mc/ctqmc/
 
 ifeq ($(MPICC),)
   MPICC = /usr/lib64/mpi/gcc/openmpi/bin/mpiCC
@@ -36,10 +36,17 @@ ifeq ($(MODE),SINGLE)
   CC=g++
   LD=g++
 endif
-CFLAGS  = -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
-INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/ -I$(HOME)/libs/FLENS -DWITH_ATLAS -DALWAYS_USE_CXXLAPACK
-LDFLAGS = -L/usr/lib64/atlas/ -fopenmp -llapack -lf77blas -lcblas -latlas
-SUPERLP = 
+ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
+	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -ansi -std=c++11 $(FLAGS_OPENMP) $(DEFINES)
+	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_MKL -DALWAYS_USE_CXXLAPACK
+	LDFLAGS = $(FLAGS_MATH_LINKER) $(FLAGS_OPENMP)
+	SUPERLP = 
+else
+        CFLAGS  = -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
+        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DUSE_CXXLAPACK
+        LDFLAGS = -fopenmp -llapack
+        SUPERLP =
+endif
 
 CCLN = g++
 LDLN = g++
