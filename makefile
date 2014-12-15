@@ -37,8 +37,8 @@ ifeq ($(MODE),SINGLE)
   LD=g++
 endif
 CFLAGS  = -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
-INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DALWAYS_USE_CXXLAPACK
-LDFLAGS = -L/usr/lib64/ -fopenmp -llapack -lf77blas -lcblas
+INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_ATLAS -DALWAYS_USE_CXXLAPACK
+LDFLAGS = -L/usr/lib64/atlas/ -fopenmp -llapack -lf77blas -lcblas -latlas
 SUPERLP = 
 
 CCLN = g++
