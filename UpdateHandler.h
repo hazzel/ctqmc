@@ -40,6 +40,9 @@ class UpdateHandler
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
 		{}
 		
+		void Init()
+		{}
+		
 		template<typename Matrix_t>
 		void PrintMatrix(const Matrix_t& M)
 		{
