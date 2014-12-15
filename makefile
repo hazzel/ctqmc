@@ -36,10 +36,17 @@ ifeq ($(MODE),SINGLE)
   CC=g++
   LD=g++
 endif
-CFLAGS  = -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
-INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_ATLAS -DALWAYS_USE_CXXLAPACK
-LDFLAGS = -L/usr/lib64/atlas/ -fopenmp -llapack -lf77blas -lcblas -latlas
-SUPERLP = 
+ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
+	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -ansi -std=c++11 $(FLAGS_OPENMP) $(DEFINES)
+	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_MKL -DALWAYS_USE_CXXLAPACK
+	LDFLAGS = $(FLAGS_MATH_LINKER) $(FLAGS_OPENMP)
+	SUPERLP = 
+else
+        CFLAGS  = -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
+        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_MKL -DALWAYS_USE_CXXLAP$
+        LDFLAGS = -fopenmp -llapack -lcblas
+        SUPERLP =
+endif
 
 CCLN = g++
 LDLN = g++
