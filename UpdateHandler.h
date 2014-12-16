@@ -151,7 +151,7 @@ class UpdateHandler
 				GeMatrix Q = invG(_(1, 2 * (k - N)), _(2 * (k - N) + 1, 2 * k));
 				GeMatrix R = invG(_(2 * (k - N) + 1, 2 * k), _(1, 2 * (k - N)));
 				if(N == 1)
-					Inverse2x2(S);
+					Inverse2x2(S, detS);
 				else
 					Inverse(S, pivS);
 				
