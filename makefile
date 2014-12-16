@@ -11,11 +11,21 @@ OBJSLN = dump.LN.o parser.LN.o measurements.LN.o evalable.LN.o observable.LN.o r
 
 ifeq ($(MODE),MPI)
   OBJS+=runner.o
+  ifeq ($(MPICC),)
+    MPICC = /usr/lib64/mpi/gcc/openmpi/bin/mpiCC
+    #MPICC = /usr/lib64/openmpi/bin/mpiCC
+  endif
+  CC=$(MPICC)
+  LD=$(MPICC)
 endif
 
 ifeq ($(MODE),SINGLE)
   OBJS+=runner_single.o
   DEFINES+= -DMCL_SINGLE
+  ifneq ($(MCLL_SYSTEM_INFO), rwthcluster)
+    CC=g++
+    LD=g++
+  endif
 endif
 
 ifeq ($(MODE),PT)
@@ -26,16 +36,6 @@ endif
 MCLL  = $(HOME)/mc/load_leveller/trunk
 APPMCLL = $(HOME)/mc/ctqmc/
 
-ifeq ($(MPICC),)
-  MPICC = /usr/lib64/mpi/gcc/openmpi/bin/mpiCC
-  #MPICC = /usr/lib64/openmpi/bin/mpiCC
-endif
-CC = $(MPICC)
-LD = $(MPICC)
-ifeq ($(MODE),SINGLE)
-  CC=g++
-  LD=g++
-endif
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -ansi -std=c++11 -DDEBUG_CXXBLAS -DNDEBUG $(FLAGS_OPENMP) $(DEFINES)
 	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_MKL -DALWAYS_USE_CXXLAPACK
