@@ -2,8 +2,8 @@ DEFINES+= -DMCL_DUMP_BUFFER=0
 DEFINES+= -DMCL_MEASUREMENTS_APPEND=0
 DEFINES+= -DMCL_MCL_RNG_MT
 
-#MODE=MPI
-MODE=SINGLE
+MODE=MPI
+#MODE=SINGLE
 #MODE=PT
 
 OBJS = dump.o parser.o measurements.o evalable.o observable.o random.o mc.o ConfigSpace.o main.o
@@ -11,11 +11,21 @@ OBJSLN = dump.LN.o parser.LN.o measurements.LN.o evalable.LN.o observable.LN.o r
 
 ifeq ($(MODE),MPI)
   OBJS+=runner.o
+  ifeq ($(MPICC),)
+    MPICC = /usr/lib64/mpi/gcc/openmpi/bin/mpiCC
+    #MPICC = /usr/lib64/openmpi/bin/mpiCC
+  endif
+  CC=$(MPICC)
+  LD=$(MPICC)
 endif
 
 ifeq ($(MODE),SINGLE)
   OBJS+=runner_single.o
   DEFINES+= -DMCL_SINGLE
+  ifneq ($(MCLL_SYSTEM_INFO), rwthcluster)
+    CC=g++
+    LD=g++
+  endif
 endif
 
 ifeq ($(MODE),PT)
@@ -26,23 +36,13 @@ endif
 MCLL  = $(HOME)/mc/load_leveller/trunk
 APPMCLL = $(HOME)/mc/ctqmc/
 
-ifeq ($(MPICC),)
-  MPICC = /usr/lib64/mpi/gcc/openmpi/bin/mpiCC
-  #MPICC = /usr/lib64/openmpi/bin/mpiCC
-endif
-CC = $(MPICC)
-LD = $(MPICC)
-ifeq ($(MODE),SINGLE)
-  CC=g++
-  LD=g++
-endif
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
-	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -ansi -std=c++11 $(FLAGS_OPENMP) $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
+	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -ansi -std=c++11 -DDEBUG_CXXBLAS -DNDEBUG $(FLAGS_OPENMP) $(DEFINES)
+	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
 	LDFLAGS = $(FLAGS_OPENMP)
 	SUPERLP = 
 else
-        CFLAGS  = -g -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
+        CFLAGS  = -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
         INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
         LDFLAGS = -fopenmp
         SUPERLP =
