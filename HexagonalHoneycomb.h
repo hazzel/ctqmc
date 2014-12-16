@@ -27,11 +27,6 @@ class HexagonalHoneycomb
 		HexagonalHoneycomb()
 		{}
 		
-		HexagonalHoneycomb(index_t l)
-		{
-			Resize(l);
-		}
-		
 		void Resize(index_t l, RNG& rng)
 		{
 			L = l;
