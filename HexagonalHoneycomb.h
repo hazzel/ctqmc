@@ -4,7 +4,9 @@
 #include <array>
 #include <map>
 #include <tuple>
-#include "Random.h"
+#include <iostream>
+#include <vector>
+#include <cstdint>
 #include "LookUpTable.h"
 
 template<typename RNG, typename Uint_t = std::uint_fast32_t, typename Int_t = std::int_fast32_t>
@@ -13,9 +15,14 @@ class HexagonalHoneycomb
 	public:
 		typedef Uint_t index_t;
 		typedef Int_t int_t;
+		using site_t = std::tuple < int_t, int_t, int_t > ;
+		using array_t = std::array<int_t, 3>;
+		using lookup_t = LookUpTable < int_t, index_t, 2 >;
+		using histogram_t = std::vector < index_t >;
+		using index_map_t = std::map < index_t, site_t >;
+		using reverse_map_t = std::map < site_t, index_t >;
 		enum SublatticeType {A, B};
-
-		enum SublatticeType {A, B};
+		
 	public:
 		HexagonalHoneycomb()
 		{}
@@ -25,12 +32,13 @@ class HexagonalHoneycomb
 			Resize(l);
 		}
 		
-		void Resize(index_t l)
+		void Resize(index_t l, RNG& rng)
 		{
 			L = l;
 			nSites = 6 * L * L;
 			nBonds = 3 * nSites / 2;
 			nDirections = 3;
+			BuildIndexMap();
 			distanceMap.AllocateTable(nSites, nSites);
 			distanceHistogram.resize(nSites, 0);
 			BuildLookUpTable();
@@ -83,6 +91,7 @@ class HexagonalHoneycomb
 		index_t ShiftSite(index_t siteIndex, int_t direction, int_t distance = 1)
 		{
 			site_t newSite = indexMap[siteIndex];
+			/*
 			for (int_t i = 0; i < distance; ++i)
 			{
 				index_t diff = (Sublattice(site) == SublatticeType::A ? 1 : -1);
@@ -99,16 +108,15 @@ class HexagonalHoneycomb
 				{
 					std::get<direction>(newSite) += diff;
 				}
-				/*
-				(-t + 1, t + 1 - p, p) and (t, -p + 1, p - t)
-				(p, -t + 1, t + 1 - p) and (p - t, t, -p + 1)
-				(t + 1 - p, p, -t + 1) and (-p + 1, p - t, t)
-				*/
+				//(-t + 1, t + 1 - p, p) and (t, -p + 1, p - t)
+				//(p, -t + 1, t + 1 - p) and (p - t, t, -p + 1)
+				//(t + 1 - p, p, -t + 1) and (-p + 1, p - t, t)
 			}
+			*/
 			return reverseMap[newSite];
 		}
 
-		index_t RandomWalk(index_t site, int_t distance, Random& rng)
+		index_t RandomWalk(index_t site, int_t distance, RNG& rng)
 		{
 			index_t newSite = site;
 			index_t lastDir = nDirections;
@@ -128,7 +136,7 @@ class HexagonalHoneycomb
 			return static_cast<index_t>(rng() * nSites);
 		}
 
-		index_t RandomSite(Random& rng)
+		index_t RandomSite(RNG& rng)
 		{
 			return static_cast<index_t>(rng() * nSites);
 		}
@@ -156,22 +164,35 @@ class HexagonalHoneycomb
 
 		void BuildLookUpTable()
 		{
-			Random rng;
 			for (index_t i = 0; i < nSites; ++i)
 			{
 				for (index_t j = 0; j < i; ++j)
 				{
 					site_t s1 = indexMap[i];
 					site_t s2 = indexMap[j];
-					int_t d = std::abs(std::get<0>(s1) - std::get<0>(s2)) + std::abs(std::get<1>(s1) -std::get<1>(s2)) + std::abs(std::get<2>(s1) - std::get<2>(s2));
-					int_t d1 = std::abs(std::get<0>(s1) -std::get<0>(s2) +2 * (int_t)L) + std::abs(std::get<1>(s1) -std::get<1>(s2) -(int)L) + std::abs(std::get<2>(s1) -std::get<2>(s2) -(int)L);
-					int_t d2 = std::abs(std::get<0>(s1) -std::get<0>(s2) -2 * (int_t)L) + std::abs(std::get<1>(s1) -std::get<1>(s2) +(int)L) + std::abs(std::get<2>(s1) -std::get<2>(s2) +(int)L);
-					int_t d3 = std::abs(std::get<0>(s1) -std::get<0>(s2) -(int_t)L) + std::abs(std::get<1>(s1) -std::get<1>(s2) +2 * (int)L) + std::abs(std::get<2>(s1) -std::get<2>(s2) -(int)L);
-					int_t d4 = std::abs(std::get<0>(s1) -std::get<0>(s2) +(int_t)L) + std::abs(std::get<1>(s1) -std::get<1>(s2) -2 * (int)L) + std::abs(std::get<2>(s1) -std::get<2>(s2) +(int)L);
-					int_t d5 = std::abs(std::get<0>(s1) -std::get<0>(s2) -(int_t)L) + std::abs(std::get<1>(s1) -std::get<1>(s2) -(int)L) + std::abs(std::get<2>(s1) -std::get<2>(s2) +2 * (int)L);
-					int_t d6 = std::abs(std::get<0>(s1) -std::get<0>(s2) +(int_t)L) + std::abs(std::get<1>(s1) -std::get<1>(s2) +(int)L) + std::abs(std::get<2>(s1) -std::get<2>(s2) -2 * (int)L);
-					distanceMap[i][j] = std::min({ d, d1, d2, d3, d4, d5, d6 });
+					int_t u1 = std::get<0>(s1);
+					int_t v1 = std::get<1>(s1);
+					int_t w1 = std::get<2>(s1);
+					int_t u2 = std::get<0>(s2);
+					int_t v2 = std::get<1>(s2);
+					int_t w2 = std::get<2>(s2);
+					int_t d0 = std::abs(u2 - u1) + std::abs(v2 - v1) + std::abs(w2 - w1);
+					int_t d1 = std::abs(u2 - u1 + 2 * L) + std::abs(v2 - v1 - L) + std::abs(w2 - w1 - L);
+					int_t d2 = std::abs(u2 - u1 - 2 * L) + std::abs(v2 - v1 + L) + std::abs(w2 - w1 + L);
+					int_t d3 = std::abs(u2 - u1 - L) + std::abs(v2 - v1 + 2 * L) + std::abs(w2 - w1 - L);
+					int_t d4 = std::abs(u2 - u1 + L) + std::abs(v2 - v1 - 2 * L) + std::abs(w2 - w1 + L);
+					int_t d5 = std::abs(u2 - u1 - L) + std::abs(v2 - v1 - L) + std::abs(w2 - w1 + 2 * L);
+					int_t d6 = std::abs(u2 - u1 + L) + std::abs(v2 - v1 + L) + std::abs(w2 - w1 - 2 * L);
+					distanceMap[i][j] = std::min({ d0, d1, d2, d3, d4, d5, d6 });
 					distanceMap[j][i] = distanceMap[i][j];
+					/*
+					if (j == 0 || j == 1)
+					{
+						std::cout << "i=" << i << " : (" << u1 << ", " << v1 << ", " << w1 << ")" << std::endl;
+						std::cout << "j=" << j << " : (" << u2 << ", " << v2 << ", " << w2 << ")" << std::endl;
+						std::cout << d0 << " , " << d1 << " , " << d2 << " , " << d3 << " , " << d4 << " , " << d5 << " , " << d6 << std::endl;
+					}
+					*/
 				}
 				distanceMap[i][i] = 0;
 			}
@@ -184,15 +205,9 @@ class HexagonalHoneycomb
 					distanceHistogram[Distance(i, j)] += 1;
 			distanceHistogram[0] = nSites;
 		}
+		
 	private:
-		using array_t = std::array<int_t, 3>;
-		using lookup_t = LookUpTable < int_t, 2 >;
-		using histogram_t = std::vector < index_t >;
-		using site_t = std::tuple < int_t, int_t, int_t > ;
-		using index_map_t = std::map < index_t, site_t >;
-		using reverse_map_t = std::map < site_t, index_t >;
-
-		index_t L;
+		int_t L;
 		index_t nSites;
 		index_t nBonds;
 		int_t nDirections;
