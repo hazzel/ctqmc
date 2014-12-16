@@ -86,19 +86,25 @@ class HexagonalHoneycomb
 		index_t ShiftSite(index_t siteIndex, int_t direction, int_t distance = 1)
 		{
 			site_t newSite = indexMap[siteIndex];
-			/*
 			for (int_t i = 0; i < distance; ++i)
 			{
-				index_t diff = (Sublattice(site) == SublatticeType::A ? 1 : -1);
-				index_t u = std::get<0>(newSite);
-				index_t v = std::get<1>(newSite);
-				index_t w = std::get<2>(newSite);
-				switch (direction):
+				SublatticeType sublat = Sublattice(site);
+				index_t& u = std::get<0>(newSite);
+				index_t& v = std::get<1>(newSite);
+				index_t& w = std::get<2>(newSite);
+				if (direction == 0)
 				{
-					case 0:
-						if (diff
+					if (L
+					u = 1 - L;
+					v += L;
+					w += L;
 				}
-					
+				else if(u == 1 - L && direction == 0)
+				{
+					u = L;
+					v -= L;
+					w -= L;
+				}
 				else
 				{
 					std::get<direction>(newSite) += diff;
@@ -107,7 +113,6 @@ class HexagonalHoneycomb
 				//(p, -t + 1, t + 1 - p) and (p - t, t, -p + 1)
 				//(t + 1 - p, p, -t + 1) and (-p + 1, p - t, t)
 			}
-			*/
 			return reverseMap[newSite];
 		}
 
