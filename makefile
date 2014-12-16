@@ -38,13 +38,13 @@ APPMCLL = $(HOME)/mc/ctqmc/
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -ansi -std=c++11 -DDEBUG_CXXBLAS -DNDEBUG $(FLAGS_OPENMP) $(DEFINES)
-	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_MKL -DALWAYS_USE_CXXLAPACK
+	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_MKLBLAS -DALWAYS_USE_CXXLAPACK
 	LDFLAGS = $(FLAGS_MATH_LINKER) $(FLAGS_OPENMP)
 	SUPERLP = 
 else
         CFLAGS  = -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
-        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DUSE_CXXLAPACK
-        LDFLAGS = -fopenmp -llapack
+        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_OPENBLAS -DALWAYS_USE_CXXLAPACK
+        LDFLAGS = -fopenmp -L$(HOME)/OpenBLAS/lib/ -lopenblas
         SUPERLP =
 endif
 
