@@ -44,7 +44,7 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 else
         CFLAGS  = -O3 -Wno-deprecated -ansi -ffast-math -std=c++11 -fopenmp $(DEFINES)
         INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_OPENBLAS -DALWAYS_USE_CXXLAPACK
-        LDFLAGS = -fopenmp -L$(HOME)/OpenBLAS/lib/ -lopenblas
+        LDFLAGS = -fopenmp -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -lopenblas
         SUPERLP =
 endif
 
