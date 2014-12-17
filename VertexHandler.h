@@ -157,7 +157,6 @@ class VertexHandler
 				}
 				a(i, i) = 0.0;
 			}
-			PrintMatrix
 		}
 		
 		Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> PermutationMatrix()

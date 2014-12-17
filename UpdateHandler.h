@@ -78,7 +78,6 @@ class UpdateHandler
 				vertexHandler.PrintVertices();
 				std::cout << "VertexBuffer:" << std::endl;
 				vertexHandler.PrintVertexBuffer();
-				std::cin.get();
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
@@ -122,7 +121,6 @@ class UpdateHandler
 				vertexHandler.PrintVertices();
 				std::cout << "IndexBuffer:" << std::endl;
 				vertexHandler.PrintIndexBuffer();
-				std::cin.get();
 			}
 			if (configSpace.rng() < acceptRatio)
 			{

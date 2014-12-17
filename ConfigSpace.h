@@ -93,9 +93,9 @@ class ConfigSpace
 			else
 			{
 				if (lattice.Sublattice(i1) == lattice.Sublattice(i2))
-					return g;
-				else
 					return -g;
+				else
+					return g;
 			}
 		}
 
