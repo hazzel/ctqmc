@@ -46,7 +46,7 @@ class RhombicHoneycomb
 
 		SublatticeType Sublattice(index_t site)
 		{
-			return site % 2 == 0 ? SublatticeType::A : SublatticeType::B;
+			return ((site % 2) == 0 ? SublatticeType::A : SublatticeType::B);
 		}
 
 		index_t Sites()

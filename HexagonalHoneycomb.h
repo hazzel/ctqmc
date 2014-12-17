@@ -94,53 +94,53 @@ class HexagonalHoneycomb
 				//(-t + 1, t + 1 - p, p) and (t, -p + 1, p - t)
 				//(p, -t + 1, t + 1 - p) and (p - t, t, -p + 1)
 				//(t + 1 - p, p, -t + 1) and (-p + 1, p - t, t)
-				if (direction == 0 && (u == 1 - L) && (v == 1 + L - w) && (w >= 1))
+				if ((direction == 0) && (u == 1 - L) && (v == 1 + L - w) && (w >= 1))
 				{
 					u = L;
 					v -= L;
 					w -= L;
 				}
-				else if (direction == 0 && (u == L) && (v <= 0) && (w == -v + 1 - L))
+				else if ((direction == 0) && (u == L) && (v <= 0) && (w == -v + 1 - L))
 				{
 					u = 1 - L;
 					v += L;
 					w += L;
 				}
-				else if (direction == 1 && (u >= 1) && (v == 1 - L) && (w = 1 + L - u))
+				else if ((direction == 1) && (u >= 1) && (v == 1 - L) && (w == 1 + L - u))
 				{
 					u -= L;
 					v = L;
 					w -= L;
 				}
-				else if (direction == 1 && (u == -w + 1 - L) && (v == L) && (w <= 0))
+				else if ((direction == 1) && (u == -w + 1 - L) && (v == L) && (w <= 0))
 				{
 					u += L;
 					v = 1 - L;
 					w += L;
 				}
-				else if (direction == 2 && (u == 1 + L - v) && (v >= 1) && (w = 1 - L))
+				else if ((direction == 2) && (u == 1 + L - v) && (v >= 1) && (w == 1 - L))
 				{
 					u -= L;
 					v -= L;
 					w = L;
 				}
-				else if (direction == 2 && (u <= 0) && (v == -u + 1 - L) && (w == L))
+				else if ((direction == 2) && (u <= 0) && (v == -u + 1 - L) && (w == L))
 				{
-					u -= L;
-					v -= L;
+					u += L;
+					v += L;
 					w = 1 - L;
 				}
 				else if(direction == 0)
 				{
-					std::get<0>(newSite) += (u + v + w == 1 ? 1.0 : -1.0);
+					std::get<0>(newSite) += (u + v + w == 1 ? 1 : -1);
 				}
 				else if(direction == 1)
 				{
-					std::get<1>(newSite) += (u + v + w == 1 ? 1.0 : -1.0);
+					std::get<1>(newSite) += (u + v + w == 1 ? 1 : -1);
 				}
 				else if(direction == 2)
 				{
-					std::get<2>(newSite) += (u + v + w == 1 ? 1.0 : -1.0);
+					std::get<2>(newSite) += (u + v + w == 1 ? 1 : -1);
 				}
 			}
 			return reverseMap[newSite];
