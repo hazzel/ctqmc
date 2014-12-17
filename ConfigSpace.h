@@ -92,7 +92,10 @@ class ConfigSpace
 			}
 			else
 			{
-				return -g * std::pow(-1.0, i1 + i2);
+				if (lattice.Sublattice(i1) == lattice.Sublattice(i2))
+					return g;
+				else
+					return -g;
 			}
 		}
 

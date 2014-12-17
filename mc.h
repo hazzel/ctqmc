@@ -12,6 +12,7 @@
 #include <map>
 #include "ConfigSpace.h"
 #include "Random.h"
+#include "HexagonalHoneycomb.h"
 #include "RhombicHoneycomb.h"
 //#define EIGEN_USE_MKL_ALL
 #include "Eigen/Dense"
@@ -47,7 +48,7 @@ class mc
 		using int_t = std::int_fast32_t;
 		using value_t = double;
 		using matrix_t = Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic>;
-		using ConfigSpace_t = ConfigSpace<RhombicHoneycomb<Random, uint_t, int_t>, Random, value_t, matrix_t>;
+		using ConfigSpace_t = ConfigSpace<HexagonalHoneycomb<Random, uint_t, int_t>, Random, value_t, matrix_t>;
 
 		mc(const std::string& dir);
 		~mc();

@@ -54,6 +54,20 @@ class VertexHandler
 			indexBufferEnd = indexBuffer.end();
 		}
 		
+		template<typename Matrix_t>
+		void PrintMatrix(const Matrix_t& M)
+		{
+			using namespace Eigen;
+			IOFormat CommaInitFmt(StreamPrecision, DontAlignCols, ", ", ", ", "", "", " << ", ";");
+			IOFormat CleanFmt(FullPrecision, 0, ", ", "\n", "[", "]");
+			IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
+			IOFormat HeavyFmt(FullPrecision, 0, ", ", ",\n", "{", "}", "{", "}");
+			//std::cout << M.format(CommaInitFmt) << std::endl;
+			//std::cout << M.format(CleanFmt) << std::endl;
+			//std::cout << M.format(OctaveFmt) << std::endl;
+			std::cout << M.format(HeavyFmt) << std::endl;
+		}
+		
 		void PrintVertices()
 		{
 			for (uint_t i = 0; i < nodes.size(); i+=2)
@@ -75,12 +89,6 @@ class VertexHandler
 			std::cout << std::endl;
 		}
 		
-		void AddVertex(uint_t site1, uint_t site2, value_t tau)
-		{
-			nodes.push_back(note_t(site1, tau));
-			nodes.push_back(note_t(site2, tau));
-		}
-		
 		void AddBufferedVertices()
 		{
 			nodes.insert(nodes.end(), nodeBuffer.begin(), nodeBufferEnd);
@@ -97,12 +105,6 @@ class VertexHandler
 				nodeBuffer[2*i+1] = node_t(configSpace.lattice.RandomWalk(site, 1, configSpace.rng), tau);
 			}
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
-		}
-		
-		void RemoveVertex(std::size_t index)
-		{
-			auto it = nodes.erase(nodes.begin() + 2 * index);
-			nodes.erase(it);
 		}
 		
 		void RemoveBufferedVertices()
@@ -155,6 +157,7 @@ class VertexHandler
 				}
 				a(i, i) = 0.0;
 			}
+			PrintMatrix
 		}
 		
 		Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> PermutationMatrix()

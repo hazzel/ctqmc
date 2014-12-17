@@ -72,7 +72,14 @@ class UpdateHandler
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), N) * configSpace.AdditionFactorialRatio(k, N);
 			value_t acceptRatio = preFactor * invS.determinant();
 			if (acceptRatio < 0.0)
-				std::cout << "AddVertices: AcceptRatio: " << acceptRatio << std::endl;
+			{
+				std::cout << "AddVertices(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
+				std::cout << "Vertices:" << std::endl;
+				vertexHandler.PrintVertices();
+				std::cout << "VertexBuffer:" << std::endl;
+				vertexHandler.PrintVertexBuffer();
+				std::cin.get();
+			}
 			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t<2 * N, 2 * N> S = invS.inverse();
@@ -109,7 +116,14 @@ class UpdateHandler
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), -N) * configSpace.RemovalFactorialRatio(k, N);
 			value_t acceptRatio = preFactor * S.determinant();
 			if (acceptRatio < 0.0)
-				std::cout << "RemoveVertex: AcceptRatio" << acceptRatio << std::endl;
+			{
+				std::cout << "RemoveVertex(" << N << "): AcceptRatio" << acceptRatio << std::endl;
+				std::cout << "Vertices:" << std::endl;
+				vertexHandler.PrintVertices();
+				std::cout << "IndexBuffer:" << std::endl;
+				vertexHandler.PrintIndexBuffer();
+				std::cin.get();
+			}
 			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t<Eigen::Dynamic, Eigen::Dynamic> P = invG.topLeftCorner(2 * (k - N), 2 * (k - N));
