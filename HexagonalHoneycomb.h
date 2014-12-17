@@ -30,7 +30,7 @@ class HexagonalHoneycomb
 		{
 			L = l;
 			nSites = 6 * L * L;
-			nBonds = 3 * nSites / 2;
+			nBonds = 9 * L * L;
 			nDirections = 3;
 			BuildIndexMap();
 			distanceMap.AllocateTable(nSites, nSites);
