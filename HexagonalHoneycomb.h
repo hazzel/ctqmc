@@ -16,7 +16,6 @@ class HexagonalHoneycomb
 		typedef Uint_t index_t;
 		typedef Int_t int_t;
 		using site_t = std::tuple < int_t, int_t, int_t > ;
-		using array_t = std::array<int_t, 3>;
 		using lookup_t = LookUpTable < int_t, index_t, 2 >;
 		using histogram_t = std::vector < index_t >;
 		using index_map_t = std::map < index_t, site_t >;
@@ -88,30 +87,61 @@ class HexagonalHoneycomb
 			site_t newSite = indexMap[siteIndex];
 			for (int_t i = 0; i < distance; ++i)
 			{
-				SublatticeType sublat = Sublattice(site);
-				index_t& u = std::get<0>(newSite);
-				index_t& v = std::get<1>(newSite);
-				index_t& w = std::get<2>(newSite);
-				if (direction == 0)
-				{
-					if (L
-					u = 1 - L;
-					v += L;
-					w += L;
-				}
-				else if(u == 1 - L && direction == 0)
+				int_t& u = std::get<0>(newSite);
+				int_t& v = std::get<1>(newSite);
+				int_t& w = std::get<2>(newSite);
+				
+				//(-t + 1, t + 1 - p, p) and (t, -p + 1, p - t)
+				//(p, -t + 1, t + 1 - p) and (p - t, t, -p + 1)
+				//(t + 1 - p, p, -t + 1) and (-p + 1, p - t, t)
+				if (direction == 0 && (u == 1 - L) && (v == 1 + L - w) && (w >= 1))
 				{
 					u = L;
 					v -= L;
 					w -= L;
 				}
-				else
+				else if (direction == 0 && (u == L) && (v <= 0) && (w == -v + 1 - L))
 				{
-					std::get<direction>(newSite) += diff;
+					u = 1 - L;
+					v += L;
+					w += L;
 				}
-				//(-t + 1, t + 1 - p, p) and (t, -p + 1, p - t)
-				//(p, -t + 1, t + 1 - p) and (p - t, t, -p + 1)
-				//(t + 1 - p, p, -t + 1) and (-p + 1, p - t, t)
+				else if (direction == 1 && (u >= 1) && (v == 1 - L) && (w = 1 + L - u))
+				{
+					u -= L;
+					v = L;
+					w -= L;
+				}
+				else if (direction == 1 && (u == -w + 1 - L) && (v == L) && (w <= 0))
+				{
+					u += L;
+					v = 1 - L;
+					w += L;
+				}
+				else if (direction == 2 && (u == 1 + L - v) && (v >= 1) && (w = 1 - L))
+				{
+					u -= L;
+					v -= L;
+					w = L;
+				}
+				else if (direction == 2 && (u <= 0) && (v == -u + 1 - L) && (w == L))
+				{
+					u -= L;
+					v -= L;
+					w = 1 - L;
+				}
+				else if(direction == 0)
+				{
+					std::get<0>(newSite) += (u + v + w == 1 ? 1.0 : -1.0);
+				}
+				else if(direction == 1)
+				{
+					std::get<1>(newSite) += (u + v + w == 1 ? 1.0 : -1.0);
+				}
+				else if(direction == 2)
+				{
+					std::get<2>(newSite) += (u + v + w == 1 ? 1.0 : -1.0);
+				}
 			}
 			return reverseMap[newSite];
 		}
@@ -185,14 +215,6 @@ class HexagonalHoneycomb
 					int_t d6 = std::abs(u2 - u1 + L) + std::abs(v2 - v1 + L) + std::abs(w2 - w1 - 2 * L);
 					distanceMap[i][j] = std::min({ d0, d1, d2, d3, d4, d5, d6 });
 					distanceMap[j][i] = distanceMap[i][j];
-					/*
-					if (j == 0 || j == 1)
-					{
-						std::cout << "i=" << i << " : (" << u1 << ", " << v1 << ", " << w1 << ")" << std::endl;
-						std::cout << "j=" << j << " : (" << u2 << ", " << v2 << ", " << w2 << ")" << std::endl;
-						std::cout << d0 << " , " << d1 << " , " << d2 << " , " << d3 << " , " << d4 << " , " << d5 << " , " << d6 << std::endl;
-					}
-					*/
 				}
 				distanceMap[i][i] = 0;
 			}
