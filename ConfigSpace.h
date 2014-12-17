@@ -39,6 +39,7 @@ template<typename Geometry, typename RNG, typename Value_t, typename Matrix_t>
 class ConfigSpace
 {
 	public:
+		typedef Geometry Geometry_t;
 		typedef typename Geometry::index_t uint_t;
 		typedef typename Geometry::int_t int_t;
 		typedef Value_t value_t;
@@ -63,6 +64,22 @@ class ConfigSpace
 				return false;
 			updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
 			return updateHandler.template RemoveVertices<N>();
+		}
+		
+		template<int_t N>
+		bool AddRandomWorms(value_t preFactor)
+		{
+			updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>();
+			return updateHandler.template AddWorms<N>(preFactor);
+		}
+		
+		template<int_t N>
+		bool RemoveRandomWorms(value_t preFactor)
+		{
+			if (updateHandler.GetVertexHandler().Worms() < N)
+				return false;
+			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
+			return updateHandler.template RemoveWorms<N>(preFactor);
 		}
 		
 		void PrintMatrix(const matrix_t& m)

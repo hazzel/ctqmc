@@ -124,7 +124,8 @@ void mc::init()
 	measure.add_observable("deltaZ", nPrebins);
 	measure.add_observable("deltaW2", nPrebins);
 	measure.add_observable("deltaW4", nPrebins);
-	measure.add_observable("invG_error", nPrebins);
+	measure.add_observable("avgInvGError", nPrebins);
+	measure.add_observable("maxInvGError", nPrebins);
 	measure.add_vectorobservable("Corr", configSpace.lattice.MaxDistance() + 1, nPrebins);
 }
 void mc::write(const std::string& dir)
@@ -214,7 +215,19 @@ void mc::BuildUpdateWeightMatrix()
 									0.0			,	0.0			,	0.0,
 									0.0			,	10.0 / 10.0	,	0.0;
 */
-
+	//ONLY Z<->W2
+	updateWeightMatrix <<	2.5 / 10.0	,	0.0 / 10.0	,	0.0,
+									5.0 / 10.0	,	0.0 / 10.0	,	0.0,
+									6.5 / 10.0	,	0.0 / 10.0	,	0.0,
+									8.0 / 10.0	,	0.0 / 10.0	,	0.0,
+									10.0 / 10.0	,	0.0			,	0.0,
+									0.0			,	2.0 / 10.0	,	0.0, 
+									0.0			,	0.0			,	0.0,
+									0.0			,	0.0			,	0.0,
+									0.0			,	0.0			,	0.0,
+									0.0			,	0.0			,	0.0,
+									0.0			,	0.0			,	0.0;
+/*
 	//ONLY Z
 	updateWeightMatrix <<	1.0 / 4.0,	0.0		,	0.0,
 									2.0 / 4.0,	0.0		,	0.0,
@@ -227,7 +240,7 @@ void mc::BuildUpdateWeightMatrix()
 									0.0		,	0.0		,	0.0,
 									0.0		,	0.0		,	0.0,
 									0.0		,	0.0		,	0.0;
-
+*/
 	acceptedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 	proposedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 }
@@ -260,7 +273,6 @@ void mc::do_update()
 	for (uint_t i = 0; i < nThermStep; ++i)
 	{
 		value_t r = rng();
-		value_t acceptRatio = 0.0;
 		StateType state = configSpace.State();
 		
 		if (r < updateWeightMatrix(UpdateType::AddVertex, state))
@@ -287,45 +299,29 @@ void mc::do_update()
 				acceptedUpdates(UpdateType::RemoveTwoVertices, state) += 1.0;
 			proposedUpdates(UpdateType::RemoveTwoVertices, state) += 1.0;
 		}
-		configSpace.updateHandler.SymmetrizeInvG();
-		
-		/*
-		if (r < updateWeightMatrix(UpdateType::AddVertex, state))
-		{
-			if (configSpace.AddRandomVertices(1, acceptRatio))
-				acceptedUpdates(UpdateType::AddVertex, state) += 1.0;
-			proposedUpdates(UpdateType::AddVertex, state) += 1.0;
-		}
-		else if (r < updateWeightMatrix(UpdateType::RemoveVertex, state))
-		{
-			if (configSpace.RemoveRandomVertices(1, acceptRatio))
-				acceptedUpdates(UpdateType::RemoveVertex, state) += 1.0;
-			proposedUpdates(UpdateType::RemoveVertex, state) += 1.0;
-		}
-		else if (r < updateWeightMatrix(UpdateType::AddTwoVertices, state))
-		{
-			if (configSpace.AddRandomVertices(2, acceptRatio))
-				acceptedUpdates(UpdateType::AddTwoVertices, state) += 1.0;
-			proposedUpdates(UpdateType::AddTwoVertices, state) += 1.0;
-		}
-		else if (r < updateWeightMatrix(UpdateType::RemoveTwoVertices, state))
-		{
-			if (configSpace.RemoveRandomVertices(2, acceptRatio))
-				acceptedUpdates(UpdateType::RemoveTwoVertices, state) += 1.0;
-			proposedUpdates(UpdateType::RemoveTwoVertices, state) += 1.0;
-		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW2, state))
 		{
-			if (configSpace.UpdateZtoW2(acceptRatio))
+			uint_t m = configSpace.lattice.Sites();
+			value_t preFactor = configSpace.lattice.Sites() * m * configSpace.beta * configSpace.zeta2;
+			if (configSpace.AddRandomWorms<1>(preFactor))
+			{
 				acceptedUpdates(UpdateType::ZtoW2, state) += 1.0;
+				configSpace.state = StateType::W2;
+			}
 			proposedUpdates(UpdateType::ZtoW2, state) += 1.0;
 		}
 		else if (r < updateWeightMatrix(UpdateType::W2toZ, state))
 		{
-			if (configSpace.UpdateW2toZ(acceptRatio))
+			uint_t m = configSpace.lattice.Sites();
+			value_t preFactor = 1.0 / (configSpace.lattice.Sites() * m * configSpace.beta * configSpace.zeta2);
+			if (configSpace.RemoveRandomWorms<1>(preFactor))
+			{
 				acceptedUpdates(UpdateType::W2toZ, state) += 1.0;
+				configSpace.state = StateType::Z;
+			}
 			proposedUpdates(UpdateType::W2toZ, state) += 1.0;
 		}
+		/*
 		else if (r < updateWeightMatrix(UpdateType::ZtoW4, state))
 		{
 			if (configSpace.UpdateZtoW4(acceptRatio))
@@ -356,17 +352,19 @@ void mc::do_update()
 				acceptedUpdates(UpdateType::shiftWorm, state) += 1.0;
 			proposedUpdates(UpdateType::shiftWorm, state) += 1.0;
 		}
+		*/
 
 		++rebuildCnt;
 		if (rebuildCnt == nRebuild)
 		{
-			value_t error = configSpace.RebuildInvG();
-			//value_t error = configSpace.StabilizeInvG();
-			measure.add("invG_error", error);
+			value_t avgError = 0.0;
+			value_t maxError = 0.0;
+			configSpace.updateHandler.StabilizeInvG(avgError, maxError);
+			measure.add("avgInvGError", avgError);
+			measure.add("maxInvGError", maxError);
 			rebuildCnt = 0;
 		}
-		configSpace.SymmetrizeInvG();
-		*/
+		//configSpace.updateHandler.SymmetrizeInvG();
 	}
 	
 	if (!is_thermalized())
@@ -396,11 +394,9 @@ void mc::do_measurement()
 	if (sweep - nThermalize + 1 == nMeasurements)
 		FinalizeSimulation();
 	
-	/*
-	measure.add("<w>", configSpace.wormVertices.size() / 2.0);
+	measure.add("<w>", configSpace.updateHandler.GetVertexHandler().Worms());
 	uint_t R = 0;
 	value_t sign, c;
-	*/
 	std::fill(corrVector.begin(), corrVector.end(), 0.0);
 	switch (configSpace.State())
 	{
@@ -411,16 +407,16 @@ void mc::do_measurement()
 			measure.add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
 			GetWithDef(exporderHistZ, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
 			break;
-		/*
+
 		case StateType::W2:
 			measure.add("deltaZ", 0.0);
 			measure.add("deltaW2", 1.0);
 			measure.add("deltaW4", 0.0);
 			measure.add("k", 0.0);
-			GetWithDef(exporderHistW2, configSpace.vertices.size() / 2, 0) += 1;
+			GetWithDef(exporderHistW2, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
 
-			R = configSpace.lattice.Distance(configSpace.wormVertices[0].second, configSpace.wormVertices[1].second);
-			sign = std::pow(-1.0, configSpace.wormVertices[0].second + configSpace.wormVertices[1].second);
+			R = configSpace.updateHandler.GetVertexHandler().WormDistance();
+			sign = configSpace.updateHandler.GetVertexHandler().WormParity();
 			corrVector[R] = sign / configSpace.lattice.DistanceHistogram(R);
 			break;
 		case StateType::W4:
@@ -429,7 +425,6 @@ void mc::do_measurement()
 			measure.add("deltaW4", 1.0);
 			measure.add("k", 0.0);
 			break;
-		*/
 	}
 	measure.add("Corr", corrVector);
 }
