@@ -87,8 +87,6 @@ class RhombicHoneycomb
 			for (int j = 0; j < distance; ++j)
 			{
 				int_t newDir = static_cast<int_t>(rng() * latticeDirection.size());
-				while(lastDir == newDir)
-					newDir = static_cast<int_t>(rng() * latticeDirection.size());
 				newSite = ShiftSite(newSite, newDir);
 				lastDir = newDir;
 			}
@@ -143,9 +141,8 @@ class RhombicHoneycomb
 		void GenerateDistanceHistogram()
 		{
 			for (index_t i = 0; i < nSites; ++i)
-				for (index_t j = 0; j < nSites; ++j)
+				for (index_t j = 0; j <= nSites; ++j)
 					distanceHistogram[Distance(i, j)] += 1;
-			distanceHistogram[0] = nSites;
 		}
 	private:
 		using array_t = std::array < int_t, 3 > ;

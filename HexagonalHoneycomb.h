@@ -81,7 +81,6 @@ class HexagonalHoneycomb
 			return i;
 		}
 
-		//FIXME
 		index_t ShiftSite(index_t siteIndex, int_t direction, int_t distance = 1)
 		{
 			site_t newSite = indexMap[siteIndex];
@@ -153,8 +152,6 @@ class HexagonalHoneycomb
 			for (int j = 0; j < distance; ++j)
 			{
 				index_t newDir = static_cast<index_t>(rng() * nDirections);
-				while (lastDir == newDir)
-					newDir = static_cast<index_t>(rng() * nDirections);
 				newSite = ShiftSite(newSite, newDir);
 				lastDir = newDir;
 			}
@@ -223,9 +220,9 @@ class HexagonalHoneycomb
 		void GenerateDistanceHistogram()
 		{
 			for (index_t i = 0; i < nSites; ++i)
-				for (index_t j = 0; j < i; ++j)
+				for (index_t j = 0; j <= i; ++j)
 					distanceHistogram[Distance(i, j)] += 1;
-			distanceHistogram[0] = nSites;
+			//distanceHistogram[0] = nSites;
 		}
 		
 	private:
