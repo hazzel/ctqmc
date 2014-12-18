@@ -148,12 +148,10 @@ class HexagonalHoneycomb
 		index_t RandomWalk(index_t site, int_t distance, RNG& rng)
 		{
 			index_t newSite = site;
-			index_t lastDir = nDirections;
 			for (int j = 0; j < distance; ++j)
 			{
 				index_t newDir = static_cast<index_t>(rng() * nDirections);
 				newSite = ShiftSite(newSite, newDir);
-				lastDir = newDir;
 			}
 			return newSite;
 		}
@@ -222,7 +220,6 @@ class HexagonalHoneycomb
 			for (index_t i = 0; i < nSites; ++i)
 				for (index_t j = 0; j <= i; ++j)
 					distanceHistogram[Distance(i, j)] += 1;
-			//distanceHistogram[0] = nSites;
 		}
 		
 	private:
