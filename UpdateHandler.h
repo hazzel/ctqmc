@@ -66,9 +66,8 @@ class UpdateHandler
 			matrix_t<2 * N, 2 * N> a(2 * N, 2 * N);
 			vertexHandler.template WoodburyAddVertices<N>(u, v, a);
 
-			matrix_t<2 * N, 2 * N> invS;
 			matrix_t<Eigen::Dynamic, 2 * N> invGu = invG * u;
-			invS.noalias() = a - v * invGu;
+			matrix_t<2 * N, 2 * N> invS = a - v * invGu;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), N) * configSpace.AdditionFactorialRatio(k, N);
 			value_t acceptRatio = preFactor * invS.determinant();
 			if (acceptRatio < 0.0)
@@ -82,12 +81,9 @@ class UpdateHandler
 			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t<2 * N, 2 * N> S = invS.inverse();
-				matrix_t<Eigen::Dynamic, 2 * N> Q;
-				Q.noalias() = -invGu * S;
-				matrix_t<2 * N, Eigen::Dynamic> R;
-				R.noalias() = -S * v * invG;
-				matrix_t<Eigen::Dynamic, Eigen::Dynamic> P;
-				P.noalias() = invG - invGu * R;
+				matrix_t<Eigen::Dynamic, 2 * N> Q = -invGu * S;
+				matrix_t<2 * N, Eigen::Dynamic> R = -S * v * invG;
+				matrix_t<Eigen::Dynamic, Eigen::Dynamic> P = invG - invGu * R;
 				
 				invG.resize(2 * (k + N), 2 * (k + N));
 				invG.topLeftCorner(2 * k, 2 * k) = P;

@@ -7,7 +7,6 @@
 #include <cmath>
 #include <numeric>
 #include <string>
-#include <chrono>
 #include <cstdint>
 #include <map>
 #include "ConfigSpace.h"
@@ -21,8 +20,6 @@
 #include "random.h"
 #include "parser.h"
 #include "types.h"
-
-using duration_t = std::chrono::seconds;
 
 class make_string
 {
@@ -48,7 +45,7 @@ class mc
 		using int_t = std::int_fast32_t;
 		using value_t = double;
 		using matrix_t = Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic>;
-		using ConfigSpace_t = ConfigSpace<RhombicHoneycomb<Random, uint_t, int_t>, Random, value_t, matrix_t>;
+		using ConfigSpace_t = ConfigSpace<HexagonalHoneycomb<Random, uint_t, int_t>, Random, value_t, matrix_t>;
 
 		mc(const std::string& dir);
 		~mc();

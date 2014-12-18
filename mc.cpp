@@ -366,7 +366,7 @@ void mc::do_update()
 			measure.add("maxInvGError", maxError);
 			rebuildCnt = 0;
 		}
-		//configSpace.updateHandler.SymmetrizeInvG();
+		configSpace.updateHandler.SymmetrizeInvG();
 	}
 	
 	if (!is_thermalized())
