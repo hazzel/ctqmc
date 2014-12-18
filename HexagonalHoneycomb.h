@@ -218,7 +218,7 @@ class HexagonalHoneycomb
 		void GenerateDistanceHistogram()
 		{
 			for (index_t i = 0; i < nSites; ++i)
-				for (index_t j = 0; j <= i; ++j)
+				for (index_t j = 0; j < nSites; ++j)
 					distanceHistogram[Distance(i, j)] += 1;
 		}
 		

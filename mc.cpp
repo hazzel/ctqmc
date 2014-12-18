@@ -215,6 +215,7 @@ void mc::BuildUpdateWeightMatrix()
 									0.0			,	0.0			,	0.0,
 									0.0			,	10.0 / 10.0	,	0.0;
 */
+/*
 	//ONLY Z<->W2
 	updateWeightMatrix <<	2.5 / 10.0	,	0.0 / 10.0	,	0.0,
 									5.0 / 10.0	,	0.0 / 10.0	,	0.0,
@@ -227,7 +228,8 @@ void mc::BuildUpdateWeightMatrix()
 									0.0			,	0.0			,	0.0,
 									0.0			,	0.0			,	0.0,
 									0.0			,	0.0			,	0.0;
-/*
+*/
+
 	//ONLY Z
 	updateWeightMatrix <<	1.0 / 4.0,	0.0		,	0.0,
 									2.0 / 4.0,	0.0		,	0.0,
@@ -240,7 +242,7 @@ void mc::BuildUpdateWeightMatrix()
 									0.0		,	0.0		,	0.0,
 									0.0		,	0.0		,	0.0,
 									0.0		,	0.0		,	0.0;
-*/
+
 	acceptedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 	proposedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 }
