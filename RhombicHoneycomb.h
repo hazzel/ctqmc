@@ -22,7 +22,6 @@ class RhombicHoneycomb
 			L = l;
 			nSites = 2 * L * L;
 			nBonds = 3 * nSites / 2;
-			latticeDirection = {{ -1, 1, 2 * static_cast<int>(L)-1 }};
 			distanceMap.AllocateTable(nSites, nSites);
 			distanceHistogram.resize(nSites, 0);
 			BuildLookUpTable(rng);
@@ -72,10 +71,72 @@ class RhombicHoneycomb
 			index_t newSite = site;
 			for (int_t i = 0; i < distance; ++i)
 			{
-				if (direction != 2)
-					newSite = static_cast<index_t>(newSite + latticeDirection[direction] + nSites) % nSites;
+				if (Sublattice(newSite) == SublatticeType::B)
+				{
+					if ((newSite + 1) % (2*L) == 0)
+					{
+						switch (direction)
+						{
+							case 0:
+								newSite = static_cast<index_t>(newSite - 4 * L + 1 + nSites) % nSites;
+								break;
+							case 1:
+								newSite = static_cast<index_t>(newSite - 1 + nSites) % nSites;
+								break;
+							case 2:
+								newSite = static_cast<index_t>(newSite - 2 * L + 1 + nSites) % nSites;
+								break;
+						}
+					}
+					else
+					{
+						switch (direction)
+						{
+							case 0:
+								newSite = static_cast<index_t>(newSite - 2 * L + 1 + nSites) % nSites;
+								break;
+							case 1:
+								newSite = static_cast<index_t>(newSite + 1 + nSites) % nSites;
+								break;
+							case 2:
+								newSite = static_cast<index_t>(newSite - 1 + nSites) % nSites;
+								break;
+						}
+					}
+				}
 				else
-					newSite = static_cast<index_t>(newSite + latticeDirection[direction] * std::pow(-1.0, newSite) + nSites) % nSites;
+				{
+					if (newSite % (2*L) == 0)
+					{
+						switch (direction)
+						{
+							case 0:
+								newSite = static_cast<index_t>(newSite + 1 + nSites) % nSites;
+								break;
+							case 1:
+								newSite = static_cast<index_t>(newSite + 2 * L - 1 + nSites) % nSites;
+								break;
+							case 2:
+								newSite = static_cast<index_t>(newSite + 4 * L - 1 + nSites) % nSites;
+								break;
+						}
+					}
+					else
+					{
+						switch (direction)
+						{
+							case 0:
+								newSite = static_cast<index_t>(newSite + 1 + nSites) % nSites;
+								break;
+							case 1:
+								newSite = static_cast<index_t>(newSite - 1 + nSites) % nSites;
+								break;
+							case 2:
+								newSite = static_cast<index_t>(newSite + 2 * L - 1 + nSites) % nSites;
+								break;
+						}
+					}
+				}
 			}
 			return newSite;
 		}
@@ -83,14 +144,10 @@ class RhombicHoneycomb
 		index_t RandomWalk(index_t site, int_t distance, RNG& rng)
 		{
 			index_t newSite = site;
-			int_t lastDir = latticeDirection.size();
 			for (int j = 0; j < distance; ++j)
 			{
-				int_t newDir = static_cast<int_t>(rng() * latticeDirection.size());
-				while(lastDir == newDir)
-					newDir = static_cast<int_t>(rng() * latticeDirection.size());
+				int_t newDir = static_cast<int_t>(rng() * nDirections);
 				newSite = ShiftSite(newSite, newDir);
-				lastDir = newDir;
 			}
 			return newSite;
 		}
@@ -121,7 +178,7 @@ class RhombicHoneycomb
 		int_t SimulateDistance(index_t i, index_t j, RNG& rng)
 		{
 			int_t shortestPath = nSites;
-			int_t nRuns = 2500 * nSites;
+			int_t nRuns = 1000 * nSites;
 			for (int_t n = 0; n < nRuns; ++n)
 			{
 				int_t path = 0;
@@ -145,7 +202,6 @@ class RhombicHoneycomb
 			for (index_t i = 0; i < nSites; ++i)
 				for (index_t j = 0; j < nSites; ++j)
 					distanceHistogram[Distance(i, j)] += 1;
-			distanceHistogram[0] = nSites;
 		}
 	private:
 		using array_t = std::array < int_t, 3 > ;
@@ -155,7 +211,7 @@ class RhombicHoneycomb
 		index_t L;
 		index_t nSites;
 		index_t nBonds;
-		array_t latticeDirection;
+		int_t nDirections = 3;
 		lookup_t distanceMap;
 		histogram_t distanceHistogram;
 };

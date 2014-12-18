@@ -91,7 +91,7 @@ class UpdateHandler
 			GeMatrix u(2 * k, 2 * N);
 			GeMatrix v(2 * N, 2 * k);
 			GeMatrix a(2 * N, 2 * N);
-			vertexHandler.template ComputeWoodburyMatrices<N>(u, v, a);
+			vertexHandler.template WoodburyAddVertices<N>(u, v, a);
 
 			GeMatrix invGu = invG * u;
 			GeMatrix S = a - v * invGu;
@@ -169,6 +169,24 @@ class UpdateHandler
 				return false;
 			}
 		}
+		
+		template<int_t N>
+		bool AddWorms(value_t preFactor)
+		{
+			return false;
+		}
+		
+		template<int_t N>
+		bool RemoveWorms(value_t preFactor)
+		{
+			return false;
+		}
+		
+		void StabalizeInvG()
+		{}
+		
+		void StabilizeInvG(value_t& avgError, value_t& maxError)
+		{}
 		
 		void SymmetrizeInvG()
 		{

@@ -7,7 +7,6 @@
 #include <cmath>
 #include <numeric>
 #include <string>
-#include <chrono>
 #include <cstdint>
 #include <map>
 #include "ConfigSpace.h"
@@ -21,8 +20,6 @@
 #include "random.h"
 #include "parser.h"
 #include "types.h"
-
-using duration_t = std::chrono::seconds;
 
 class make_string
 {

@@ -87,6 +87,40 @@ class VertexHandler
 			nodes.insert(nodes.end(), nodeBuffer.begin(), nodeBufferEnd);
 		}
 		
+		void AddBufferedWorms()
+		{
+			wormNodes.insert(wormNodes.end(), nodeBuffer.begin(), nodeBufferEnd);
+		}
+		
+		value_t VertexBufferParity()
+		{
+			value_t parity = 1.0;
+			for (auto it = nodeBuffer.begin(); it != nodeBufferEnd; ++it)
+				parity *= (configSpace.lattice.Sublattice(it->Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			return parity;
+		}
+		
+		value_t WormParity()
+		{
+			value_t parity = 1.0;
+			for (auto node : wormNodes)
+				parity *= (configSpace.lattice.Sublattice(node.Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			return parity;
+		}
+		
+		value_t WormIndexBufferParity()
+		{
+			value_t parity = 1.0;
+			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+				parity *= (configSpace.lattice.Sublattice(wormNodes[*it].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			return parity;
+		}
+		
+		uint_t WormDistance()
+		{
+			return configSpace.lattice.Distance(wormNodes[0].Site, wormNodes[1].Site);
+		}
+		
 		template<int_t N>
 		void AddRandomVerticesToBuffer()
 		{
@@ -100,10 +134,30 @@ class VertexHandler
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
 		}
 		
+		template<int_t N>
+		void AddRandomWormsToBuffer()
+		{
+			uint_t site = configSpace.lattice.RandomSite(configSpace.rng);
+			value_t tau = configSpace.rng() * configSpace.beta;
+			nodeBuffer[0] = node_t(site, tau);
+			for (uint_t i = 1; i < 2 * N; ++i)
+			{
+				uint_t nsite = configSpace.lattice.FromNeighborhood(site, 0, configSpace.rng);
+				nodeBuffer[i] = node_t(nsite, tau);
+			}
+			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
+		}
+		
 		void RemoveBufferedVertices()
 		{
 			for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
 				nodes.erase(nodes.begin() + *(it-1));
+		}
+		
+		void RemoveBufferedWorms()
+		{
+			for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
+				wormNodes.erase(wormNodes.begin() + *(it-1));
 		}
 		
 		template<int_t N>
@@ -125,13 +179,50 @@ class VertexHandler
 			std::sort(indexBuffer.begin(), indexBufferEnd);
 		}
 		
+		template<int_t N>
+		void AddRandomWormIndicesToBuffer()
+		{
+			for (uint_t i = 0; i < 2 * N; ++i)
+				indexBuffer[i] = wormNodes.size();
+			for (uint_t i = 0; i < N;)
+			{
+				uint_t r = configSpace.rng() * wormNodes.size() / 2;
+				if (std::find(indexBuffer.begin(), indexBuffer.begin() + 2*N, 2 * r) == indexBuffer.begin() + 2*N)
+				{
+					indexBuffer[2*i] = 2 * r;
+					indexBuffer[2*i + 1] = 2 * r + 1;
+					++i;
+				}
+			}
+			indexBufferEnd = indexBuffer.begin() + 2 * N;
+			std::sort(indexBuffer.begin(), indexBufferEnd);
+		}
+		
 		std::size_t Vertices()
 		{
 			return nodes.size() / 2;
 		}
 		
+		std::size_t Worms()
+		{
+			return wormNodes.size() / 2;
+		}
+		
+		void PropagatorMatrix(GeMatrix& G)
+		{
+			for (uint_t i = 0; i < nodes.size(); ++i)
+			{
+				for (uint_t j = 0; j < i; ++j)
+				{
+					G(j+1, i+1) = configSpace.LookUpG0(nodes[j].Site, nodes[i].Site, nodes[j].Tau - nodes[i].Tau + configSpace.infinTau);
+					G(i+1, j+1) = configSpace.LookUpG0(nodes[i].Site, nodes[j].Site, nodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
+				}
+				G(i+1, i+1) = 0.0;
+			}
+		}
+		
 		template<int_t N>
-		void ComputeWoodburyMatrices(GeMatrix& u, GeMatrix& v, GeMatrix& a)
+		void WoodburyAddVertices(GeMatrix& u, GeMatrix& v, GeMatrix& a)
 		{
 			for (uint_t i = 0; i < 2 * N; ++i)
 			{
@@ -174,6 +265,7 @@ class VertexHandler
 	private:
 		ConfigSpace_t& configSpace;
 		std::vector<node_t> nodes;
+		std::vector<node_t> wormNodes;
 		std::vector<node_t> nodeBuffer;
 		typename std::vector<node_t>::iterator nodeBufferEnd;
 		std::vector<std::size_t> indexBuffer;
