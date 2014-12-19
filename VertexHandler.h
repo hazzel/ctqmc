@@ -215,7 +215,8 @@ class VertexHandler
 			return wormNodes.size() / 2;
 		}
 		
-		void PropagatorMatrix(matrix_t<Eigen::Dynamic, Eigen::Dynamic>& G)
+		template<typename Matrix>
+		void PropagatorMatrix(Matrix& G)
 		{
 			for (uint_t i = 0; i < nodes.size(); ++i)
 			{
@@ -228,17 +229,20 @@ class VertexHandler
 			}
 		}
 		
-		template<int_t N>
-		void WoodburyAddVertices(matrix_t<Eigen::Dynamic, 2 * N>& u, matrix_t<2 * N, Eigen::Dynamic>& v, matrix_t<2 * N, 2 * N>& a)
+		template<typename U, typename V, typename A>
+		void WoodburyAddVertices(U& u, V& v, A& a)
 		{
-			for (uint_t i = 0; i < 2 * N; ++i)
+			uint_t k = nodes.size();
+			uint_t l = wormNodes.size();
+			uint_t n = a.cols() - l;
+			for (uint_t i = 0; i < n; ++i)
 			{
-				for (uint_t j = 0; j < nodes.size(); ++j)
+				for (uint_t j = 0; j < k; ++j)
 				{
 					u(j, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
 					v(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
-				for (uint_t j = 0; j < 2 * N; ++j)
+				for (uint_t j = 0; j < n; ++j)
 				{
 					if (i < j)
 					{
@@ -247,22 +251,53 @@ class VertexHandler
 					}
 				}
 				a(i, i) = 0.0;
+				for (uint_t j = 0; j < l; ++j)
+				{
+					a(i, j + n) = configSpace.LookUpG0(nodeBuffer[i].Site, wormNodes[j].Site, nodeBuffer[i].Tau - wormNodes[j].Tau + configSpace.infinTau);
+					a(j + n, i) = configSpace.LookUpG0(wormNodes[j].Site, nodeBuffer[i].Site, wormNodes[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+				}
 			}
 		}
 		
-		template<int_t N>
-		void WoodburyAddWorm(matrix_t<Eigen::Dynamic, Eigen::Dynamic>& u, matrix_t<Eigen::Dynamic, Eigen::Dynamic>& v, matrix_t<Eigen::Dynamic, Eigen::Dynamic>& a)
+		template<typename U, typename V, typename A, typename P>
+		void WoodburyRemoveVertices(U& u, V& v, A& a, const P& perm)
 		{
 			uint_t k = nodes.size();
 			uint_t l = wormNodes.size();
-			for (uint_t i = 0; i < 2 * N; ++i)
+			uint_t n = a.cols() - l;
+			for (uint_t i = 0; i < n; ++i)
+			{
+				for (uint_t j = 0; j < k - n; ++j)
+				{
+					u(j, i) = configSpace.LookUpG0(nodes[perm[j]].Site, nodes[indexBuffer[i]].Site, nodes[perm[j]].Tau - nodes[indexBuffer[i]].Tau + configSpace.infinTau);
+					v(i, j) = configSpace.LookUpG0(nodes[indexBuffer[i]].Site, nodes[perm[j]].Site, nodes[indexBuffer[i]].Tau - nodes[perm[j]].Tau - configSpace.infinTau);
+				}
+				for (uint_t j = 0; j < n; ++j)
+				{
+					if (i < j)
+					{
+						a(i, j) = configSpace.LookUpG0(nodes[indexBuffer[i]].Site, nodes[indexBuffer[j]].Site, nodes[indexBuffer[i]].Tau - nodes[indexBuffer[j]].Tau + configSpace.infinTau);
+						a(j, i) = configSpace.LookUpG0(nodes[indexBuffer[j]].Site, nodes[indexBuffer[i]].Site, nodes[indexBuffer[j]].Tau - nodes[indexBuffer[i]].Tau - configSpace.infinTau);
+					}
+				}
+				a(i, i) = 0.0;
+			}
+		}
+		
+		template<typename U, typename V, typename A>
+		void WoodburyAddWorm(U& u, V& v, A& a)
+		{
+			uint_t k = nodes.size();
+			uint_t l = wormNodes.size();
+			uint_t n = a.cols() - l;
+			for (uint_t i = 0; i < n; ++i)
 			{
 				for (uint_t j = 0; j < k; ++j)
 				{
 					u(j, l + i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
 					v(l + i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
-				for (uint_t j = 0; j < 2 * N; ++j)
+				for (uint_t j = 0; j < n; ++j)
 				{
 					if (i < j)
 					{
@@ -279,26 +314,24 @@ class VertexHandler
 			}
 		}
 		
-		Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> PermutationMatrix(uint_t size)
+		template<typename P>
+		void PermutationMatrix(P& perm)
 		{
-			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(size);
-			perm.setIdentity();
 			uint_t cnt = 0;
-			for (uint_t i = 0; i < perm.indices().size(); ++i)
+			for (uint_t i = 0; i < perm.size(); ++i)
 			{
 				if (find(indexBuffer.begin(), indexBufferEnd, i) == indexBufferEnd)
 				{
-					perm.indices()[cnt] = i;
+					perm[cnt] = i;
 					++cnt;
 				}
 			}
 			int i = 0;
 			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 			{
-				perm.indices()[cnt + i] = *it;
+				perm[cnt + i] = *it;
 				++i;
 			}
-			return perm;
 		}
 	private:
 		ConfigSpace_t& configSpace;

@@ -64,7 +64,7 @@ class UpdateHandler
 			matrix_t<Eigen::Dynamic, 2 * N> u(2 * k, 2 * N);
 			matrix_t<2 * N, Eigen::Dynamic> v(2 * N, 2 * k);
 			matrix_t<2 * N, 2 * N> a(2 * N, 2 * N);
-			vertexHandler.template WoodburyAddVertices<N>(u, v, a);
+			vertexHandler.WoodburyAddVertices(u, v, a);
 
 			matrix_t<Eigen::Dynamic, 2 * N> invGu = invG * u;
 			matrix_t<2 * N, 2 * N> invS = a - v * invGu;
@@ -98,13 +98,70 @@ class UpdateHandler
 		}
 		
 		template<int_t N>
+		bool AddVerticesWithWorms(value_t preFactor)
+		{
+			uint_t k = 2 * vertexHandler.Vertices();
+			uint_t l = 2 * vertexHandler.Worms();
+			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> u(k, l + 2 * N);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> v(l + 2 * N, k);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> a(l + 2 * N, l + 2 * N);
+			vertexHandler.WoodburyAddVertices(u, v, a);
+			u.rightCols(l) = wormU;
+			v.bottomRows(l) = wormV;
+			a.bottomRightCorner(l, l) = wormA;
+
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invS = a - v * invG * u;
+			value_t acceptRatio = preFactor * invS.determinant() * detWormS;
+			if (acceptRatio < 0.0)
+			{
+				std::cout << "AddVerticesWithWorm(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
+				std::cout << "Vertices:" << std::endl;
+				vertexHandler.PrintVertices();
+				std::cout << "VertexBuffer:" << std::endl;
+				vertexHandler.PrintVertexBuffer();
+			}
+			if (configSpace.rng() < acceptRatio)
+			{
+				wormU.conservativeResize(k + 2 * N, l);
+				wormU.bottomRows(2 * N) = a.topRightCorner(2 * N, l);
+				wormV.conservativeResize(l, k + 2 * N);
+				wormV.rightCols(2 * N) = a.bottomLeftCorner(l, 2 * N);
+
+				u.conservativeResize(k, 2 * N);
+				v.conservativeResize(2 * N, k);
+				a.conservativeResize(2 * N, 2 * N);
+				invS.resize(2 * N, 2 * N);
+				invS = a - v * invG * u;
+				
+				matrix_t<2 * N, 2 * N> S = invS.inverse();
+				matrix_t<Eigen::Dynamic, 2 * N> invGu = invG * u;
+				matrix_t<Eigen::Dynamic, 2 * N> Q = -invGu * S;
+				matrix_t<2 * N, Eigen::Dynamic> R = -S * v * invG;
+				matrix_t<Eigen::Dynamic, Eigen::Dynamic> P = invG - invGu * R;
+				
+				invG.resize(2 * (k + N), 2 * (k + N));
+				invG.topLeftCorner(2 * k, 2 * k) = P;
+				invG.topRightCorner(2 * k, 2 * N) = Q;
+				invG.bottomLeftCorner(2 * N, 2 * k) = R;
+				invG.template bottomRightCorner<2 * N, 2 * N>() = S;
+
+				detWormS = 1.0 / (wormA - wormV * invG * wormU).determinant();
+				vertexHandler.AddBufferedVertices();
+				return true;
+			}
+			return false;
+		}
+		
+		template<int_t N>
 		bool RemoveVertices()
 		{
 			uint_t k = vertexHandler.Vertices();
 			if (k < N)
 				return false;
 			
-			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm = vertexHandler.PermutationMatrix(2 * k);
+			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(2 + k);
+			vertexHandler.PermutationMatrix(perm.indices());
 			invG = perm.transpose() * invG * perm;
 			
 			matrix_t<2 * N, 2 * N> S = invG.template bottomRightCorner<2 * N, 2 * N>();
@@ -112,7 +169,7 @@ class UpdateHandler
 			value_t acceptRatio = preFactor * S.determinant();
 			if (acceptRatio < 0.0)
 			{
-				std::cout << "RemoveVertex(" << N << "): AcceptRatio" << acceptRatio << std::endl;
+				std::cout << "RemoveVertices(" << N << "): AcceptRatio" << acceptRatio << std::endl;
 				std::cout << "Vertices:" << std::endl;
 				vertexHandler.PrintVertices();
 				std::cout << "IndexBuffer:" << std::endl;
@@ -137,6 +194,65 @@ class UpdateHandler
 		}
 		
 		template<int_t N>
+		bool RemoveVerticesWithWorms(value_t preFactor)
+		{
+			uint_t k = 2 * vertexHandler.Vertices();
+			uint_t l = 2 * vertexHandler.Worms();
+			if (k < 2 * N)
+				return false;
+
+			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k);
+			vertexHandler.PermutationMatrix(perm.indices());
+			invG = perm.transpose() * invG * perm;
+			wormU = perm.transpose() * wormU;
+			wormV = wormV * perm;
+						
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> u(k - 2 * N, 2 * N + l), v(2 * N + l, k - 2 * N), a(2 * N + l, 2 * N + l);
+			vertexHandler.WoodburyRemoveVertices(u, v, a, perm.indices());
+			u.topRightCorner(k - 2 * N, l) = wormU.topRows(k - 2 * N);
+			v.bottomLeftCorner(l, k - 2 * N) = wormV.leftCols(k - 2 * N);
+			a.bottomRightCorner(l, l) = wormA;
+			a.topRightCorner(2 * N, l) = wormU.bottomRows(2 * N);
+			a.bottomLeftCorner(l, 2 * N) = wormV.rightCols(2 * N);
+			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> P = invG.topLeftCorner(k - 2 * N, k - 2 * N);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> Q = invG.topRightCorner(k - 2 * N, 2 * N);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> R = invG.bottomLeftCorner(2 * N, k - 2 * N);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> S = invG.bottomRightCorner(2 * N, 2 * N);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> newInvG = P - Q * S.inverse() * R;
+			value_t newDetWormS = 1.0 / (wormA - wormV.leftCols(k - 2 * N) * newInvG * wormU.topRows(k - 2 * N)).determinant();
+			
+			value_t acceptRatio = preFactor * newDetWormS / (a - v * newInvG * u).determinant();
+			if (acceptRatio < 0.0)
+			{
+				std::cout << "RemoveVerticesWithWorm(" << N << "): AcceptRatio" << acceptRatio << std::endl;
+				std::cout << "Vertices:" << std::endl;
+				vertexHandler.PrintVertices();
+				std::cout << "IndexBuffer:" << std::endl;
+				vertexHandler.PrintIndexBuffer();
+			}
+			if (configSpace.rng() < acceptRatio)
+			{
+				invG.resize(k - 2 * N, k - 2 * N);
+				invG = newInvG;
+				
+				wormU.conservativeResize(k - 2 * N, l);
+				wormV.conservativeResize(l, k - 2 * N);
+				detWormS = newDetWormS;
+				
+				vertexHandler.RemoveBufferedVertices();
+				return true;
+			}
+			else
+			{
+				invG = perm * invG * perm.transpose();
+				wormU = perm * wormU;
+				wormV = wormV * perm.transpose();
+				return false;
+			}
+		}
+		
+		template<int_t N>
 		bool AddWorms(double preFactor)
 		{
 			uint_t k = 2 * vertexHandler.Vertices();
@@ -147,7 +263,7 @@ class UpdateHandler
 			wormU.conservativeResize(k, l + 2 * N);
 			wormV.conservativeResize(l + 2 * N, k);
 			wormA.conservativeResize(l + 2 * N, l + 2 * N);
-			vertexHandler.template WoodburyAddWorm<N>(wormU, wormV, wormA);
+			vertexHandler.WoodburyAddWorm(wormU, wormV, wormA);
 
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invS = wormA - wormV * invG * wormU;
 			value_t detInvS = invS.determinant();
@@ -184,7 +300,8 @@ class UpdateHandler
 			if (l < 2 * N)
 				return false;
 
-			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm = vertexHandler.PermutationMatrix(2 * vertexHandler.Worms());
+			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(2 * vertexHandler.Worms());
+			vertexHandler.PermutationMatrix(perm.indices());
 
 			wormU = wormU * perm;
 			wormV = perm.transpose() * wormV;

@@ -54,7 +54,10 @@ class ConfigSpace
 		bool AddRandomVertices()
 		{
 			updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
-			return updateHandler.template AddVertices<N>();
+			if (updateHandler.GetVertexHandler().Worms() == 0)
+				return updateHandler.template AddVertices<N>();
+			else
+				return updateHandler.template AddVerticesWithWorms<N>(1.0);
 		}
 		
 		template<int_t N>
@@ -63,7 +66,10 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Vertices() < N)
 				return false;
 			updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
-			return updateHandler.template RemoveVertices<N>();
+			if (updateHandler.GetVertexHandler().Worms() == 0)
+				return updateHandler.template RemoveVertices<N>();
+			else
+				return updateHandler.template RemoveVerticesWithWorms<N>(1.0);
 		}
 		
 		template<int_t N>
