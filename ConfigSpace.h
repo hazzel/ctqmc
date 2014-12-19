@@ -57,7 +57,7 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Worms() == 0)
 				return updateHandler.template AddVertices<N>();
 			else
-				return updateHandler.template AddVerticesWithWorms<N>(1.0);
+				return updateHandler.template AddVerticesWithWorms<N>();
 		}
 		
 		template<int_t N>
@@ -69,7 +69,7 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Worms() == 0)
 				return updateHandler.template RemoveVertices<N>();
 			else
-				return updateHandler.template RemoveVerticesWithWorms<N>(1.0);
+				return updateHandler.template RemoveVerticesWithWorms<N>();
 		}
 		
 		template<int_t N>
