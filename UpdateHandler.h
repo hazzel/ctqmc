@@ -264,7 +264,7 @@ class UpdateHandler
 			uint_t k = 2 * vertexHandler.Vertices();
 			uint_t l = 2 * vertexHandler.Worms();
 			const uint_t n = 2 * N;
-			if (l + n > maxWorms)
+			if (l + n > 2 * maxWorms)
 				return false;
 			
 			wormU.conservativeResize(k, l + n);
@@ -316,13 +316,13 @@ class UpdateHandler
 			wormA = perm.transpose() * wormA * perm;
 
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invS(l - n, l - n);
-			value_t detRatio;
 			value_t detInvS;
+			value_t detRatio;
 			if (l - n > 0)
 			{
 				invS = wormA.topLeftCorner(l - n, l - n) - wormV.topRows(l - n) * invG * wormU.leftCols(l - n);
 				detInvS = invS.determinant();
-				detRatio = invS.determinant() * detWormS;
+				detRatio = detInvS * detWormS;
 			}
 			else
 			{
@@ -344,7 +344,7 @@ class UpdateHandler
 					wormU.conservativeResize(k, l - n);
 					wormV.conservativeResize(l - n, k);
 					wormA.conservativeResize(l - n, l - n);
-					detWormS = 1.0 / invS.determinant();
+					detWormS = 1.0 / detInvS;
 				}
 
 				vertexHandler.RemoveBufferedWorms();

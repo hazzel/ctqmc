@@ -6,7 +6,7 @@ DEFINES+= -DMCL_MCL_RNG_MT
 MODE=SINGLE
 #MODE=PT
 
-OBJS = dump.o parser.o measurements.o evalable.o observable.o random.o mc.o ConfigSpace.o main.o
+OBJS = dump.o parser.o measurements.o evalable.o observable.o random.o mc.o main.o
 OBJSLN = dump.LN.o parser.LN.o measurements.LN.o evalable.LN.o observable.LN.o random.LN.o mc.LN.o ConfigSpace.LN.o runner_single.LN.o merge.LN.o
 
 ifeq ($(MODE),MPI)

@@ -10,7 +10,7 @@ void M2Function(double& out, std::vector< std::valarray<double>* >& o, double* p
 	double w2=(*o[1])[0];
 	double w4=(*o[2])[0];
 	
-	out = w2 / z / (p[0] * p[1] * p[3] * p[3]);
+	out = (w2 / z) / (p[0] * p[1] * p[3] * p[3]);
 }
 
 void M4Function(double& out, std::vector< std::valarray<double>* >& o, double* p)
@@ -19,7 +19,7 @@ void M4Function(double& out, std::vector< std::valarray<double>* >& o, double* p
 	double w2=(*o[1])[0];
 	double w4=(*o[2])[0];
 	
-	out = w4 / z / (p[0] * p[2] * std::pow(p[3], 4.0));
+	out = (w4 / z) / (p[0] * p[2] * p[3] * p[3] * p[3] * p[3]);
 }
 
 void BinderRatioFunction(double& out, std::vector< std::valarray<double>* >& o, double* p)
@@ -28,7 +28,7 @@ void BinderRatioFunction(double& out, std::vector< std::valarray<double>* >& o, 
 	double w2=(*o[1])[0];
 	double w4=(*o[2])[0];
 	
-	out = p[0] * std::pow(p[1], 2.0) / p[2] * w4 * z / (w2 * w2);
+	out = (p[0] * p[1] * p[1] / p[2]) * (w4 * z / (w2 * w2));
 }
 
 void AvgExporderFunction(double& out, std::vector< std::valarray<double>* >& o)
@@ -186,21 +186,47 @@ bool mc::is_thermalized()
 
 void mc::BuildUpdateWeightMatrix()
 {
+
 /*
 	//ALL TRANSITIONS
-	updateWeightMatrix <<			2.0 / 10.0	,	1.5 / 10.0	,	2.0 / 10.0,
-									4.0 / 10.0	,	3.0 / 10.0	,	4.0 / 10.0,
-									5.0 / 10.0	,	3.5 / 10.0	,	0.0,
-									6.0 / 10.0	,	4.0 / 10.0	,	0.0,
+	updateWeightMatrix <<			2.0 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
+									4.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
+									5.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
+									6.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
 									8.0 / 10.0	,	0.0			,	0.0,
-									0.0			,	6.0 / 10.0	,	0.0, 
+									0.0			,	8.0 / 10.0	,	0.0, 
 									10.0 / 10.0	,	0.0			,	0.0,
-									0.0			,	0.0			,	6.0 / 10.0,
-									0.0			,	8.0 / 10.0	,	0.0,
 									0.0			,	0.0			,	8.0 / 10.0,
-									0.0			,	10.0 / 10.0	,	10.0 / 10.0;
+									0.0			,	10.0 / 10.0	,	0.0,
+									0.0			,	0.0			,	10.0 / 10.0,
+									0.0			,	0.0			,	0.0;
 */
-
+	updateWeightMatrix <<			2.5 / 10.0	,	2.0 / 10.0	,	2.5 / 10.0,
+									5.0 / 10.0	,	4.0 / 10.0	,	5.0 / 10.0,
+									6.5 / 10.0	,	5.0 / 10.0	,	6.5 / 10.0,
+									8.0 / 10.0	,	6.0 / 10.0	,	8.0 / 10.0,
+									10.0 / 10.0	,	0.0			,	0.0,
+									0.0			,	8.0 / 10.0	,	0.0,
+									0.0			,	0.0			,	0.0,
+									0.0			,	0.0			,	0.0,
+									0.0			,	10.0 / 10.0	,	0.0,
+									0.0			,	0.0			,	10.0 / 10.0,
+									0.0			,	0.0			,	0.0;
+/*
+	//
+	updateWeightMatrix <<			2.0 / 10.0	,	2.5 / 10.0	,	2.5 / 10.0,
+									4.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
+									5.0 / 10.0	,	6.5 / 10.0	,	6.5 / 10.0,
+									6.0 / 10.0	,	8.0 / 10.0	,	8.0 / 10.0,
+									8.0 / 10.0	,	0.0			,	0.0,
+									0.0			,	10.0 / 10.0	,	0.0,
+									10.0 / 10.0	,	0.0			,	0.0,
+									0.0			,	0.0 / 10.0	,	10.0 / 10.0,
+									0.0			,	0.0			,	0.0,
+									0.0			,	0.0			,	0.0,
+									0.0			,	0.0 / 10.0	,	0.0;
+*/
+/*
 	//ONLY Z<->W2
 	updateWeightMatrix <<			2.5 / 10.0	,	2.5 / 10.0	,	0.0,
 									5.0 / 10.0	,	5.0 / 10.0	,	0.0,
@@ -213,7 +239,7 @@ void mc::BuildUpdateWeightMatrix()
 									0.0			,	0.0			,	0.0,
 									0.0			,	0.0			,	0.0,
 									0.0			,	0.0 / 10.0	,	0.0;
-
+*/
 /*
 	//ONLY Z
 	updateWeightMatrix <<			1.0 / 4.0,	0.0		,	0.0,
@@ -308,31 +334,51 @@ void mc::do_update()
 			}
 			proposedUpdates(UpdateType::W2toZ, state) += 1.0;
 		}
-		/*
 		else if (r < updateWeightMatrix(UpdateType::ZtoW4, state))
 		{
-			if (configSpace.UpdateZtoW4(acceptRatio))
+			uint_t m = configSpace.lattice.Sites();
+			value_t preFactor = configSpace.lattice.Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
+			if (configSpace.AddRandomWorms<2>(preFactor))
+			{
 				acceptedUpdates(UpdateType::ZtoW4, state) += 1.0;
+				configSpace.state = StateType::W4;
+			}
 			proposedUpdates(UpdateType::ZtoW4, state) += 1.0;
 		}
 		else if (r < updateWeightMatrix(UpdateType::W4toZ, state))
 		{
-			if (configSpace.UpdateW4toZ(acceptRatio))
+			uint_t m = configSpace.lattice.Sites();
+			value_t preFactor = 1.0 / (configSpace.lattice.Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
+			if (configSpace.RemoveRandomWorms<2>(preFactor))
+			{
 				acceptedUpdates(UpdateType::W4toZ, state) += 1.0;
+				configSpace.state = StateType::Z;
+			}
 			proposedUpdates(UpdateType::W4toZ, state) += 1.0;
 		}
 		else if (r < updateWeightMatrix(UpdateType::W2toW4, state))
 		{
-			if (configSpace.UpdateW2toW4(acceptRatio))
+			uint_t m = configSpace.lattice.Sites();
+			value_t preFactor = (configSpace.lattice.Sites() * m * configSpace.zeta4) / configSpace.zeta2;
+			if (configSpace.AddRandomWorms<1>(preFactor))
+			{
 				acceptedUpdates(UpdateType::W2toW4, state) += 1.0;
+				configSpace.state = StateType::W4;
+			}
 			proposedUpdates(UpdateType::W2toW4, state) += 1.0;
 		}
 		else if (r < updateWeightMatrix(UpdateType::W4toW2, state))
 		{
-			if (configSpace.UpdateW4toW2(acceptRatio))
+			uint_t m = configSpace.lattice.Sites();
+			value_t preFactor = configSpace.zeta2 / (configSpace.lattice.Sites() * m * configSpace.zeta4);
+			if (configSpace.RemoveRandomWorms<1>(preFactor))
+			{
 				acceptedUpdates(UpdateType::W4toW2, state) += 1.0;
+				configSpace.state = StateType::W2;
+			}
 			proposedUpdates(UpdateType::W4toW2, state) += 1.0;
 		}
+		/*
 		else if (r < updateWeightMatrix(UpdateType::shiftWorm, state))
 		{
 			if (configSpace.WormShift(acceptRatio))
@@ -351,7 +397,7 @@ void mc::do_update()
 			measure.add("maxInvGError", maxError);
 			rebuildCnt = 0;
 		}
-		configSpace.updateHandler.SymmetrizeInvG();
+		//configSpace.updateHandler.SymmetrizeInvG();
 	}
 	
 	if (!is_thermalized())
