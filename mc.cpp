@@ -189,7 +189,7 @@ void mc::BuildUpdateWeightMatrix()
 
 /*
 	//ALL TRANSITIONS
-	updateWeightMatrix <<			2.0 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
+	updateWeightMatrix <<	2.0 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
 									4.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
 									5.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
 									6.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
@@ -201,7 +201,8 @@ void mc::BuildUpdateWeightMatrix()
 									0.0			,	0.0			,	10.0 / 10.0,
 									0.0			,	0.0			,	0.0;
 */
-	updateWeightMatrix <<			2.5 / 10.0	,	2.0 / 10.0	,	2.5 / 10.0,
+
+	updateWeightMatrix <<	2.5 / 10.0	,	2.0 / 10.0	,	2.5 / 10.0,
 									5.0 / 10.0	,	4.0 / 10.0	,	5.0 / 10.0,
 									6.5 / 10.0	,	5.0 / 10.0	,	6.5 / 10.0,
 									8.0 / 10.0	,	6.0 / 10.0	,	8.0 / 10.0,
@@ -212,40 +213,40 @@ void mc::BuildUpdateWeightMatrix()
 									0.0			,	10.0 / 10.0	,	0.0,
 									0.0			,	0.0			,	10.0 / 10.0,
 									0.0			,	0.0			,	0.0;
+
 /*
-	//
-	updateWeightMatrix <<			2.0 / 10.0	,	2.5 / 10.0	,	2.5 / 10.0,
+	updateWeightMatrix <<	2.0 / 10.0	,	2.5 / 10.0	,	2.5 / 10.0,
 									4.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
 									5.0 / 10.0	,	6.5 / 10.0	,	6.5 / 10.0,
 									6.0 / 10.0	,	8.0 / 10.0	,	8.0 / 10.0,
 									8.0 / 10.0	,	0.0			,	0.0,
 									0.0			,	10.0 / 10.0	,	0.0,
 									10.0 / 10.0	,	0.0			,	0.0,
-									0.0			,	0.0 / 10.0	,	10.0 / 10.0,
+									0.0			,	0.0			,	10.0 / 10.0,
 									0.0			,	0.0			,	0.0,
 									0.0			,	0.0			,	0.0,
-									0.0			,	0.0 / 10.0	,	0.0;
+									0.0			,	0.0			,	0.0;
 */
 /*
 	//ONLY Z<->W2
-	updateWeightMatrix <<			2.5 / 10.0	,	2.5 / 10.0	,	0.0,
-									5.0 / 10.0	,	5.0 / 10.0	,	0.0,
-									6.5 / 10.0	,	6.5 / 10.0	,	0.0,
-									8.0 / 10.0	,	8.0 / 10.0	,	0.0,
+	updateWeightMatrix <<	2.5 / 10.0	,	2.0 / 10.0	,	0.0,
+									5.0 / 10.0	,	4.0 / 10.0	,	0.0,
+									6.5 / 10.0	,	5.0 / 10.0	,	0.0,
+									8.0 / 10.0	,	6.0 / 10.0	,	0.0,
 									10.0 / 10.0	,	0.0			,	0.0,
-									0.0			,	10.0 / 10.0	,	0.0,
+									0.0			,	8.0 / 10.0	,	0.0,
 									0.0			,	0.0			,	0.0,
 									0.0			,	0.0			,	0.0,
 									0.0			,	0.0			,	0.0,
 									0.0			,	0.0			,	0.0,
-									0.0			,	0.0 / 10.0	,	0.0;
+									0.0			,	10.0 / 10.0	,	0.0;
 */
 /*
 	//ONLY Z
-	updateWeightMatrix <<			1.0 / 4.0,	0.0		,	0.0,
-									2.0 / 4.0,	0.0		,	0.0,
-									3.0 / 4.0,	0.0		,	0.0,
+	updateWeightMatrix <<	2.0 / 4.0,	0.0		,	0.0,
 									4.0 / 4.0,	0.0		,	0.0,
+									0.0 / 4.0,	0.0		,	0.0,
+									0.0 / 4.0,	0.0		,	0.0,
 									0.0		,	0.0		,	0.0,
 									0.0		,	0.0		,	0.0, 
 									0.0		,	0.0		,	0.0,
@@ -378,14 +379,12 @@ void mc::do_update()
 			}
 			proposedUpdates(UpdateType::W4toW2, state) += 1.0;
 		}
-		/*
 		else if (r < updateWeightMatrix(UpdateType::shiftWorm, state))
 		{
-			if (configSpace.WormShift(acceptRatio))
+			if (configSpace.ShiftWorm())
 				acceptedUpdates(UpdateType::shiftWorm, state) += 1.0;
 			proposedUpdates(UpdateType::shiftWorm, state) += 1.0;
 		}
-		*/
 
 		++rebuildCnt;
 		if (rebuildCnt == nRebuild)
@@ -397,7 +396,7 @@ void mc::do_update()
 			measure.add("maxInvGError", maxError);
 			rebuildCnt = 0;
 		}
-		//configSpace.updateHandler.SymmetrizeInvG();
+		configSpace.updateHandler.SymmetrizeInvG();
 	}
 	
 	if (!is_thermalized())
@@ -421,7 +420,7 @@ void mc::do_measurement()
 	if ((sweep - nThermalize + 1) % (nMeasurements / 3) == 0)
 	{
 		std::cout << "Vertices: " << configSpace.updateHandler.GetVertexHandler().Vertices() << std::endl;
-		std::cout << "Worms: " << 0 << std::endl;
+		std::cout << "Worms: " << configSpace.updateHandler.GetVertexHandler().Worms() << std::endl;
 	}
 	
 	if (sweep - nThermalize + 1 == nMeasurements)

@@ -88,6 +88,11 @@ class ConfigSpace
 			return updateHandler.template RemoveWorms<N>(preFactor);
 		}
 		
+		bool ShiftWorm()
+		{
+			return updateHandler.ShiftWorm();
+		}
+		
 		void PrintMatrix(const matrix_t& m)
 		{
 			for (uint_t i = 0; i < m.rows(); ++i)

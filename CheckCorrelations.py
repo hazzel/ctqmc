@@ -19,9 +19,11 @@ from ParseDataOutput import *
 #V = 1.4, T = 0.07
 #ED = [0.25000000, -0.13342669, 0.08676040, -0.11000114]
 #V = 1.5, T = 0.3
-ED = [0.25000000, -0.14102794, 0.09719328, -0.11667938]
+#ED = [0.25000000, -0.14102794, 0.09719328, -0.11667938]
+#V = 1.5, T = 0.25 (hex)
+ED = [0.25000000, -0.18787612, 0.15710331]
 
-filelist = ['job-test.single.task0001.out']
+filelist = ['job-test.task0001.out']
 for i in range(len(filelist)):
 	if (not os.path.exists(filelist[i])):
 		continue

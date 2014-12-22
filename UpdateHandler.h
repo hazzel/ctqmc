@@ -359,6 +359,41 @@ class UpdateHandler
 			}
 		}
 		
+		bool ShiftWorm()
+		{
+			uint_t k = 2 * vertexHandler.Vertices();
+			uint_t l = 2 * vertexHandler.Worms();
+			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> shiftedWormU(wormU.rows(), wormU.cols());
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> shiftedWormV(wormV.rows(), wormV.cols());
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> shiftedWormA(wormA.rows(), wormA.cols());
+			vertexHandler.ShiftWorm();
+			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
+				
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> shiftedInvS = shiftedWormA - shiftedWormV * invG * shiftedWormU;
+			value_t detShiftedInvS = shiftedInvS.determinant();
+			value_t acceptRatio = detShiftedInvS * detWormS * vertexHandler.WormShiftParity();
+			if (acceptRatio < 0.0)
+			{
+				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
+				std::cout << "Vertices:" << std::endl;
+				vertexHandler.PrintVertices();
+			}
+			if (configSpace.rng() < acceptRatio)
+			{
+				detWormS = 1.0 / detShiftedInvS;
+				wormU = shiftedWormU;
+				wormV = shiftedWormV;
+				wormA = shiftedWormA;
+				return true;
+			}
+			else
+			{
+				vertexHandler.UndoWormShift();
+				return false;
+			}
+		}
+		
 		void SymmetrizeInvG()
 		{
 			SymmetrizeMatrix(invG);
@@ -368,14 +403,16 @@ class UpdateHandler
 		{
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
 			vertexHandler.PropagatorMatrix(G);
-			invG = G.inverse();
+			invSolver.compute(G);
+			invG = invSolver.inverse();
 		}
 		
 		void StabilizeInvG(value_t& avgError, value_t& maxError)
 		{
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
 			vertexHandler.PropagatorMatrix(G);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = G.inverse();
+			invSolver.compute(G);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = invSolver.inverse();
 			avgError = 0.0;
 			maxError = 0.0;
 			value_t N = stabInvG.rows() * stabInvG.rows();

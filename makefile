@@ -2,8 +2,8 @@ DEFINES+= -DMCL_DUMP_BUFFER=0
 DEFINES+= -DMCL_MEASUREMENTS_APPEND=0
 DEFINES+= -DMCL_MCL_RNG_MT
 
-#MODE=MPI
-MODE=SINGLE
+MODE=MPI
+#MODE=SINGLE
 #MODE=PT
 
 OBJS = dump.o parser.o measurements.o evalable.o observable.o random.o mc.o main.o
@@ -43,7 +43,7 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	SUPERLP = 
 else
         CFLAGS  = -O3 -Wno-deprecated -std=c++11 -fopenmp $(DEFINES)
-        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
+        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
         LDFLAGS = -fopenmp
         SUPERLP =
 endif
