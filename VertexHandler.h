@@ -151,6 +151,8 @@ class VertexHandler
 		{
 			uint_t site = configSpace.lattice.RandomSite(configSpace.rng);
 			value_t tau = configSpace.rng() * configSpace.beta;
+			if (wormNodes.size() > 0)
+				tau = wormNodes[0].Tau;
 			nodeBuffer[0] = node_t(site, tau);
 			for (uint_t i = 1; i < 2 * N; ++i)
 			{
