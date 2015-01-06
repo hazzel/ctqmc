@@ -352,7 +352,7 @@ class VertexHandler
 		}
 		
 		template<typename U, typename V, typename A>
-		void WoodburyShiftWorm(U& u, V& v, A& a)
+		void WoodburyWorm(U& u, V& v, A& a)
 		{
 			uint_t k = nodes.size();
 			uint_t l = wormNodes.size();
@@ -393,6 +393,18 @@ class VertexHandler
 				perm[cnt + i] = *it;
 				++i;
 			}
+		}
+		
+		void Serialize(odump& d)
+		{
+			d.write(nodes);
+			d.write(wormNodes);
+		}
+		
+		void Serialize(idump& d)
+		{
+			d.read(nodes);
+			d.read(wormNodes);
 		}
 	private:
 		ConfigSpace_t& configSpace;

@@ -368,7 +368,7 @@ class UpdateHandler
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> shiftedWormV(wormV.rows(), wormV.cols());
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> shiftedWormA(wormA.rows(), wormA.cols());
 			vertexHandler.ShiftWorm();
-			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
+			vertexHandler.WoodburyWorm(shiftedWormU, shiftedWormV, shiftedWormA);
 				
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> shiftedInvS = shiftedWormA - shiftedWormV * invG * shiftedWormU;
 			value_t detShiftedInvS = shiftedInvS.determinant();
@@ -420,7 +420,7 @@ class UpdateHandler
 			{
 				for (uint_t j = 0; j < stabInvG.cols(); ++j)
 				{
-					value_t err = 2.0 * std::abs(invG(i, j) - stabInvG(i, j));
+					value_t err = std::abs(invG(i, j) - stabInvG(i, j));
 					if (err > maxError)
 						maxError = err;
 					avgError += err / N;
@@ -447,6 +447,27 @@ class UpdateHandler
 		VertexHandler_t& GetVertexHandler()
 		{
 			return vertexHandler;
+		}
+		
+		void Serialize(odump& d)
+		{
+			d.write(detWormS);
+			vertexHandler.Serialize(d);
+		}
+		
+		void Serialize(idump& d)
+		{
+			d.read(detWormS);
+			vertexHandler.Serialize(d);
+			invG.resize(2 * vertexHandler.Vertices(), 2 * vertexHandler.Vertices());
+			StabalizeInvG();
+			if (vertexHandler.Worms() > 0)
+			{
+				wormU.resize(2 * vertexHandler.Vertices(), 2 * vertexHandler.Worms());
+				wormV.resize(2 * vertexHandler.Worms(), 2 * vertexHandler.Vertices());
+				wormA.resize(2 * vertexHandler.Worms(), 2 * vertexHandler.Worms());
+				vertexHandler.WoodburyWorm(wormU, wormV, wormA);
+			}
 		}
 		
 	private:

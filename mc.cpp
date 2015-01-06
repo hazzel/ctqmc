@@ -80,7 +80,7 @@ mc::mc(const std::string& dir)
 	
 	nThermalize = param.value_or_default<uint_t>("THERMALIZATION", 10000);
 	nMeasurements = param.value_or_default<uint_t>("SWEEPS", 10000);
-	nPrebins = param.value_or_default<uint_t>("PREBINS", 10.0);
+	nPrebins = param.value_or_default<uint_t>("PREBINS", 100);
 	nRebuild = param.value_or_default<uint_t>("REBUILD", 100000);
 	nThermStep = param.value_or_default<uint_t>("THERM_STEP", 100);
 	if (param.defined("SEED"))
@@ -124,8 +124,8 @@ void mc::init()
 	measure.add_observable("deltaZ", nPrebins);
 	measure.add_observable("deltaW2", nPrebins);
 	measure.add_observable("deltaW4", nPrebins);
-	measure.add_observable("avgInvGError", nPrebins);
-	measure.add_observable("maxInvGError", nPrebins);
+	measure.add_observable("avgInvGError");
+	measure.add_observable("maxInvGError");
 	measure.add_vectorobservable("Corr", configSpace.lattice.MaxDistance() + 1, nPrebins);
 }
 void mc::write(const std::string& dir)
@@ -156,8 +156,6 @@ bool mc::read(const std::string& dir)
 		random_read(d);
 		d.read(sweep);
 		configSpace.Serialize(d);
-		//configSpace.BuildInvGMatrix();
-		//configSpace.SymmetrizeInvG();
 		d.close();
 		return true;
 	}

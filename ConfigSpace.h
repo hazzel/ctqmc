@@ -193,10 +193,14 @@ class ConfigSpace
 		
 		void Serialize(odump& d)
 		{
+			d.write(state);
+			updateHandler.Serialize(d);
 		}
 		
 		void Serialize(idump& d)
 		{
+			d.read(state);
+			updateHandler.Serialize(d);
 		}
 		
 		value_t AdditionFactorialRatio(uint_t k, uint_t n)
@@ -238,5 +242,4 @@ class ConfigSpace
 		matrix_t hoppingMatrix;
 		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
 		Eigen::FullPivLU<matrix_t> invSolver;
-		bool printRatios = true;
 };
