@@ -9,10 +9,6 @@
 #include <numeric>
 #include <cstdint>
 #include "LookUpTable.h"
-//#define EIGEN_USE_MKL_ALL
-#include "Eigen/Dense"
-#include "Eigen/Eigenvalues"
-#include "Eigen/SVD"
 #include "measurements.h"
 #include "random.h"
 #include "parser.h"
@@ -41,7 +37,6 @@ class VertexHandler
 		typedef typename ConfigSpace_t::uint_t uint_t;
 		typedef typename ConfigSpace_t::int_t int_t;
 		typedef typename ConfigSpace_t::value_t value_t;
-		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M>;
 		typedef Node<uint_t, value_t> node_t;
 		
 		VertexHandler(ConfigSpace_t& configSpace)
@@ -52,20 +47,6 @@ class VertexHandler
 			nodeBufferEnd = nodeBuffer.end();
 			indexBuffer.resize(maxBufferSize);
 			indexBufferEnd = indexBuffer.end();
-		}
-		
-		template<typename Matrix_t>
-		void PrintMatrix(const Matrix_t& M)
-		{
-			using namespace Eigen;
-			IOFormat CommaInitFmt(StreamPrecision, DontAlignCols, ", ", ", ", "", "", " << ", ";");
-			IOFormat CleanFmt(FullPrecision, 0, ", ", "\n", "[", "]");
-			IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
-			IOFormat HeavyFmt(FullPrecision, 0, ", ", ",\n", "{", "}", "{", "}");
-			//std::cout << M.format(CommaInitFmt) << std::endl;
-			//std::cout << M.format(CleanFmt) << std::endl;
-			//std::cout << M.format(OctaveFmt) << std::endl;
-			std::cout << M.format(HeavyFmt) << std::endl;
 		}
 		
 		void PrintVertices()
