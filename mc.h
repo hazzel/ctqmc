@@ -90,7 +90,6 @@ class mc
 		matrix_t updateWeightMatrix = matrix_t(nUpdateType, nStateType);
 		matrix_t acceptedUpdates = matrix_t(nUpdateType, nStateType);
 		matrix_t proposedUpdates = matrix_t(nUpdateType, nStateType);
-		matrix_t accRateUpdates = matrix_t(nUpdateType, nStateType);
 		parser param;
 		uint_t sweep = 0;
 		uint_t rebuildCnt = 0;

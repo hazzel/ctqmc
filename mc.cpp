@@ -133,6 +133,16 @@ void mc::write(const std::string& dir)
 	odump d(dir+"dump");
 	random_write(d);
 	d.write(sweep);
+	d.write(rebuildCnt);
+	for (uint_t i = 0; i < nUpdateType; ++i)
+	{
+		for (uint_t j = 0; j < nStateType; ++j)
+		{
+			d.write(updateWeightMatrix(i, j));
+			d.write(acceptedUpdates(i, j));
+			d.write(proposedUpdates(i, j));
+		}
+	}
 	configSpace.Serialize(d);
 	d.close();
 	seed_write(dir+"seed");
@@ -155,6 +165,16 @@ bool mc::read(const std::string& dir)
 	{
 		random_read(d);
 		d.read(sweep);
+		d.read(rebuildCnt);
+		for (uint_t i = 0; i < nUpdateType; ++i)
+		{
+			for (uint_t j = 0; j < nStateType; ++j)
+			{
+				d.read(updateWeightMatrix(i, j));
+				d.read(acceptedUpdates(i, j));
+				d.read(proposedUpdates(i, j));
+			}
+		}
 		configSpace.Serialize(d);
 		d.close();
 		return true;
@@ -391,11 +411,11 @@ void mc::do_update()
 			value_t avgError = 0.0;
 			value_t maxError = 0.0;
 			configSpace.updateHandler.StabilizeInvG(avgError, maxError);
+			configSpace.updateHandler.SymmetrizeInvG();
 			measure.add("avgInvGError", avgError);
 			measure.add("maxInvGError", maxError);
 			rebuildCnt = 0;
 		}
-		configSpace.updateHandler.SymmetrizeInvG();
 	}
 	
 	if (!is_thermalized())
