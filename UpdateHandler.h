@@ -485,27 +485,23 @@ class UpdateHandler
 
 		void StabalizeInvG()
 		{
-			/*
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.numRows(), invG.numCols());
-			vertexHandler.PropagatorMatrix(G);
-			invSolver.compute(G);
-			invG = invSolver.inverse();
-			*/
+			GeMatrix stabInvG(invG.numRows(), invG.numCols());
+			vertexHandler.PropagatorMatrix(stabInvG);
+			Inverse(stabInvG);
+			invG = stabInvG;
 		}
 		
 		void StabilizeInvG(value_t& avgError, value_t& maxError)
 		{
-			/*
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.numRows(), invG.numCols());
-			vertexHandler.PropagatorMatrix(G);
-			invSolver.compute(G);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = invSolver.inverse();
+			GeMatrix stabInvG(invG.numRows(), invG.numCols());
+			vertexHandler.PropagatorMatrix(stabInvG);
+			Inverse(stabInvG);
 			avgError = 0.0;
 			maxError = 0.0;
 			value_t N = stabInvG.numRows() * stabInvG.numRows();
-			for (uint_t i = 0; i < stabInvG.numRows(); ++i)
+			for (uint_t i = 1; i <= stabInvG.numRows(); ++i)
 			{
-				for (uint_t j = 0; j < stabInvG.numCols(); ++j)
+				for (uint_t j = 1; j <= stabInvG.numCols(); ++j)
 				{
 					value_t err = std::abs(invG(i, j) - stabInvG(i, j));
 					if (err > maxError)
@@ -514,7 +510,6 @@ class UpdateHandler
 				}
 			}
 			invG = stabInvG;
-			*/
 		}
 		
 		template<typename Matrix>
