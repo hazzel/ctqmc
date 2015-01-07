@@ -47,7 +47,21 @@ class UpdateHandler
 		}
 		
 		//Performs an LU factorizatin on M
-		value_t Determinant(GeMatrix& M, IndexVector& piv)
+		template<typename Matrix>
+		value_t Determinant(Matrix& M)
+		{
+			IndexVector piv(M.numRows());
+			//Calculate LU factorization
+			flens::lapack::trf(M, piv);
+			value_t det = 1.0;
+			for (int_t i = M.firstCol(); i <= M.lastCol(); ++i)
+				det *= M(i, i) * ((piv(i) != i) ? -1.0 : 1.0);
+			return det;
+		}
+		
+		//Performs an LU factorizatin on M
+		template<typename Matrix>
+		value_t Determinant(Matrix& M, IndexVector& piv)
 		{
 			//Calculate LU factorization
 			flens::lapack::trf(M, piv);
@@ -58,20 +72,33 @@ class UpdateHandler
 		}
 
 		//Specialized version does not perform LU factorization
-		value_t Determinant2x2(GeMatrix& M)
+		template<typename Matrix>
+		value_t Determinant2x2(Matrix& M)
 		{
 			return M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1);
 		}
 
+		//Computes inverse
+		template<typename Matrix>
+		void Inverse(Matrix& M)
+		{
+			IndexVector piv(M.numRows());
+			//Calculate LU factorization
+			flens::lapack::trf(M, piv);
+			//Use LU factorization to calculate inverse
+			flens::lapack::tri(M, piv);
+		}
+		
 		//Computes inverse from LU factorization as input
-		void Inverse(GeMatrix& M, IndexVector& piv)
+		template<typename Matrix>
+		void InverseFromLU(Matrix& M, IndexVector& piv)
 		{
 			//Use LU factorization to calculate inverse
 			flens::lapack::tri(M, piv);
 		}
 
 		//Specialized version does require LU factorization as input
-		void Inverse2x2(GeMatrix& M, value_t det)
+		void InverseFromLU2x2(GeMatrix& M, value_t det)
 		{
 			value_t a = M(1, 1);
 			M(1, 1) = M(2, 2) / det;
@@ -102,9 +129,9 @@ class UpdateHandler
 			if (configSpace.rng() < acceptRatio)
 			{
 				if(N == 1)
-					Inverse2x2(S, detS);
+					InverseFromLU2x2(S, detS);
 				else
-					Inverse(S, pivS);
+					InverseFromLU(S, pivS);
 				GeMatrix vinvG = v * invG;
 				GeMatrix R = -S * vinvG;
 				GeMatrix P = invG - invGu * R;
@@ -124,24 +151,23 @@ class UpdateHandler
 		template<int_t N>
 		bool AddVerticesWithWorms()
 		{
-			return false;
-			/*
 			uint_t k = 2 * vertexHandler.Vertices();
 			uint_t l = 2 * vertexHandler.Worms();
 			const uint_t n = 2 * N;
 			
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> u(k, l + n);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> v(l + n, k);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> a(l + n, l + n);
+			const flens::Underscore<IndexType> _;
+			GeMatrix u(k, n + l);
+			GeMatrix v(n + l, k);
+			GeMatrix a(n + l, n + l);
 			vertexHandler.WoodburyAddVertices(u, v, a);
-			u.rightCols(l) = wormU;
-			v.bottomRows(l) = wormV;
-			a.bottomRightCorner(l, l) = wormA;
+			u(_, _(n + 1, n + l)) = wormU;
+			v(_(n + 1, n + l), _) = wormV;
+			a(_(n + 1, n + l), _(n + 1, n + l)) = wormA;
 
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invS = a;
-			invS.noalias() -= v * invG * u;
+			GeMatrix invGu = invG * u;
+			GeMatrix invS = a - v * invGu;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), N) * configSpace.AdditionFactorialRatio(k / 2, N);
-			value_t acceptRatio = preFactor * invS.determinant() * detWormS;
+			value_t acceptRatio = preFactor * Determinant(invS) * detWormS;
 			if (acceptRatio < 0.0)
 			{
 				std::cout << "AddVerticesWithWorm(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
@@ -152,34 +178,39 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				wormU.conservativeResize(k + n, l);
-				wormU.bottomRows(n) = a.topRightCorner(n, l);
-				wormV.conservativeResize(l, k + n);
-				wormV.rightCols(n) = a.bottomLeftCorner(l, n);
+				wormU.resize(k + n, l);
+				wormU(_(1, k), _) = u(_, _(n + 1, n + l));
+				wormU(_(k + 1, k + n), _) = a(_(l + 1, n + l), _(n + 1, n + l));
+				wormV.resize(l, k + n);
+				wormV(_, _(1, k)) = v(_(n + 1, n + l), _);
+				wormV(_, _(k + 1, k + n)) = a(_(n + 1, n + l), _(l + 1, n + l));
 
-				u.conservativeResize(k, n);
-				v.conservativeResize(n, k);
-				a.conservativeResize(n, n);
-				invS.resize(n, n);
-				invS = a;
-				invS.noalias() -= v * invG * u;
-				
-				matrix_t<n, n> S = invS.inverse();
-				matrix_t<Eigen::Dynamic, n> invGu = invG * u;
-				matrix_t<n, Eigen::Dynamic> R = -S * v * invG;
-				
-				invG.conservativeResize(k + n, k + n);
-				invG.topLeftCorner(k, k).noalias() -= invGu * R;
-				invG.topRightCorner(k, n).noalias() = -invGu * S;
-				invG.bottomLeftCorner(n, k) = R;
-				invG.template bottomRightCorner<n, n>() = S;
+				typename GeMatrix::View u_view = u(_(1, k), _(1, n));
+				typename GeMatrix::View v_view = v(_(1, n), _(1, k));
+				typename GeMatrix::View a_view = u(_(1, n), _(1, n));
 
-				detWormS = 1.0 / (wormA - wormV * invG * wormU).determinant();
+				GeMatrix invGu = invG * u_view;
+				GeMatrix vinvG = v_view * invG;
+				GeMatrix S = a_view - v_view * invGu;
+				Inverse(S);
+				GeMatrix R = -S * vinvG;
+				GeMatrix P = invG - invGu * R;
+				
+				invG.resize(k + n, k + n);
+				const flens::Underscore<IndexType> _;
+				invG(_(1, k), _(1, k)) = P;
+				invG(_(1, k), _(k + 1, k + n)) = -invGu * S;
+				invG(_(k + 1, k + n), _(1, k)) = R;
+				invG(_(k + 1, k + n), _(k + 1, k + n)) = S;
+				
+				GeMatrix invGwU = invG * wormU;
+				GeMatrix wormS = wormA - wormV * invGwU;
+
+				detWormS = 1.0 / Determinant(wormS);
 				vertexHandler.AddBufferedVertices();
 				return true;
 			}
 			return false;
-			*/
 		}
 		
 		template<int_t N>
@@ -209,9 +240,9 @@ class UpdateHandler
 				GeMatrix Q = invG(_(1, k - n), _(k - n + 1, k));
 				GeMatrix R = invG(_(k - n + 1, k), _(1, k - n));
 				if(N == 1)
-					Inverse2x2(S, detS);
+					InverseFromLU2x2(S, detS);
 				else
-					Inverse(S, pivS);
+					InverseFromLU(S, pivS);
 				
 				invG.resize(k - n, k - n);
 				GeMatrix SR = S * R;
