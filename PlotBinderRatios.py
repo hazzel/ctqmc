@@ -9,7 +9,7 @@ from ParseDataOutput import *
 
 color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-L = ["2"]
+L = ["3", "4"]
 for l in range(len(L)):
 	filelist = glob.glob("out/job-L" + L[l] + "-V2.0.task*.out")
 	if len(filelist) == 0:
