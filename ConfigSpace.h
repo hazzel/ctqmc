@@ -54,7 +54,10 @@ class ConfigSpace
 		bool AddRandomVertices()
 		{
 			updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
-			return updateHandler.template AddVertices<N>();
+			if (updateHandler.GetVertexHandler().Worms() == 0)
+				return updateHandler.template AddVertices<N>();
+			else
+				return updateHandler.template AddVerticesWithWorms<N>();
 		}
 		
 		template<int_t N>
@@ -63,7 +66,10 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Vertices() < N)
 				return false;
 			updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
-			return updateHandler.template RemoveVertices<N>();
+			if (updateHandler.GetVertexHandler().Worms() == 0)
+				return updateHandler.template RemoveVertices<N>();
+			else
+				return updateHandler.template RemoveVerticesWithWorms<N>();
 		}
 		
 		template<int_t N>
@@ -80,6 +86,11 @@ class ConfigSpace
 				return false;
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 			return updateHandler.template RemoveWorms<N>(preFactor);
+		}
+		
+		bool ShiftWorm()
+		{
+			return updateHandler.ShiftWorm();
 		}
 		
 		void PrintMatrix(const matrix_t& m)
@@ -182,10 +193,14 @@ class ConfigSpace
 		
 		void Serialize(odump& d)
 		{
+			d.write(state);
+			updateHandler.Serialize(d);
 		}
 		
 		void Serialize(idump& d)
 		{
+			d.read(state);
+			updateHandler.Serialize(d);
 		}
 		
 		value_t AdditionFactorialRatio(uint_t k, uint_t n)
@@ -227,5 +242,4 @@ class ConfigSpace
 		matrix_t hoppingMatrix;
 		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
 		Eigen::FullPivLU<matrix_t> invSolver;
-		bool printRatios = true;
 };

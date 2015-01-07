@@ -8,7 +8,6 @@ class Random
 		using seed_t = std::size_t;
 
 		Random()
-			: seed(seed)
 		{
 			rng = new generator_t();
 			seed = rng->seed();

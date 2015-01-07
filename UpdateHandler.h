@@ -9,10 +9,6 @@
 #include <numeric>
 #include <cstdint>
 #include "LookUpTable.h"
-//#define EIGEN_USE_MKL_ALL
-#include "Eigen/Dense"
-#include "Eigen/Eigenvalues"
-#include "Eigen/SVD"
 #include <flens/flens.cxx>
 #include "measurements.h"
 #include "random.h"
