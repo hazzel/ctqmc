@@ -216,7 +216,7 @@ class UpdateHandler
 			a.topRightCorner(n, l) = wormU.bottomRows(n);
 			a.bottomLeftCorner(l, n) = wormV.rightCols(n);
 			
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> S = invG.bottomRightCorner(n, n);
+			matrix_t<n, n> S = invG.template bottomRightCorner<n, n>();
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> newInvG = invG.topLeftCorner(k - n, k - n);
 			newInvG.noalias() -= invG.topRightCorner(k - n, n) * S.inverse() * invG.bottomLeftCorner(n, k - n);
 			value_t newDetWormS = 1.0 / (wormA - wormV.leftCols(k - n) * newInvG * wormU.topRows(k - n)).determinant();
