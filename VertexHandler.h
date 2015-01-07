@@ -240,10 +240,10 @@ class VertexHandler
 			{
 				for (uint_t j = 0; j < i; ++j)
 				{
-					G(j, i) = configSpace.LookUpG0(nodes[j].Site, nodes[i].Site, nodes[j].Tau - nodes[i].Tau + configSpace.infinTau);
-					G(i, j) = configSpace.LookUpG0(nodes[i].Site, nodes[j].Site, nodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
+					G(j + 1, i + 1) = configSpace.LookUpG0(nodes[j].Site, nodes[i].Site, nodes[j].Tau - nodes[i].Tau + configSpace.infinTau);
+					G(i + 1, j + 1) = configSpace.LookUpG0(nodes[i].Site, nodes[j].Site, nodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
-				G(i, i) = 0.0;
+				G(i + 1, i + 1) = 0.0;
 			}
 		}
 		
@@ -252,27 +252,27 @@ class VertexHandler
 		{
 			uint_t k = nodes.size();
 			uint_t l = wormNodes.size();
-			uint_t n = a.cols() - l;
+			uint_t n = a.numCols() - l;
 			for (uint_t i = 0; i < n; ++i)
 			{
 				for (uint_t j = 0; j < k; ++j)
 				{
-					u(j, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-					v(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
+					u(j + 1, i + 1) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					v(i + 1, j + 1) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
 				for (uint_t j = 0; j < n; ++j)
 				{
 					if (i < j)
 					{
-						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+						a(i + 1, j + 1) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
+						a(j + 1, i + 1) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 					}
 				}
-				a(i, i) = 0.0;
+				a(i + 1, i + 1) = 0.0;
 				for (uint_t j = 0; j < l; ++j)
 				{
-					a(i, j + n) = configSpace.LookUpG0(nodeBuffer[i].Site, wormNodes[j].Site, nodeBuffer[i].Tau - wormNodes[j].Tau + configSpace.infinTau);
-					a(j + n, i) = configSpace.LookUpG0(wormNodes[j].Site, nodeBuffer[i].Site, wormNodes[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+					a(i + 1, j + n + 1) = configSpace.LookUpG0(nodeBuffer[i].Site, wormNodes[j].Site, nodeBuffer[i].Tau - wormNodes[j].Tau + configSpace.infinTau);
+					a(j + n + 1, i + 1) = configSpace.LookUpG0(wormNodes[j].Site, nodeBuffer[i].Site, wormNodes[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 				}
 			}
 		}
@@ -282,23 +282,23 @@ class VertexHandler
 		{
 			uint_t k = nodes.size();
 			uint_t l = wormNodes.size();
-			uint_t n = a.cols() - l;
+			uint_t n = a.numCols() - l;
 			for (uint_t i = 0; i < n; ++i)
 			{
 				for (uint_t j = 0; j < k - n; ++j)
 				{
-					u(j, i) = configSpace.LookUpG0(nodes[perm[j]].Site, nodes[indexBuffer[i]].Site, nodes[perm[j]].Tau - nodes[indexBuffer[i]].Tau + configSpace.infinTau);
-					v(i, j) = configSpace.LookUpG0(nodes[indexBuffer[i]].Site, nodes[perm[j]].Site, nodes[indexBuffer[i]].Tau - nodes[perm[j]].Tau - configSpace.infinTau);
+					u(j + 1, i + 1) = configSpace.LookUpG0(nodes[perm[j]].Site, nodes[indexBuffer[i]].Site, nodes[perm[j]].Tau - nodes[indexBuffer[i]].Tau + configSpace.infinTau);
+					v(i + 1, j + 1) = configSpace.LookUpG0(nodes[indexBuffer[i]].Site, nodes[perm[j]].Site, nodes[indexBuffer[i]].Tau - nodes[perm[j]].Tau - configSpace.infinTau);
 				}
 				for (uint_t j = 0; j < n; ++j)
 				{
 					if (i < j)
 					{
-						a(i, j) = configSpace.LookUpG0(nodes[indexBuffer[i]].Site, nodes[indexBuffer[j]].Site, nodes[indexBuffer[i]].Tau - nodes[indexBuffer[j]].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(nodes[indexBuffer[j]].Site, nodes[indexBuffer[i]].Site, nodes[indexBuffer[j]].Tau - nodes[indexBuffer[i]].Tau - configSpace.infinTau);
+						a(i + 1, j + 1) = configSpace.LookUpG0(nodes[indexBuffer[i]].Site, nodes[indexBuffer[j]].Site, nodes[indexBuffer[i]].Tau - nodes[indexBuffer[j]].Tau + configSpace.infinTau);
+						a(j + 1, i + 1) = configSpace.LookUpG0(nodes[indexBuffer[j]].Site, nodes[indexBuffer[i]].Site, nodes[indexBuffer[j]].Tau - nodes[indexBuffer[i]].Tau - configSpace.infinTau);
 					}
 				}
-				a(i, i) = 0.0;
+				a(i + 1, i + 1) = 0.0;
 			}
 		}
 		
@@ -307,28 +307,28 @@ class VertexHandler
 		{
 			uint_t k = nodes.size();
 			uint_t l = wormNodes.size();
-			uint_t n = a.cols() - l;
+			uint_t n = a.numCols() - l;
 			for (uint_t i = 0; i < n; ++i)
 			{
 				for (uint_t j = 0; j < k; ++j)
 				{
-					u(j, l + i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-					v(l + i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
+					u(j + 1, l + i + 1) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					v(l + i + 1, j + 1) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
 				for (uint_t j = 0; j < n; ++j)
 				{
 					if (i < j)
 					{
-						a(i + l, j + l) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
-						a(j + l, i + l) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+						a(i + l + 1, j + l + 1) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
+						a(j + l + 1, i + l + 1) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 					}
 				}
 				for (uint_t j = 0; j < l; ++j)
 				{
-					a(j, i + l) = configSpace.LookUpG0(wormNodes[j].Site, nodeBuffer[i].Site, wormNodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-					a(i + l, j) = configSpace.LookUpG0(nodeBuffer[i].Site, wormNodes[j].Site, nodeBuffer[i].Tau - wormNodes[j].Tau - configSpace.infinTau);
+					a(j + 1, i + l + 1) = configSpace.LookUpG0(wormNodes[j].Site, nodeBuffer[i].Site, wormNodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					a(i + l + 1, j + 1) = configSpace.LookUpG0(nodeBuffer[i].Site, wormNodes[j].Site, nodeBuffer[i].Tau - wormNodes[j].Tau - configSpace.infinTau);
 				}
-				a(i + l, i + l) = 0.0;
+				a(i + l + 1, i + l + 1) = 0.0;
 			}
 		}
 		
@@ -341,37 +341,37 @@ class VertexHandler
 			{
 				for (uint_t j = 0; j < k; ++j)
 				{
-					u(j, i) = configSpace.LookUpG0(nodes[j].Site, wormNodes[i].Site, nodes[j].Tau - wormNodes[i].Tau + configSpace.infinTau);
-					v(i, j) = configSpace.LookUpG0(wormNodes[i].Site, nodes[j].Site, wormNodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
+					u(j + 1, i + 1) = configSpace.LookUpG0(nodes[j].Site, wormNodes[i].Site, nodes[j].Tau - wormNodes[i].Tau + configSpace.infinTau);
+					v(i + 1, j + 1) = configSpace.LookUpG0(wormNodes[i].Site, nodes[j].Site, wormNodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
 				for (uint_t j = 0; j < l; ++j)
 				{
 					if (i < j)
 					{
-						a(i, j) = configSpace.LookUpG0(wormNodes[i].Site, wormNodes[j].Site, wormNodes[i].Tau - wormNodes[j].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(wormNodes[j].Site, wormNodes[i].Site, wormNodes[j].Tau - wormNodes[i].Tau - configSpace.infinTau);
+						a(i + 1, j + 1) = configSpace.LookUpG0(wormNodes[i].Site, wormNodes[j].Site, wormNodes[i].Tau - wormNodes[j].Tau + configSpace.infinTau);
+						a(j + 1, i + 1) = configSpace.LookUpG0(wormNodes[j].Site, wormNodes[i].Site, wormNodes[j].Tau - wormNodes[i].Tau - configSpace.infinTau);
 					}
 				}
-				a(i, i) = 0.0;
+				a(i + 1, i + 1) = 0.0;
 			}
 		}
 		
 		template<typename P>
 		void PermutationMatrix(P& perm)
 		{
-			uint_t cnt = 0;
-			for (uint_t i = 0; i < perm.size(); ++i)
+			uint_t cnt = 1;
+			for (uint_t i = 0; i < perm.numRows(); ++i)
 			{
 				if (find(indexBuffer.begin(), indexBufferEnd, i) == indexBufferEnd)
 				{
-					perm[cnt] = i;
+					perm(i + 1, cnt) = 1.0;
 					++cnt;
 				}
 			}
 			int i = 0;
 			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 			{
-				perm[cnt + i] = *it;
+				perm(*it + 1, cnt + i) = 1.0;
 				++i;
 			}
 		}
