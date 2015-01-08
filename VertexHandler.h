@@ -376,6 +376,28 @@ class VertexHandler
 			}
 		}
 		
+		template<typename P, typename I>
+		void PermutationMatrix(P& perm, I& indices)
+		{
+			uint_t cnt = 1;
+			for (uint_t i = 0; i < perm.numRows(); ++i)
+			{
+				if (find(indexBuffer.begin(), indexBufferEnd, i) == indexBufferEnd)
+				{
+					perm(i + 1, cnt) = 1.0;
+					indices[i] = cnt - 1;
+					++cnt;
+				}
+			}
+			int i = 0;
+			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+			{
+				perm(*it + 1, cnt + i) = 1.0;
+				indices[*it] = cnt + i - 1;
+				++i;
+			}
+		}
+		
 		void Serialize(odump& d)
 		{
 			d.write(nodes);
