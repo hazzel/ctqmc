@@ -272,7 +272,7 @@ class UpdateHandler
 			GeMatrix pInvGp = flens::transpose(perm) * invGp;
 			GeMatrix wormUp = flens::transpose(perm) * wormU;
 			GeMatrix wormVp = wormV * perm;
-						
+			
 			GeMatrix u(k - n, n + l), v(n + l, k - n), a(n + l, n + l);
 			vertexHandler.WoodburyRemoveVertices(u, v, a, perm_indices);
 			u(_, _(n + 1, n + l)) = wormUp(_(1, k - n), _);
