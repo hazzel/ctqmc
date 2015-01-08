@@ -154,7 +154,7 @@ class UpdateHandler
 			uint_t k = 2 * vertexHandler.Vertices();
 			uint_t l = 2 * vertexHandler.Worms();
 			const uint_t n = 2 * N;
-			
+		
 			const flens::Underscore<IndexType> _;
 			GeMatrix u(k, n + l);
 			GeMatrix v(n + l, k);
@@ -485,6 +485,8 @@ class UpdateHandler
 
 		void StabalizeInvG()
 		{
+			if (vertexHandler.Vertices() == 0)
+				return;
 			GeMatrix stabInvG(invG.numRows(), invG.numCols());
 			vertexHandler.PropagatorMatrix(stabInvG);
 			Inverse(stabInvG);
@@ -493,6 +495,8 @@ class UpdateHandler
 		
 		void StabilizeInvG(value_t& avgError, value_t& maxError)
 		{
+			if (vertexHandler.Vertices() == 0)
+				return;
 			GeMatrix stabInvG(invG.numRows(), invG.numCols());
 			vertexHandler.PropagatorMatrix(stabInvG);
 			Inverse(stabInvG);
