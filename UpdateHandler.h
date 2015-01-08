@@ -271,30 +271,35 @@ class UpdateHandler
 			GeMatrix invGp = invG * perm;
 			GeMatrix pInvGp = flens::transpose(perm) * invGp;
 			GeMatrix wormUp = flens::transpose(perm) * wormU;
+			typename GeMatrix::View wU = wormUp(_(1, k - n), _);
 			GeMatrix wormVp = wormV * perm;
+			typename GeMatrix::View wV = wormVp(_, _(1, k - n));
 			
 			GeMatrix u(k - n, n + l), v(n + l, k - n), a(n + l, n + l);
 			vertexHandler.WoodburyRemoveVertices(u, v, a, perm_indices);
-			u(_, _(n + 1, n + l)) = wormUp(_(1, k - n), _);
-			v(_(n + 1, n + l), _) = wormVp(_, _(1, k - n));
+			u(_, _(n + 1, n + l)) = wU;
+			v(_(n + 1, n + l), _) = wV;
 			a(_(n + 1, n + l), _(n + 1, n + l)) = wormA;
 			a(_(1, n), _(n + 1, n + l)) = wormUp(_(k - n + 1, k), _);
 			a(_(n + 1, n + l), _(1, n)) = wormVp(_, _(k - n + 1, k));
 			
-			GeMatrix S = pInvGp(_(k - n + 1, k), _(k - n + 1, k));
+			typename GeMatrix::View P = pInvGp(_(1, k - n), _(1, k - n));
+			typename GeMatrix::View Q = pInvGp(_(1, k - n), _(k - n + 1, k));
+			typename GeMatrix::View R = pInvGp(_(k - n + 1, k), _(1, k - n));
+			typename GeMatrix::View S = pInvGp(_(k - n + 1, k), _(k - n + 1, k));
 			Inverse(S);
-			GeMatrix Sv = S * pInvGp(_(k - n + 1, k), _(1, k - n));
-			GeMatrix newInvG = pInvGp(_(1, k - n), _(1, k - n)) - pInvGp(_(1, k - n), _(k - n + 1, k)) * Sv;
+			GeMatrix SR = S * R;
+			GeMatrix newInvG = P - Q * SR;
 			
-			GeMatrix newInvGwU = newInvG * wormUp(_(1, k - n), _);
-			GeMatrix invWormS = wormA - wormVp(_, _(1, k - n)) * newInvGwU;
+			GeMatrix newInvGwU = newInvG * wU;
+			GeMatrix invWormS = wormA - wV * newInvGwU;
 			value_t newDetWormS = 1.0 / Determinant(invWormS);
 			
 			GeMatrix newInvGu = newInvG * u;
 			GeMatrix invS = a - v * newInvGu;
 			
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), -N) * configSpace.RemovalFactorialRatio(k / 2, N);
-			value_t acceptRatio = preFactor / newDetWormS / Determinant(invS);
+			value_t acceptRatio = preFactor / newDetWormS / Determinant(invS);;
 			if (acceptRatio < 0.0)
 			{
 				std::cout << "RemoveVerticesWithWorm(" << N << "): AcceptRatio" << acceptRatio << std::endl;
@@ -309,9 +314,9 @@ class UpdateHandler
 				invG = newInvG;
 				
 				wormU.resize(k - n, l);
-				wormU = wormUp(_(1, k - n), _);
+				wormU = wU;
 				wormV.resize(l, k - n);
-				wormV = wormVp(_, _(1, k - n));
+				wormV = wV;
 				detWormS = newDetWormS;
 				
 				vertexHandler.RemoveBufferedVertices();
@@ -397,6 +402,7 @@ class UpdateHandler
 
 			value_t detInvS;
 			value_t detRatio;
+			//TODO: implement with views
 			GeMatrix newWormU, newWormV, newWormA;
 			if (l - n > 0)
 			{
