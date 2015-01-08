@@ -264,19 +264,6 @@ class UpdateHandler
 			if (k < n)
 				return false;
 			
-			/*
-			u.topRightCorner(k - n, l) = wormU.topRows(k - n);
-			v.bottomLeftCorner(l, k - n) = wormV.leftCols(k - n);
-			a.bottomRightCorner(l, l) = wormA;
-			a.topRightCorner(n, l) = wormU.bottomRows(n);
-			a.bottomLeftCorner(l, n) = wormV.rightCols(n);
-			
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> S = invG.bottomRightCorner(n, n);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> newInvG = invG.topLeftCorner(k - n, k - n);
-			newInvG.noalias() -= invG.topRightCorner(k - n, n) * S.inverse() * invG.bottomLeftCorner(n, k - n);
-			value_t newDetWormS = 1.0 / (wormA - wormV.leftCols(k - n) * newInvG * wormU.topRows(k - n)).determinant();
-			*/
-
 			const flens::Underscore<IndexType> _;
 			GeMatrix perm(k, k);
 			std::vector<uint_t> perm_indices(k);
@@ -288,16 +275,17 @@ class UpdateHandler
 						
 			GeMatrix u(k - n, n + l), v(n + l, k - n), a(n + l, n + l);
 			vertexHandler.WoodburyRemoveVertices(u, v, a, perm_indices);
-			u(_, _(l + 1, n + l)) = wormUp(_(1, k - n), _);
-			v(_(1, l), _) = wormVp(_, _(1, k - n));
+			u(_, _(n + 1, n + l)) = wormUp(_(1, k - n), _);
+			v(_(n + 1, n + l), _) = wormVp(_, _(1, k - n));
 			a(_(n + 1, n + l), _(n + 1, n + l)) = wormA;
-			a(_(l + 1, n + l), _(n + 1, n + l)) = wormUp(_(k - n + 1, k), _);
-			a(_(n + 1, n + l), _(l + 1, n + l)) = wormVp(_, _(k - n + 1, k));
+			a(_(1, n), _(n + 1, n + l)) = wormUp(_(k - n + 1, k), _);
+			a(_(n + 1, n + l), _(1, n)) = wormVp(_, _(k - n + 1, k));
 			
 			GeMatrix S = pInvGp(_(k - n + 1, k), _(k - n + 1, k));
 			Inverse(S);
-			GeMatrix Sv = S * pInvGp(_(k - n + 1, k), _(n + 1, k));
-			GeMatrix newInvG = pInvGp(_(1, k - n), _(1, k - n)) - pInvGp(_(n + 1, k), _(k - n + 1, k)) * Sv;
+			GeMatrix Sv = S * pInvGp(_(k - n + 1, k), _(1, k - n));
+			GeMatrix newInvG = pInvGp(_(1, k - n), _(1, k - n)) - pInvGp(_(1, k - n), _(k - n + 1, k)) * Sv;
+			
 			GeMatrix newInvGwU = newInvG * wormUp(_(1, k - n), _);
 			GeMatrix invWormS = wormA - wormVp(_, _(1, k - n)) * newInvGwU;
 			value_t newDetWormS = 1.0 / Determinant(invWormS);
