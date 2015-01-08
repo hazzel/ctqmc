@@ -210,8 +210,8 @@ class UpdateHandler
 						
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> u(k - n, n + l), v(n + l, k - n), a(n + l, n + l);
 			vertexHandler.WoodburyRemoveVertices(u, v, a, perm.indices());
-			u.topRightCorner(k - n, l) = wormU.topRows(k - n);
-			v.bottomLeftCorner(l, k - n) = wormV.leftCols(k - n);
+			u.rightCols(l) = wormU.topRows(k - n);
+			v.bottomRows(l) = wormV.leftCols(k - n);
 			a.bottomRightCorner(l, l) = wormA;
 			a.topRightCorner(n, l) = wormU.bottomRows(n);
 			a.bottomLeftCorner(l, n) = wormV.rightCols(n);
