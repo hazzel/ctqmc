@@ -98,7 +98,8 @@ class UpdateHandler
 		}
 
 		//Specialized version does require LU factorization as input
-		void InverseFromLU2x2(GeMatrix& M, value_t det)
+		template<typename Matrix>
+		void InverseFromLU2x2(Matrix& M, value_t det)
 		{
 			value_t a = M(1, 1);
 			M(1, 1) = M(2, 2) / det;
@@ -224,7 +225,7 @@ class UpdateHandler
 			GeMatrix pInvGp = flens::transpose(perm) * invGp;
 			
 			const flens::Underscore<IndexType> _;
-			GeMatrix S = pInvGp(_(k - n + 1, k), _(k - n + 1, k));
+			typename GeMatrix::View S = pInvGp(_(k - n + 1, k), _(k - n + 1, k));
 			IndexVector pivS(n);
 			value_t detS = (N == 1 ? Determinant2x2(S) : Determinant(S, pivS));
 			value_t preFactor = configSpace.RemovalFactorialRatio(k / 2, N) / prefactor[N-1];
@@ -233,9 +234,9 @@ class UpdateHandler
 				std::cout << "RemoveVertex: AcceptRatio" << acceptRatio << std::endl;
 			if (configSpace.rng() < acceptRatio)
 			{
-				GeMatrix P = pInvGp(_(1, k - n), _(1, k - n));
-				GeMatrix Q = pInvGp(_(1, k - n), _(k - n + 1, k));
-				GeMatrix R = pInvGp(_(k - n + 1, k), _(1, k - n));
+				typename GeMatrix::View P = pInvGp(_(1, k - n), _(1, k - n));
+				typename GeMatrix::View Q = pInvGp(_(1, k - n), _(k - n + 1, k));
+				typename GeMatrix::View R = pInvGp(_(k - n + 1, k), _(1, k - n));
 				if(N == 1)
 					InverseFromLU2x2(S, detS);
 				else
@@ -274,18 +275,18 @@ class UpdateHandler
 						
 			GeMatrix u(k - n, n + l), v(n + l, k - n), a(n + l, n + l);
 			vertexHandler.WoodburyRemoveVertices(u, v, a, perm_indices);
-			u(_, _(l + 1, n + l)) = wormU(_(1, k - n), _);
-			v(_(1, l), _) = wormV(_, _(1, k - n));
+			u(_, _(l + 1, n + l)) = wormUp(_(1, k - n), _);
+			v(_(1, l), _) = wormVp(_, _(1, k - n));
 			a(_(n + 1, n + l), _(n + 1, n + l)) = wormA;
-			a(_(l + 1, n + l), _(n + 1, n + l)) = wormU(_(k - n + 1, k), _);
-			a(_(n + 1, n + l), _(l + 1, n + l)) = wormV(_, _(k - n + 1, k));
+			a(_(l + 1, n + l), _(n + 1, n + l)) = wormUp(_(k - n + 1, k), _);
+			a(_(n + 1, n + l), _(l + 1, n + l)) = wormVp(_, _(k - n + 1, k));
 			
 			GeMatrix S = invG(_(k - n + 1, k), _(k - n + 1, k));
 			Inverse(S);
 			GeMatrix Sv = S * invG(_(k - n + 1, k), _(n + 1, k));
 			GeMatrix newInvG = invG(_(1, k - n), _(1, k - n)) - invG(_(n + 1, k), _(k - n + 1, k)) * Sv;
-			GeMatrix newInvGwU = newInvG * wormU(_(1, k - n), _);
-			GeMatrix invWormS = wormA - wormV(_, _(1, k - n)) * newInvGwU;
+			GeMatrix newInvGwU = newInvG * wormUp(_(1, k - n), _);
+			GeMatrix invWormS = wormA - wormVp(_, _(1, k - n)) * newInvGwU;
 			value_t newDetWormS = 1.0 / Determinant(invWormS);
 			
 			GeMatrix newInvGu = newInvG * u;
