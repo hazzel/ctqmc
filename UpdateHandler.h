@@ -179,10 +179,10 @@ class UpdateHandler
 			{
 				wormU.resize(k + n, l);
 				wormU(_(1, k), _) = u(_, _(n + 1, n + l));
-				wormU(_(k + 1, k + n), _) = a(_(l + 1, n + l), _(n + 1, n + l));
+				wormU(_(k + 1, k + n), _) = a(_(1, n), _(n + 1, n + l));
 				wormV.resize(l, k + n);
 				wormV(_, _(1, k)) = v(_(n + 1, n + l), _);
-				wormV(_, _(k + 1, k + n)) = a(_(n + 1, n + l), _(l + 1, n + l));
+				wormV(_, _(k + 1, k + n)) = a(_(n + 1, n + l), _(1, n));
 
 				typename GeMatrix::View u_view = u(_(1, k), _(1, n));
 				typename GeMatrix::View v_view = v(_(1, n), _(1, k));
@@ -263,6 +263,19 @@ class UpdateHandler
 			const uint_t n = 2 * N;
 			if (k < n)
 				return false;
+			
+			/*
+			u.topRightCorner(k - n, l) = wormU.topRows(k - n);
+			v.bottomLeftCorner(l, k - n) = wormV.leftCols(k - n);
+			a.bottomRightCorner(l, l) = wormA;
+			a.topRightCorner(n, l) = wormU.bottomRows(n);
+			a.bottomLeftCorner(l, n) = wormV.rightCols(n);
+			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> S = invG.bottomRightCorner(n, n);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> newInvG = invG.topLeftCorner(k - n, k - n);
+			newInvG.noalias() -= invG.topRightCorner(k - n, n) * S.inverse() * invG.bottomLeftCorner(n, k - n);
+			value_t newDetWormS = 1.0 / (wormA - wormV.leftCols(k - n) * newInvG * wormU.topRows(k - n)).determinant();
+			*/
 
 			const flens::Underscore<IndexType> _;
 			GeMatrix perm(k, k);
@@ -281,10 +294,10 @@ class UpdateHandler
 			a(_(l + 1, n + l), _(n + 1, n + l)) = wormUp(_(k - n + 1, k), _);
 			a(_(n + 1, n + l), _(l + 1, n + l)) = wormVp(_, _(k - n + 1, k));
 			
-			GeMatrix S = invG(_(k - n + 1, k), _(k - n + 1, k));
+			GeMatrix S = pInvGp(_(k - n + 1, k), _(k - n + 1, k));
 			Inverse(S);
-			GeMatrix Sv = S * invG(_(k - n + 1, k), _(n + 1, k));
-			GeMatrix newInvG = invG(_(1, k - n), _(1, k - n)) - invG(_(n + 1, k), _(k - n + 1, k)) * Sv;
+			GeMatrix Sv = S * pInvGp(_(k - n + 1, k), _(n + 1, k));
+			GeMatrix newInvG = pInvGp(_(1, k - n), _(1, k - n)) - pInvGp(_(n + 1, k), _(k - n + 1, k)) * Sv;
 			GeMatrix newInvGwU = newInvG * wormUp(_(1, k - n), _);
 			GeMatrix invWormS = wormA - wormVp(_, _(1, k - n)) * newInvGwU;
 			value_t newDetWormS = 1.0 / Determinant(invWormS);
@@ -308,9 +321,9 @@ class UpdateHandler
 				invG = newInvG;
 				
 				wormU.resize(k - n, l);
-				wormU = u(_, _(l + 1, n + l));
+				wormU = wormUp(_(1, k - n), _);
 				wormV.resize(l, k - n);
-				wormV = v(_(1, l), _);
+				wormV = wormVp(_, _(1, k - n));
 				detWormS = newDetWormS;
 				
 				vertexHandler.RemoveBufferedVertices();
