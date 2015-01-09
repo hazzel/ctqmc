@@ -385,7 +385,7 @@ class VertexHandler
 				if (find(indexBuffer.begin(), indexBufferEnd, i) == indexBufferEnd)
 				{
 					perm(i + 1, cnt) = 1.0;
-					indices[i] = cnt - 1;
+					indices[cnt - 1] = i;
 					++cnt;
 				}
 			}
@@ -393,7 +393,7 @@ class VertexHandler
 			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 			{
 				perm(*it + 1, cnt + i) = 1.0;
-				indices[*it] = cnt + i - 1;
+				indices[cnt - 1] = *it;
 				++i;
 			}
 		}
