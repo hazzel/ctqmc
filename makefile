@@ -41,6 +41,11 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_MKLBLAS -DALWAYS_USE_CXXLAPACK
 	LDFLAGS = $(FLAGS_MATH_LINKER) $(FLAGS_OPENMP)
 	SUPERLP = 
+else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
+        CFLAGS  = -O3 -Wno-deprecated -ffast-math -std=c++11 -fopenmp $(DEFINES)
+        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/ -I$(HOME)/libs/FLENS -DWITH_ATLAS -DALWAYS_USE_CXXLAPACK
+        LDFLAGS = -fopenmp -L/usr/lib64/atlas/ -llapack -lcblas -latlas
+        SUPERLP =
 else
         CFLAGS  = -O3 -Wno-deprecated -ffast-math -std=c++11 -fopenmp $(DEFINES)
         INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_OPENBLAS -DALWAYS_USE_CXXLAPACK

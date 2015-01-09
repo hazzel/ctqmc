@@ -402,13 +402,11 @@ class UpdateHandler
 
 			value_t detInvS;
 			value_t detRatio;
-			//TODO: implement with views
-			GeMatrix newWormU, newWormV, newWormA;
+			typename GeMatrix::View newWormU = wormUp(_, _(1, l - n));
+			typename GeMatrix::View newWormV = wormVp(_(1, l - n), _);
+			typename GeMatrix::View newWormA = wormAp(_(1, l - n), _(1, l - n));
 			if (l - n > 0)
 			{
-				newWormU = wormUp(_, _(1, l - n));
-				newWormV = wormVp(_(1, l - n), _);
-				newWormA = wormAp(_(1, l - n), _(1, l - n));
 				GeMatrix invGwU = invG * newWormU;
 				GeMatrix invS = newWormA - newWormV * invGwU;
 				detInvS = Determinant(invS);
