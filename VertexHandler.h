@@ -51,9 +51,17 @@ class VertexHandler
 		
 		void PrintVertices()
 		{
+			value_t minTauDiff = configSpace.beta;
 			for (uint_t i = 0; i < nodes.size(); i+=2)
 				std::cout << "(" << nodes[i].Site << " , " << nodes[i+1].Site << ", " << nodes[i].Tau << ") ";
+			for (uint_t i = 2; i < nodes.size(); i+=2)
+			{
+				value_t diff = std::abs(nodes[i-2].Tau - nodes[i].Tau);
+				if (diff < minTauDiff)
+					minTauDiff = diff;
+			}
 			std::cout << std::endl;
+			std::cout << "MinTauDiff: " << minTauDiff / configSpace.dtau << std::endl;
 		}
 		
 		void PrintVertexBuffer()

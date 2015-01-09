@@ -82,7 +82,8 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				matrix_t<n, n> S = invS.inverse();
+				invSolver.compute(invS);
+				matrix_t<n, n> S = invSolver.inverse();
 				matrix_t<n, Eigen::Dynamic> R = -S * v * invG;
 				
 				invG.conservativeResize(k + n, k + n);
@@ -138,7 +139,8 @@ class UpdateHandler
 				invS = a;
 				invS.noalias() -= v * invG * u;
 				
-				matrix_t<n, n> S = invS.inverse();
+				invSolver.compute(invS);
+				matrix_t<n, n> S = invSolver.inverse();
 				matrix_t<Eigen::Dynamic, n> invGu = invG * u;
 				matrix_t<n, Eigen::Dynamic> R = -S * v * invG;
 				
@@ -180,7 +182,9 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * S.inverse() * invG.bottomLeftCorner(n, k - n);
+				invSolver.compute(S);
+				matrix_t<Eigen::Dynamic, Eigen::Dynamic> invS = invSolver.inverse();
+				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
 				invG.conservativeResize(k - n, k - n);
 				
 				vertexHandler.RemoveBufferedVertices();
@@ -218,7 +222,10 @@ class UpdateHandler
 			
 			matrix_t<n, n> S = invG.template bottomRightCorner<n, n>();
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> newInvG = invG.topLeftCorner(k - n, k - n);
-			newInvG.noalias() -= invG.topRightCorner(k - n, n) * S.inverse() * invG.bottomLeftCorner(n, k - n);
+			
+			invSolver.compute(S);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invS = invSolver.inverse();
+			newInvG.noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
 			value_t newDetWormS = 1.0 / (wormA - wormV.leftCols(k - n) * newInvG * wormU.topRows(k - n)).determinant();
 			
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), -N) * configSpace.RemovalFactorialRatio(k / 2, N);
@@ -422,6 +429,17 @@ class UpdateHandler
 					avgError += err / N;
 				}
 			}
+			/*
+			if (avgError > std::pow(10.0, -3.0))
+			{
+				std::cout << "Error: " << avgError << std::endl;
+				std::cout << "invG:" << std::endl;
+				PrintMatrix(invG);
+				std::cout << "stabInvG:" << std::endl;
+				PrintMatrix(stabInvG);
+				std::cin.get();
+			}
+			*/
 			invG = stabInvG;
 		}
 		

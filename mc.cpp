@@ -124,8 +124,8 @@ void mc::init()
 	measure.add_observable("deltaZ", nPrebins);
 	measure.add_observable("deltaW2", nPrebins);
 	measure.add_observable("deltaW4", nPrebins);
-	measure.add_observable("avgInvGError");
-	measure.add_observable("maxInvGError");
+	measure.add_observable("avgInvGError", nPrebins / nRebuild);
+	measure.add_observable("maxInvGError", nPrebins / nRebuild);
 	measure.add_vectorobservable("Corr", configSpace.lattice.MaxDistance() + 1, nPrebins);
 }
 void mc::write(const std::string& dir)
@@ -204,7 +204,7 @@ bool mc::is_thermalized()
 
 void mc::BuildUpdateWeightMatrix()
 {
-/*
+
 	//ALL TRANSITIONS
 	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
 									4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
@@ -217,7 +217,7 @@ void mc::BuildUpdateWeightMatrix()
 									0.0			,	8.0 / 10.0	,	0.0,
 									0.0			,	0.0			,	8.0 / 10.0,
 									0.0			,	10.0 / 10.0	,	10.0 / 10.0;
-*/
+
 /*
 	//ONLY Z<->W2<->W4
 	updateWeightMatrix <<	2.5 / 10.0	,	2.0 / 10.0	,	2.5 / 10.0,
@@ -247,7 +247,7 @@ void mc::BuildUpdateWeightMatrix()
 									0.0			,	0.0			,	0.0;
 */
 
-
+/*
 	//ONLY Z<->W2
 	updateWeightMatrix <<	2.5 / 10.0	,	2.0 / 10.0	,	0.0,
 									5.0 / 10.0	,	4.0 / 10.0	,	0.0,
@@ -260,6 +260,7 @@ void mc::BuildUpdateWeightMatrix()
 									0.0			,	0.0			,	0.0,
 									0.0			,	0.0			,	0.0,
 									0.0			,	10.0 / 10.0	,	0.0;
+*/
 
 /*
 	//ONLY Z
@@ -412,11 +413,11 @@ void mc::do_update()
 			value_t avgError = 0.0;
 			value_t maxError = 0.0;
 			configSpace.updateHandler.StabilizeInvG(avgError, maxError);
-			//configSpace.updateHandler.SymmetrizeInvG();
 			measure.add("avgInvGError", avgError);
 			measure.add("maxInvGError", maxError);
 			rebuildCnt = 0;
 		}
+		//configSpace.updateHandler.SymmetrizeInvG();
 	}
 	
 	if (!is_thermalized())
