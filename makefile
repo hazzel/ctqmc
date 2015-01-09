@@ -41,6 +41,11 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
 	LDFLAGS = $(FLAGS_OPENMP)
 	SUPERLP = 
+else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
+        CFLAGS  = -O3 -Wno-deprecated -std=c++11 -fopenmp $(DEFINES)
+        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
+        LDFLAGS = -fopenmp
+        SUPERLP =
 else
         CFLAGS  = -O3 -Wno-deprecated -std=c++11 -fopenmp $(DEFINES)
         INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
