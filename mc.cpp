@@ -124,8 +124,8 @@ void mc::init()
 	measure.add_observable("deltaZ", nPrebins);
 	measure.add_observable("deltaW2", nPrebins);
 	measure.add_observable("deltaW4", nPrebins);
-	measure.add_observable("avgInvGError", nPrebins / nRebuild);
-	measure.add_observable("maxInvGError", nPrebins / nRebuild);
+	measure.add_observable("avgInvGError", nPrebins);
+	measure.add_observable("maxInvGError", nPrebins);
 	measure.add_vectorobservable("Corr", configSpace.lattice.MaxDistance() + 1, nPrebins);
 }
 void mc::write(const std::string& dir)
