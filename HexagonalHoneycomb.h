@@ -15,7 +15,7 @@ class HexagonalHoneycomb
 	public:
 		typedef Uint_t index_t;
 		typedef Int_t int_t;
-		using site_t = std::tuple < int_t, int_t, int_t > ;
+		using site_t = std::tuple < int_t, int_t, int_t >;
 		using lookup_t = LookUpTable < int_t, index_t, 2 >;
 		using histogram_t = std::vector < index_t >;
 		using index_map_t = std::map < index_t, site_t >;
@@ -24,7 +24,13 @@ class HexagonalHoneycomb
 		
 	public:
 		HexagonalHoneycomb()
+			: neighborList(0)
 		{}
+		
+		~HexagonalHoneycomb()
+		{
+			DeallocateNeighborList();
+		}
 		
 		void Resize(index_t l, RNG& rng)
 		{
@@ -32,6 +38,8 @@ class HexagonalHoneycomb
 			nSites = 6 * L * L;
 			nBonds = 9 * L * L;
 			nDirections = 3;
+			DeallocateNeighborList();
+			AllocateNeighborList();
 			BuildIndexMap();
 			distanceMap.AllocateTable(nSites, nSites);
 			distanceHistogram.resize(nSites, 0);
@@ -81,6 +89,15 @@ class HexagonalHoneycomb
 			return i;
 		}
 
+		index_t ShiftSite(index_t siteIndex, int_t direction, int_t distance = 1)
+		{
+			index_t newSite = siteIndex;
+			for (int_t i = 0; i < distance; ++i)
+				newSite = neighborList[newSite][direction];
+			return newSite;
+		}
+		
+		/*
 		index_t ShiftSite(index_t siteIndex, int_t direction, int_t distance = 1)
 		{
 			site_t newSite = indexMap[siteIndex];
@@ -144,6 +161,7 @@ class HexagonalHoneycomb
 			}
 			return reverseMap[newSite];
 		}
+		*/
 
 		index_t RandomWalk(index_t site, int_t distance, RNG& rng)
 		{
@@ -166,6 +184,28 @@ class HexagonalHoneycomb
 			return static_cast<index_t>(rng() * nSites);
 		}
 	private:
+		void AllocateNeighborList()
+		{
+			neighborList = new index_t*[nSites];
+			for (index_t i = 0; i < nSites; ++i)
+			{
+				neighborList[i] = new index_t[4];
+			}
+			for (index_t i = 0; i < nSites; ++i)
+				for (index_t j = 0; j < 4; ++j)
+					neighborList[i][j] = 0;
+		}
+
+		void DeallocateNeighborList()
+		{
+			if (neighborList == 0)
+				return;
+			for (index_t i = 0; i < nSites; ++i)
+				delete[] neighborList[i];
+			delete[] neighborList;
+			neighborList = 0;
+		}
+		
 		void BuildIndexMap()
 		{
 			index_t cnt = 0;
@@ -218,8 +258,17 @@ class HexagonalHoneycomb
 		void GenerateDistanceHistogram()
 		{
 			for (index_t i = 0; i < nSites; ++i)
+			{
 				for (index_t j = 0; j < nSites; ++j)
+				{
 					distanceHistogram[Distance(i, j)] += 1;
+					if (Distance(i, j) == 1)
+					{
+						neighborList[i][neighborList[i][3]] = j;
+						++neighborList[i][3];
+					}
+				}
+			}
 		}
 		
 	private:
@@ -231,4 +280,5 @@ class HexagonalHoneycomb
 		histogram_t distanceHistogram;
 		index_map_t indexMap;
 		reverse_map_t reverseMap;
+		index_t** neighborList;
 };
