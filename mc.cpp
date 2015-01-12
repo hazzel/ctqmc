@@ -407,17 +407,28 @@ void mc::do_update()
 			proposedUpdates(UpdateType::shiftWorm, state) += 1.0;
 		}
 
+		value_t avgError = 0.0;
+		value_t maxError = 0.0;
+			
 		++rebuildCnt;
 		if (rebuildCnt == nRebuild)
 		{
-			value_t avgError = 0.0;
-			value_t maxError = 0.0;
 			configSpace.updateHandler.StabilizeInvG(avgError, maxError);
 			//configSpace.updateHandler.SymmetrizeInvG();
 			measure.add("avgInvGError", avgError);
 			measure.add("maxInvGError", maxError);
 			rebuildCnt = 0;
 		}
+		/*
+		if (avgError > std::pow(10.0, -3.0))
+		{
+			configSpace.updateHandler.PrintPropagatorMatrix();
+			configSpace.updateHandler.GetVertexHandler().PrintVertices();
+			configSpace.updateHandler.GetVertexHandler().PrintVertexBuffer();
+			std::cout << "------" << std::endl;
+			std::cin.get();
+		}
+		*/
 	}
 	
 	if (!is_thermalized())

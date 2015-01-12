@@ -35,6 +35,7 @@ class UpdateHandler
 		typedef flens::GeMatrix< flens::FullStorage<value_t, flens::ColMajor> > GeMatrix;
 		typedef typename GeMatrix::IndexType IndexType;
 		typedef flens::DenseVector< flens::Array<IndexType> > IndexVector;
+		typedef flens::DenseVector< flens::Array<value_t> > GeVector;
 		
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace)), invG(GeMatrix(0, 0))
@@ -106,6 +107,15 @@ class UpdateHandler
 			M(1, 2) = -M(1, 2) / det;
 			M(2, 1) = -M(2, 1) / det;
 			M(2, 2) = a / det;
+		}
+		
+		//Computes SVD
+		template<typename Matrix, typename Vector>
+		void SVD(Matrix& M, Vector& S)
+		{
+			GeMatrix U(M.numRows(), M.numCols());
+			GeMatrix VT(M.numRows(), M.numCols());
+			flens::lapack::svd(flens::lapack::SVD::Job::All, flens::lapack::SVD::Job::All, M, S, U, VT);
 		}
 
 		template<int_t N>
@@ -537,6 +547,23 @@ class UpdateHandler
 			}
 		}
 		
+		void PrintPropagatorMatrix()
+		{
+			GeMatrix G(invG.numRows(), invG.numCols());
+			vertexHandler.PropagatorMatrix(G);
+			std::cout << "G:" << std::endl;
+			std::cout << G << std::endl;
+			std::cout << "SVD (G):" << std::endl;
+			GeVector S(G.numRows());
+			SVD(G, S);
+			std::cout << S << std::endl;
+			std::cout << "invG:" << std::endl;
+			std::cout << invG << std::endl;
+			std::cout << "SVD (invG):" << std::endl;
+			SVD(invG, S);
+			std::cout << S << std::endl;
+		}
+		
 		VertexHandler_t& GetVertexHandler()
 		{
 			return vertexHandler;
@@ -561,6 +588,11 @@ class UpdateHandler
 				wormA.resize(2 * vertexHandler.Worms(), 2 * vertexHandler.Worms());
 				vertexHandler.WoodburyWorm(wormU, wormV, wormA);
 			}
+		}
+		
+		GeMatrix& InvG()
+		{
+			return invG;
 		}
 		
 	private:
