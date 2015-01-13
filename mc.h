@@ -64,9 +64,8 @@ class mc
 		void do_update();
 		void do_measurement();
 		void BuildUpdateWeightMatrix();
-		void PrintAcceptanceMatrix();
+		void PrintAcceptanceMatrix(std::ostream& out);
 		void SelfBalance();
-		void FinalizeSimulation();
 		
 	private:
 		uint_t& GetWithDef(std::map<uint_t, uint_t>& map, uint_t key, uint_t defval)
