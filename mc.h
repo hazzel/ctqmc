@@ -21,6 +21,9 @@
 #include "parser.h"
 #include "types.h"
 
+//#include <qd/qd_real.h>
+//#include <qd/fpu.h>
+
 class make_string
 {
 public:
@@ -64,7 +67,7 @@ class mc
 		void do_update();
 		void do_measurement();
 		void BuildUpdateWeightMatrix();
-		void PrintAcceptanceMatrix();
+		void PrintAcceptanceMatrix(std::ostream& out);
 		void SelfBalance();
 		void FinalizeSimulation();
 		
@@ -97,4 +100,5 @@ class mc
 		std::map<uint_t, uint_t> exporderHistZ;
 		std::map<uint_t, uint_t> exporderHistW2;
 		double* evalableParameters;
+		unsigned int old_cw;
 };

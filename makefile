@@ -48,8 +48,8 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
         SUPERLP =
 else
         CFLAGS  = -O3 -Wno-deprecated -ffast-math -std=c++11 -fopenmp $(DEFINES)
-        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_OPENBLAS -DALWAYS_USE_CXXLAPACK
-        LDFLAGS = -fopenmp -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -lopenblas
+        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/qd-2.3.15/include -I$(HOME)/FLENS -DWITH_OPENBLAS -DALWAYS_USE_CXXLAPACK
+        LDFLAGS = -fopenmp -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -lopenblas 
         SUPERLP =
 endif
 

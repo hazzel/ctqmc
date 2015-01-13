@@ -51,6 +51,8 @@ void CorrFunction(std::valarray<double>& out, std::vector< std::valarray<double>
 mc::mc(const std::string& dir)
 	: rng(Random()), configSpace(rng)
 {
+	//fpu_fix_start(&old_cw);
+	
 	std::cout.precision(15);
 	std::cout << std::fixed;
 	
@@ -99,6 +101,7 @@ mc::mc(const std::string& dir)
 mc::~mc()
 {
 	delete[] evalableParameters;
+	//fpu_fix_end(&old_cw);
 }
 
 void mc::random_write(odump& d)
@@ -154,6 +157,9 @@ void mc::write(const std::string& dir)
 	ostream.open(ofile.c_str());
 	for (uint_t i = 0; i < std::max(exporderHistZ.size(), exporderHistW2.size()); ++i)
 		ostream << i << " " << GetWithDef(exporderHistZ, i, 0) << " " << GetWithDef(exporderHistW2, i, 0) << std::endl;
+	ostream.close();
+	ostream.open(dir+"probabilities.txt");
+	PrintAcceptanceMatrix(ostream);
 	ostream.close();
 }
 bool mc::read(const std::string& dir)
@@ -278,19 +284,19 @@ void mc::BuildUpdateWeightMatrix()
 	proposedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 }
 
-void mc::PrintAcceptanceMatrix()
+void mc::PrintAcceptanceMatrix(std::ostream& out)
 {
-	std::cout << "Acceptance of updates:" << std::endl;
+	out << "Acceptance of updates:" << std::endl;
 	for (uint_t i = 0; i < nUpdateType; ++i)
 	{
 		for (uint_t j = 0; j < nStateType; ++j)
 		{
 			if (proposedUpdates(i, j) == 0)
-				std::cout << 0 << " ";
+				out << 0 << " ";
 			else
-				std::cout << acceptedUpdates(i, j) / proposedUpdates(i, j) << " ";
+				out << acceptedUpdates(i, j) / proposedUpdates(i, j) << " ";
 		}
-		std::cout << std::endl;
+		out << std::endl;
 	}
 }
 
@@ -298,7 +304,6 @@ void mc::do_update()
 {
 	if (sweep == 0)
 	{
-		std::cout << "Perform simulation..." << std::endl;
 		std::cout << "Thermalization";
 		std::cout.flush();
 	}
@@ -455,9 +460,6 @@ void mc::do_measurement()
 		std::cout << "Worms: " << configSpace.updateHandler.GetVertexHandler().Worms() << std::endl;
 	}
 	
-	if (sweep - nThermalize + 1 == nMeasurements)
-		FinalizeSimulation();
-	
 	measure.add("<w>", configSpace.updateHandler.GetVertexHandler().Worms());
 	uint_t R = 0;
 	value_t sign, c;
@@ -491,9 +493,4 @@ void mc::do_measurement()
 			break;
 	}
 	measure.add("Corr", corrVector);
-}
-
-void mc::FinalizeSimulation()
-{
-	PrintAcceptanceMatrix();
 }
