@@ -16,6 +16,7 @@
 #include "types.h"
 #include "ConfigSpace.h"
 #include "VertexHandler.h"
+#include "MatrixOperation.h"
 
 template <typename T>
 int sgn(T val)
@@ -100,7 +101,7 @@ class UpdateHandler
 
 		//Specialized version does require LU factorization as input
 		template<typename Matrix>
-		void InverseFromLU2x2(Matrix& M, value_t det)
+		void Inverse2x2(Matrix& M, value_t det)
 		{
 			value_t a = M(1, 1);
 			M(1, 1) = M(2, 2) / det;
@@ -132,17 +133,15 @@ class UpdateHandler
 			GeMatrix S = a - v * invGu;
 			IndexVector pivS(n);
 			
-			value_t detS = (N == 1 ? Determinant2x2(S) : Determinant(S, pivS));
+			MatrixOperation<value_t, 2*N> matop;
+			value_t detS = matop.Determinant(S, pivS);
 			value_t preFactor = configSpace.AdditionFactorialRatio(k / 2, N) * prefactor[N-1];
 			value_t acceptRatio = preFactor * detS;
 			if (acceptRatio < 0.0)
 				std::cout << "AddVertices: AcceptRatio: " << acceptRatio << std::endl;
 			if (configSpace.rng() < acceptRatio)
 			{
-				if(N == 1)
-					InverseFromLU2x2(S, detS);
-				else
-					InverseFromLU(S, pivS);
+				matop.Inverse(S, pivS);
 				GeMatrix vinvG = v * invG;
 				GeMatrix R = -S * vinvG;
 				GeMatrix P = invG - invGu * R;
@@ -237,7 +236,8 @@ class UpdateHandler
 			const flens::Underscore<IndexType> _;
 			typename GeMatrix::View S = pInvGp(_(k - n + 1, k), _(k - n + 1, k));
 			IndexVector pivS(n);
-			value_t detS = (N == 1 ? Determinant2x2(S) : Determinant(S, pivS));
+			MatrixOperation<value_t, 2*N> matop;
+			value_t detS = matop.Determinant(S, pivS);
 			value_t preFactor = configSpace.RemovalFactorialRatio(k / 2, N) / prefactor[N-1];
 			value_t acceptRatio = preFactor * detS;
 			if (acceptRatio < 0.0)
@@ -247,10 +247,7 @@ class UpdateHandler
 				typename GeMatrix::View P = pInvGp(_(1, k - n), _(1, k - n));
 				typename GeMatrix::View Q = pInvGp(_(1, k - n), _(k - n + 1, k));
 				typename GeMatrix::View R = pInvGp(_(k - n + 1, k), _(1, k - n));
-				if(N == 1)
-					InverseFromLU2x2(S, detS);
-				else
-					InverseFromLU(S, pivS);
+				matop.Inverse(S, pivS);
 				
 				invG.resize(k - n, k - n);
 				GeMatrix SR = S * R;
