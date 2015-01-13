@@ -48,68 +48,6 @@ class UpdateHandler
 				prefactor.push_back(std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), n));
 		}
 		
-		//Performs an LU factorizatin on M
-		template<typename Matrix>
-		value_t Determinant(Matrix& M)
-		{
-			IndexVector piv(M.numRows());
-			//Calculate LU factorization
-			flens::lapack::trf(M, piv);
-			value_t det = 1.0;
-			for (int_t i = M.firstCol(); i <= M.lastCol(); ++i)
-				det *= M(i, i) * ((piv(i) != i) ? -1.0 : 1.0);
-			return det;
-		}
-		
-		//Performs an LU factorizatin on M
-		template<typename Matrix>
-		value_t Determinant(Matrix& M, IndexVector& piv)
-		{
-			//Calculate LU factorization
-			flens::lapack::trf(M, piv);
-			value_t det = 1.0;
-			for (int_t i = M.firstCol(); i <= M.lastCol(); ++i)
-				det *= M(i, i) * ((piv(i) != i) ? -1.0 : 1.0);
-			return det;
-		}
-
-		//Specialized version does not perform LU factorization
-		template<typename Matrix>
-		value_t Determinant2x2(Matrix& M)
-		{
-			return M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1);
-		}
-
-		//Computes inverse
-		template<typename Matrix>
-		void Inverse(Matrix& M)
-		{
-			IndexVector piv(M.numRows());
-			//Calculate LU factorization
-			flens::lapack::trf(M, piv);
-			//Use LU factorization to calculate inverse
-			flens::lapack::tri(M, piv);
-		}
-		
-		//Computes inverse from LU factorization as input
-		template<typename Matrix>
-		void InverseFromLU(Matrix& M, IndexVector& piv)
-		{
-			//Use LU factorization to calculate inverse
-			flens::lapack::tri(M, piv);
-		}
-
-		//Specialized version does require LU factorization as input
-		template<typename Matrix>
-		void Inverse2x2(Matrix& M, value_t det)
-		{
-			value_t a = M(1, 1);
-			M(1, 1) = M(2, 2) / det;
-			M(1, 2) = -M(1, 2) / det;
-			M(2, 1) = -M(2, 1) / det;
-			M(2, 2) = a / det;
-		}
-		
 		//Computes SVD
 		template<typename Matrix, typename Vector>
 		void SVD(Matrix& M, Vector& S)
@@ -175,13 +113,12 @@ class UpdateHandler
 			GeMatrix invGu = invG * u;
 			GeMatrix invS = a - v * invGu;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), N) * configSpace.AdditionFactorialRatio(k / 2, N);
-			value_t acceptRatio = preFactor * Determinant(invS) * detWormS;
+			MatrixOperation<value_t, 0> matop;
+			value_t acceptRatio = preFactor * matop.Determinant(invS) * detWormS;
 			if (acceptRatio < 0.0)
 			{
 				std::cout << "AddVerticesWithWorm(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
-				std::cout << "Vertices:" << std::endl;
 				vertexHandler.PrintVertices();
-				std::cout << "VertexBuffer:" << std::endl;
 				vertexHandler.PrintVertexBuffer();
 			}
 			if (configSpace.rng() < acceptRatio)
@@ -200,7 +137,7 @@ class UpdateHandler
 				GeMatrix invGu = invG * u_view;
 				GeMatrix vinvG = v_view * invG;
 				GeMatrix S = a_view - v_view * invGu;
-				Inverse(S);
+				matop.Inverse(S);
 				GeMatrix R = -S * vinvG;
 				GeMatrix P = invG - invGu * R;
 				
@@ -213,7 +150,7 @@ class UpdateHandler
 				GeMatrix invGwU = invG * wormU;
 				GeMatrix wormS = wormA - wormV * invGwU;
 
-				detWormS = 1.0 / Determinant(wormS);
+				detWormS = 1.0 / matop.Determinant(wormS);
 				vertexHandler.AddBufferedVertices();
 				return true;
 			}
@@ -294,23 +231,23 @@ class UpdateHandler
 			typename GeMatrix::View Q = pInvGp(_(1, k - n), _(k - n + 1, k));
 			typename GeMatrix::View R = pInvGp(_(k - n + 1, k), _(1, k - n));
 			typename GeMatrix::View S = pInvGp(_(k - n + 1, k), _(k - n + 1, k));
-			Inverse(S);
+			MatrixOperation<value_t, 0> matop;
+			matop.Inverse(S);
 			GeMatrix SR = S * R;
 			GeMatrix newInvG = P - Q * SR;
 			
 			GeMatrix newInvGwU = newInvG * wU;
 			GeMatrix invWormS = wormA - wV * newInvGwU;
-			value_t newDetWormS = 1.0 / Determinant(invWormS);
+			value_t newDetWormS = 1.0 / matop.Determinant(invWormS);
 			
 			GeMatrix newInvGu = newInvG * u;
 			GeMatrix invS = a - v * newInvGu;
 			
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), -N) * configSpace.RemovalFactorialRatio(k / 2, N);
-			value_t acceptRatio = preFactor / newDetWormS / Determinant(invS);;
+			value_t acceptRatio = preFactor / newDetWormS / matop.Determinant(invS);;
 			if (acceptRatio < 0.0)
 			{
 				std::cout << "RemoveVerticesWithWorm(" << N << "): AcceptRatio" << acceptRatio << std::endl;
-				std::cout << "Vertices:" << std::endl;
 				vertexHandler.PrintVertices();
 				std::cout << "IndexBuffer:" << std::endl;
 				vertexHandler.PrintIndexBuffer();
@@ -356,17 +293,16 @@ class UpdateHandler
 			}
 			vertexHandler.WoodburyAddWorm(newWormU, newWormV, newWormA);
 
+			MatrixOperation<value_t, 0> matop;
 			GeMatrix invGwU = invG * newWormU;
 			GeMatrix invS = newWormA - newWormV * invGwU;
-			value_t detInvS = Determinant(invS);
+			value_t detInvS = matop.Determinant(invS);
 			value_t detRatio = detInvS * (l > 0 ? detWormS : 1.0);
 			value_t acceptRatio = preFactor * detRatio * vertexHandler.VertexBufferParity();
 			if (acceptRatio < 0.0)
 			{
 				std::cout << "AddWorm(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
-				std::cout << "Vertices:" << std::endl;
 				vertexHandler.PrintVertices();
-				std::cout << "VertexBuffer:" << std::endl;
 				vertexHandler.PrintVertexBuffer();
 			}
 			if (configSpace.rng() < acceptRatio)
@@ -412,11 +348,12 @@ class UpdateHandler
 			typename GeMatrix::View newWormU = wormUp(_, _(1, l - n));
 			typename GeMatrix::View newWormV = wormVp(_(1, l - n), _);
 			typename GeMatrix::View newWormA = wormAp(_(1, l - n), _(1, l - n));
+			MatrixOperation<value_t, 0> matop;
 			if (l - n > 0)
 			{
 				GeMatrix invGwU = invG * newWormU;
 				GeMatrix invS = newWormA - newWormV * invGwU;
-				detInvS = Determinant(invS);
+				detInvS = matop.Determinant(invS);
 				detRatio = detInvS * detWormS;
 			}
 			else
@@ -428,7 +365,6 @@ class UpdateHandler
 			if (acceptRatio < 0.0)
 			{
 				std::cout << "RemoveWorm(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
-				std::cout << "Vertices:" << std::endl;
 				vertexHandler.PrintVertices();
 				std::cout << "IndexBuffer:" << std::endl;
 				vertexHandler.PrintIndexBuffer();
@@ -466,14 +402,14 @@ class UpdateHandler
 			vertexHandler.ShiftWorm();
 			vertexHandler.WoodburyWorm(shiftedWormU, shiftedWormV, shiftedWormA);
 			
+			MatrixOperation<value_t, 0> matop;
 			GeMatrix invGwU = invG * shiftedWormU;
 			GeMatrix shiftedInvS = shiftedWormA - shiftedWormV * invGwU;
-			value_t detShiftedInvS = Determinant(shiftedInvS);
+			value_t detShiftedInvS = matop.Determinant(shiftedInvS);
 			value_t acceptRatio = detShiftedInvS * detWormS * vertexHandler.WormShiftParity();
 			if (acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
-				std::cout << "Vertices:" << std::endl;
 				vertexHandler.PrintVertices();
 			}
 			if (configSpace.rng() < acceptRatio)
@@ -502,7 +438,8 @@ class UpdateHandler
 				return;
 			GeMatrix stabInvG(invG.numRows(), invG.numCols());
 			vertexHandler.PropagatorMatrix(stabInvG);
-			Inverse(stabInvG);
+			MatrixOperation<value_t, 0> matop;
+			matop.Inverse(stabInvG);
 			invG = stabInvG;
 		}
 		
@@ -512,7 +449,8 @@ class UpdateHandler
 				return;
 			GeMatrix stabInvG(invG.numRows(), invG.numCols());
 			vertexHandler.PropagatorMatrix(stabInvG);
-			Inverse(stabInvG);
+			MatrixOperation<value_t, 0> matop;
+			matop.Inverse(stabInvG);
 			avgError = 0.0;
 			maxError = 0.0;
 			value_t N = stabInvG.numRows() * stabInvG.numRows();
