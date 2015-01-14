@@ -341,7 +341,7 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW2, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice.Sites() * m * configSpace.beta * configSpace.zeta2;
 			if (configSpace.AddRandomWorms<1>(preFactor))
 			{
@@ -352,7 +352,7 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W2toZ, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice.Sites() * m * configSpace.beta * configSpace.zeta2);
 			if (configSpace.RemoveRandomWorms<1>(preFactor))
 			{
@@ -363,7 +363,7 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW4, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice.Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
 			if (configSpace.AddRandomWorms<2>(preFactor))
 			{
@@ -374,7 +374,7 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W4toZ, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice.Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
 			if (configSpace.RemoveRandomWorms<2>(preFactor))
 			{
@@ -385,7 +385,7 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W2toW4, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = (configSpace.lattice.Sites() * m * configSpace.zeta4) / configSpace.zeta2;
 			if (configSpace.AddRandomWorms<1>(preFactor))
 			{
@@ -396,7 +396,7 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W4toW2, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.zeta2 / (configSpace.lattice.Sites() * m * configSpace.zeta4);
 			if (configSpace.RemoveRandomWorms<1>(preFactor))
 			{

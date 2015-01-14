@@ -182,6 +182,7 @@ class ConfigSpace
 			hoppingMatrix.resize(lattice.Sites(), lattice.Sites());
 			lookUpTableG0.AllocateTable(lattice.MaxDistance() + 1, nTimeBins + 1);
 			lookUpTableDtG0.AllocateTable(lattice.MaxDistance() + 1, nTimeBins);
+			nhoodDist = std::min({uint_t(100), lattice.MaxDistance()});
 		}
 		
 		void SetTemperature(value_t T)
@@ -242,4 +243,5 @@ class ConfigSpace
 		matrix_t hoppingMatrix;
 		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
 		Eigen::FullPivLU<matrix_t> invSolver;
+		uint_t nhoodDist;
 };
