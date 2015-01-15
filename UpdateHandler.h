@@ -137,6 +137,7 @@ class UpdateHandler
 				GeMatrix invGu = invG * u_view;
 				GeMatrix vinvG = v_view * invG;
 				GeMatrix S = a_view - v_view * invGu;
+				
 				matop.Inverse(S);
 				GeMatrix R = -S * vinvG;
 				GeMatrix P = invG - invGu * R;
@@ -185,7 +186,6 @@ class UpdateHandler
 				typename GeMatrix::View Q = pInvGp(_(1, k - n), _(k - n + 1, k));
 				typename GeMatrix::View R = pInvGp(_(k - n + 1, k), _(1, k - n));
 				matop.Inverse(S, pivS);
-				
 				invG.resize(k - n, k - n);
 				GeMatrix SR = S * R;
 				invG = P - Q * SR;
@@ -232,6 +232,7 @@ class UpdateHandler
 			typename GeMatrix::View R = pInvGp(_(k - n + 1, k), _(1, k - n));
 			typename GeMatrix::View S = pInvGp(_(k - n + 1, k), _(k - n + 1, k));
 			MatrixOperation<value_t, 0> matop;
+				
 			matop.Inverse(S);
 			GeMatrix SR = S * R;
 			GeMatrix newInvG = P - Q * SR;
@@ -443,7 +444,7 @@ class UpdateHandler
 			invG = stabInvG;
 		}
 		
-		void StabilizeInvG(value_t& avgError, value_t& maxError)
+		void StabilizeInvG(value_t& avgError, value_t& relError)
 		{
 			if (vertexHandler.Vertices() == 0)
 				return;
@@ -452,18 +453,18 @@ class UpdateHandler
 			MatrixOperation<value_t, 0> matop;
 			matop.Inverse(stabInvG);
 			avgError = 0.0;
-			maxError = 0.0;
+			relError = 0.0;
 			value_t N = stabInvG.numRows() * stabInvG.numRows();
 			for (uint_t i = 1; i <= stabInvG.numRows(); ++i)
 			{
 				for (uint_t j = 1; j <= stabInvG.numCols(); ++j)
 				{
 					value_t err = std::abs(invG(i, j) - stabInvG(i, j));
-					if (err > maxError)
-						maxError = err;
 					avgError += err / N;
+					relError += std::abs(stabInvG(i, j));
 				}
 			}
+			relError = avgError * N / relError;
 			invG = stabInvG;
 		}
 		

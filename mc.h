@@ -2,7 +2,6 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include <list>
 #include <utility>
 #include <cmath>
 #include <numeric>

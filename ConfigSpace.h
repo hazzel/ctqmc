@@ -48,16 +48,26 @@ class ConfigSpace
 		
 		ConfigSpace(RNG& rng)
 			:rng(rng), updateHandler(UpdateHandler_t(*this))
-		{}
+		{
+			updateList.resize(10, "");
+		}
 		
 		template<int_t N>
 		bool AddRandomVertices()
 		{
 			updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
 			if (updateHandler.GetVertexHandler().Worms() == 0)
+			{
+				updateList.pop_front();
+				updateList.push_back("AddVertices N=" + std::to_string(N));
 				return updateHandler.template AddVertices<N>();
+			}
 			else
+			{
+				updateList.pop_front();
+				updateList.push_back("AddVerticesWithWorms N=" + std::to_string(N));
 				return updateHandler.template AddVerticesWithWorms<N>();
+			}
 		}
 		
 		template<int_t N>
@@ -67,14 +77,24 @@ class ConfigSpace
 				return false;
 			updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
 			if (updateHandler.GetVertexHandler().Worms() == 0)
+			{
+				updateList.pop_front();
+				updateList.push_back("RemoveVertices N=" + std::to_string(N));
 				return updateHandler.template RemoveVertices<N>();
+			}
 			else
+			{
+				updateList.pop_front();
+				updateList.push_back("RemoveVerticesWithWorms N=" + std::to_string(N));
 				return updateHandler.template RemoveVerticesWithWorms<N>();
+			}
 		}
 		
 		template<int_t N>
 		bool AddRandomWorms(value_t preFactor)
 		{
+			updateList.pop_front();
+			updateList.push_back("AddWorms N=" + std::to_string(N));
 			updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>();
 			return updateHandler.template AddWorms<N>(preFactor);
 		}
@@ -84,12 +104,16 @@ class ConfigSpace
 		{
 			if (updateHandler.GetVertexHandler().Worms() < N)
 				return false;
+			updateList.pop_front();
+			updateList.push_back("RemoveWorms N=" + std::to_string(N));
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 			return updateHandler.template RemoveWorms<N>(preFactor);
 		}
 		
 		bool ShiftWorm()
 		{
+			updateList.pop_front();
+			updateList.push_back("ShiftWorm");
 			return updateHandler.ShiftWorm();
 		}
 		
@@ -101,6 +125,14 @@ class ConfigSpace
 					std::cout << m(i, j) << " ";
 				std::cout << std::endl;
 			}
+		}
+		
+		void PrintLastUpdates()
+		{
+			std::cout << "Last Updates:" << std::endl;
+			for (auto str : updateList)
+				std::cout << str << std::endl;
+			std::cout << std::endl;
 		}
 
 		StateType State() const
@@ -142,12 +174,12 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable()
 		{
+			uint i = lattice.RandomSite(rng);
 			for (uint_t t = 0; t <= nTimeBins; ++t)
 			{
 				matrix_t G0 = EvaluateG0(dtau * t);
-				for (uint_t i = 0; i < lattice.Sites(); ++i)
-					for (uint_t j = 0; j <= i; ++j)
-						lookUpTableG0[lattice.Distance(i, j)][t] = G0(i, j);
+				for (uint_t j = 0; j < lattice.Sites(); ++j)
+					lookUpTableG0[lattice.Distance(i, j)][t] = G0(i, j);
 				if (t % (nTimeBins / 3) == 0)
 				{
 					std::cout << ".";
@@ -156,9 +188,8 @@ class ConfigSpace
 			}
 
 			for (uint_t t = 0; t < nTimeBins; ++t)
-				for (uint_t i = 0; i < lattice.Sites(); ++i)
-					for (uint_t j = 0; j < lattice.Sites(); ++j)
-						lookUpTableDtG0[lattice.Distance(i, j)][t] = (lookUpTableG0[lattice.Distance(i, j)][t + 1] - lookUpTableG0[lattice.Distance(i, j)][t]) / dtau;
+				for (uint_t j = 0; j < lattice.Sites(); ++j)
+					lookUpTableDtG0[lattice.Distance(i, j)][t] = (lookUpTableG0[lattice.Distance(i, j)][t + 1] - lookUpTableG0[lattice.Distance(i, j)][t]) / dtau;
 		}
 
 		void BuildHoppingMatrix()
@@ -244,4 +275,5 @@ class ConfigSpace
 		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
 		Eigen::FullPivLU<matrix_t> invSolver;
 		uint_t nhoodDist;
+		std::list<std::string> updateList;
 };
