@@ -69,16 +69,11 @@ mc::mc(const std::string& dir)
 	configSpace.ResizeGeometry(L);
 	configSpace.BuildHoppingMatrix();
 	std::cout << "Done." << std::endl;
-	std::cout << "Build G0 look up table";
-	std::cout.flush();
-	configSpace.BuildG0LookUpTable();
-	std::cout << "Done." << std::endl;
 	
 	configSpace.zeta2 = param.value_or_default<value_t>("zeta2", 1.0);
 	configSpace.zeta2 /= configSpace.lattice.Sites() * 4.0 / T;
 	configSpace.zeta4 = param.value_or_default<value_t>("zeta4", 1.0);
 	configSpace.zeta4 /= configSpace.lattice.Sites() * 216.0 / T;
-	configSpace.updateHandler.Init();
 	
 	nThermalize = param.value_or_default<uint_t>("THERMALIZATION", 10000);
 	nMeasurements = param.value_or_default<uint_t>("SWEEPS", 10000);
@@ -130,6 +125,12 @@ void mc::init()
 	measure.add_observable("avgInvGError", nPrebins);
 	measure.add_observable("maxInvGError", nPrebins);
 	measure.add_vectorobservable("Corr", configSpace.lattice.MaxDistance() + 1, nPrebins);
+	
+	std::cout << "Build G0 look up table";
+	std::cout.flush();
+	configSpace.BuildG0LookUpTable();
+	std::cout << "Done." << std::endl;
+	configSpace.updateHandler.Init();
 }
 void mc::write(const std::string& dir)
 {
