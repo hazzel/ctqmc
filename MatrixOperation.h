@@ -74,7 +74,7 @@ public:
 			+ M(1,4) * M(2,2) * M(3,1) * M(4,3) - M(1,4) * M(2,3) * M(3,1) * M(4,2) + M(1,4) * M(2,3) * M(3,2) * M(4,1);
 	}
 };
-
+/*
 template<typename T>
 class MatrixOperation<T, 2>
 {
@@ -104,3 +104,4 @@ private:
 	T det;
 	bool validDeterminant = false;
 };
+*/
