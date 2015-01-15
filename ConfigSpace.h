@@ -146,7 +146,7 @@ class ConfigSpace
 			{
 				matrix_t G0 = EvaluateG0(dtau * t);
 				for (uint_t i = 0; i < lattice.Sites(); ++i)
-					for (uint_t j = 0; j < lattice.Sites(); ++j)
+					for (uint_t j = 0; j <= i; ++j)
 						lookUpTableG0[lattice.Distance(i, j)][t] = G0(i, j);
 				if (t % (nTimeBins / 3) == 0)
 				{
