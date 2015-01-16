@@ -35,6 +35,7 @@ class UpdateHandler
 		typedef typename ConfigSpace_t::value_t value_t;
 		typedef VertexHandler<ConfigSpace_t> VertexHandler_t;
 		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M>;
+		template<int_t N> using inv_solver_t = Eigen::FullPivLU< matrix_t<N, N> >;
 		
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
@@ -82,8 +83,8 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				invSolver.compute(invS);
-				matrix_t<n, n> S = invSolver.inverse();
+				inv_solver_t<n> solver(invS);
+				matrix_t<n, n> S = solver.inverse();
 				matrix_t<n, Eigen::Dynamic> R = -S * v * invG;
 				
 				invG.conservativeResize(k + n, k + n);
@@ -139,8 +140,8 @@ class UpdateHandler
 				invS = a;
 				invS.noalias() -= v * invG * u;
 				
-				invSolver.compute(invS);
-				matrix_t<n, n> S = invSolver.inverse();
+				inv_solver_t<n> solver(invS);
+				matrix_t<n, n> S = solver.inverse();
 				matrix_t<Eigen::Dynamic, n> invGu = invG * u;
 				matrix_t<n, Eigen::Dynamic> R = -S * v * invG;
 				
@@ -182,8 +183,8 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				invSolver.compute(S);
-				matrix_t<Eigen::Dynamic, Eigen::Dynamic> invS = invSolver.inverse();
+				inv_solver_t<n> solver(S);
+				matrix_t<n, n> invS = solver.inverse();
 				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
 				invG.conservativeResize(k - n, k - n);
 				
@@ -223,8 +224,8 @@ class UpdateHandler
 			matrix_t<n, n> S = invG.template bottomRightCorner<n, n>();
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> newInvG = invG.topLeftCorner(k - n, k - n);
 			
-			invSolver.compute(S);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invS = invSolver.inverse();
+			inv_solver_t<n> solver(S);
+			matrix_t<n, n> invS = solver.inverse();
 			newInvG.noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
 			value_t newDetWormS = 1.0 / (wormA - wormV.leftCols(k - n) * newInvG * wormU.topRows(k - n)).determinant();
 			
@@ -406,16 +407,16 @@ class UpdateHandler
 		{
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
 			vertexHandler.PropagatorMatrix(G);
-			invSolver.compute(G);
-			invG = invSolver.inverse();
+			inv_solver_t<Eigen::Dynamic> solver(G);
+			invG = solver.inverse();
 		}
 		
 		void StabilizeInvG(value_t& avgError, value_t& maxError)
 		{
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
 			vertexHandler.PropagatorMatrix(G);
-			invSolver.compute(G);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = invSolver.inverse();
+			inv_solver_t<Eigen::Dynamic> solver(G);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = solver.inverse();
 			avgError = 0.0;
 			maxError = 0.0;
 			value_t N = stabInvG.rows() * stabInvG.rows();
@@ -492,6 +493,5 @@ class UpdateHandler
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormV;
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormA;
 		value_t detWormS;
-		Eigen::FullPivLU< matrix_t<Eigen::Dynamic, Eigen::Dynamic> > invSolver;
 		uint_t maxWorms = 2;
 };
