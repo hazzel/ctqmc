@@ -126,12 +126,6 @@ void mc::init()
 	measure.add_observable("avgInvGError", nPrebins);
 	measure.add_observable("relInvGError", nPrebins);
 	measure.add_vectorobservable("Corr", configSpace.lattice.MaxDistance() + 1, nPrebins);
-	
-	std::cout << "Build G0 look up table";
-	std::cout.flush();
-	configSpace.BuildG0LookUpTable();
-	std::cout << "Done." << std::endl;
-	configSpace.updateHandler.Init();
 }
 void mc::write(const std::string& dir)
 {
@@ -306,6 +300,11 @@ void mc::do_update()
 {
 	if (sweep == 0)
 	{
+		std::cout << "Build G0 look up table";
+		std::cout.flush();
+		configSpace.BuildG0LookUpTable();
+		std::cout << "Done." << std::endl;
+		configSpace.updateHandler.Init();
 		std::cout << "Thermalization";
 		std::cout.flush();
 	}
@@ -468,10 +467,7 @@ void mc::do_update()
 		}
 	}
 	if (sweep + 1 == nThermalize)
-	{
-		std::cout << "Done." << std::endl;
-		std::cout.flush();
-	}
+		std::cout << std::endl;
 	++sweep;
 }
 
