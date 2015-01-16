@@ -20,6 +20,7 @@ class HexagonalHoneycomb
 		using histogram_t = std::vector < index_t >;
 		using index_map_t = std::map < index_t, site_t >;
 		using reverse_map_t = std::map < site_t, index_t >;
+		using vector_t = std::vector< index_t >;
 		enum SublatticeType {A, B};
 		
 	public:
@@ -45,6 +46,8 @@ class HexagonalHoneycomb
 			distanceHistogram.resize(nSites, 0);
 			BuildLookUpTable();
 			GenerateDistanceHistogram();
+			numNeighborhood.resize(maxDistance + 1, 0);
+			CountNeighborhood();
 		}
 		
 		int_t Distance(index_t s1, index_t s2)
@@ -83,10 +86,7 @@ class HexagonalHoneycomb
 		
 		index_t MaxDistance()
 		{
-			index_t i = distanceHistogram.size() - 1;
-			while (i >= 0 && distanceHistogram[i] == 0)
-				--i;
-			return i;
+			return maxDistance;
 		}
 
 		index_t ShiftSite(index_t siteIndex, int_t direction, int_t distance = 1)
@@ -96,72 +96,6 @@ class HexagonalHoneycomb
 				newSite = neighborList[newSite][direction];
 			return newSite;
 		}
-		
-		/*
-		index_t ShiftSite(index_t siteIndex, int_t direction, int_t distance = 1)
-		{
-			site_t newSite = indexMap[siteIndex];
-			for (int_t i = 0; i < distance; ++i)
-			{
-				int_t& u = std::get<0>(newSite);
-				int_t& v = std::get<1>(newSite);
-				int_t& w = std::get<2>(newSite);
-				
-				//(-t + 1, t + 1 - p, p) and (t, -p + 1, p - t)
-				//(p, -t + 1, t + 1 - p) and (p - t, t, -p + 1)
-				//(t + 1 - p, p, -t + 1) and (-p + 1, p - t, t)
-				if ((direction == 0) && (u == 1 - L) && (v == 1 + L - w) && (w >= 1))
-				{
-					u = L;
-					v -= L;
-					w -= L;
-				}
-				else if ((direction == 0) && (u == L) && (v <= 0) && (w == -v + 1 - L))
-				{
-					u = 1 - L;
-					v += L;
-					w += L;
-				}
-				else if ((direction == 1) && (u >= 1) && (v == 1 - L) && (w == 1 + L - u))
-				{
-					u -= L;
-					v = L;
-					w -= L;
-				}
-				else if ((direction == 1) && (u == -w + 1 - L) && (v == L) && (w <= 0))
-				{
-					u += L;
-					v = 1 - L;
-					w += L;
-				}
-				else if ((direction == 2) && (u == 1 + L - v) && (v >= 1) && (w == 1 - L))
-				{
-					u -= L;
-					v -= L;
-					w = L;
-				}
-				else if ((direction == 2) && (u <= 0) && (v == -u + 1 - L) && (w == L))
-				{
-					u += L;
-					v += L;
-					w = 1 - L;
-				}
-				else if(direction == 0)
-				{
-					std::get<0>(newSite) += (u + v + w == 1 ? 1 : -1);
-				}
-				else if(direction == 1)
-				{
-					std::get<1>(newSite) += (u + v + w == 1 ? 1 : -1);
-				}
-				else if(direction == 2)
-				{
-					std::get<2>(newSite) += (u + v + w == 1 ? 1 : -1);
-				}
-			}
-			return reverseMap[newSite];
-		}
-		*/
 
 		index_t RandomWalk(index_t site, int_t distance, RNG& rng)
 		{
@@ -176,7 +110,15 @@ class HexagonalHoneycomb
 		
 		index_t FromNeighborhood(index_t site, int_t distance, RNG& rng)
 		{
-			return static_cast<index_t>(rng() * nSites);
+			index_t s = RandomSite(rng);
+			while (Distance(s, site) > distance)
+				s = RandomSite(rng);
+			return s;
+		}
+		
+		index_t NeighborhoodCount(int_t distance)
+		{
+			return numNeighborhood[distance];
 		}
 
 		index_t RandomSite(RNG& rng)
@@ -269,6 +211,19 @@ class HexagonalHoneycomb
 					}
 				}
 			}
+			index_t i = distanceHistogram.size() - 1;
+			while (i >= 0 && distanceHistogram[i] == 0)
+				--i;
+			maxDistance = i;
+		}
+		
+		void CountNeighborhood()
+		{
+			index_t i = 0;
+			for (index_t j = 0; j < nSites; ++j)
+				numNeighborhood[Distance(i, j)] += 1;
+			for (index_t j = 1; j <= maxDistance; ++j)
+				numNeighborhood[j] += numNeighborhood[j-1];
 		}
 		
 	private:
@@ -276,9 +231,11 @@ class HexagonalHoneycomb
 		index_t nSites;
 		index_t nBonds;
 		int_t nDirections;
+		index_t maxDistance;
 		lookup_t distanceMap;
 		histogram_t distanceHistogram;
 		index_map_t indexMap;
 		reverse_map_t reverseMap;
 		index_t** neighborList;
+		vector_t numNeighborhood;
 };

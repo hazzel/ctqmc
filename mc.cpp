@@ -69,16 +69,12 @@ mc::mc(const std::string& dir)
 	configSpace.ResizeGeometry(L);
 	configSpace.BuildHoppingMatrix();
 	std::cout << "Done." << std::endl;
-	std::cout << "Build G0 look up table";
-	std::cout.flush();
-	configSpace.BuildG0LookUpTable();
-	std::cout << "Done." << std::endl;
 	
 	configSpace.zeta2 = param.value_or_default<value_t>("zeta2", 1.0);
-	configSpace.zeta2 /= configSpace.lattice.Sites() * 4.0 / T;
+	value_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
+	configSpace.zeta2 /= m / T;
 	configSpace.zeta4 = param.value_or_default<value_t>("zeta4", 1.0);
-	configSpace.zeta4 /= configSpace.lattice.Sites() * 216.0 / T;
-	configSpace.updateHandler.Init();
+	configSpace.zeta4 /= m * m * m / T;
 	
 	nThermalize = param.value_or_default<uint_t>("THERMALIZATION", 10000);
 	nMeasurements = param.value_or_default<uint_t>("SWEEPS", 10000);
@@ -128,7 +124,7 @@ void mc::init()
 	measure.add_observable("deltaW2", nPrebins);
 	measure.add_observable("deltaW4", nPrebins);
 	measure.add_observable("avgInvGError", nPrebins);
-	measure.add_observable("maxInvGError", nPrebins);
+	measure.add_observable("relInvGError", nPrebins);
 	measure.add_vectorobservable("Corr", configSpace.lattice.MaxDistance() + 1, nPrebins);
 }
 void mc::write(const std::string& dir)
@@ -212,10 +208,10 @@ void mc::BuildUpdateWeightMatrix()
 {
 
 	//ALL TRANSITIONS
-	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
-									4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
-									5.0 / 10.0	,	3.5 / 10.0	,	3.5 / 10.0,
-									6.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
+	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	2.0 / 10.0,
+									4.0 / 10.0	,	3.0 / 10.0	,	4.0 / 10.0,
+									5.0 / 10.0	,	3.5 / 10.0	,	0.0 / 10.0,
+									6.0 / 10.0	,	4.0 / 10.0	,	0.0 / 10.0,
 									8.0 / 10.0	,	0.0			,	0.0,
 									0.0			,	6.0 / 10.0	,	0.0, 
 									10.0 / 10.0	,	0.0			,	0.0,
@@ -304,6 +300,11 @@ void mc::do_update()
 {
 	if (sweep == 0)
 	{
+		std::cout << "Build G0 look up table";
+		std::cout.flush();
+		configSpace.BuildG0LookUpTable();
+		std::cout << "Done." << std::endl;
+		configSpace.updateHandler.Init();
 		std::cout << "Thermalization";
 		std::cout.flush();
 	}
@@ -317,6 +318,7 @@ void mc::do_update()
 		{
 			if (configSpace.AddRandomVertices<1>())
 			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::AddVertex, state) += 1.0;
 			}
 			proposedUpdates(UpdateType::AddVertex, state) += 1.0;
@@ -324,27 +326,37 @@ void mc::do_update()
 		else if (r < updateWeightMatrix(UpdateType::RemoveVertex, state))
 		{
 			if (configSpace.RemoveRandomVertices<1>())
+			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::RemoveVertex, state) += 1.0;
+			}
 			proposedUpdates(UpdateType::RemoveVertex, state) += 1.0;
 		}
 		else if (r < updateWeightMatrix(UpdateType::AddTwoVertices, state))
 		{
 			if (configSpace.AddRandomVertices<2>())
+			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::AddTwoVertices, state) += 1.0;
+			}
 			proposedUpdates(UpdateType::AddTwoVertices, state) += 1.0;
 		}
 		else if (r < updateWeightMatrix(UpdateType::RemoveTwoVertices, state))
 		{
 			if (configSpace.RemoveRandomVertices<2>())
+			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::RemoveTwoVertices, state) += 1.0;
+			}
 			proposedUpdates(UpdateType::RemoveTwoVertices, state) += 1.0;
 		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW2, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice.Sites() * m * configSpace.beta * configSpace.zeta2;
 			if (configSpace.AddRandomWorms<1>(preFactor))
 			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::ZtoW2, state) += 1.0;
 				configSpace.state = StateType::W2;
 			}
@@ -352,10 +364,11 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W2toZ, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice.Sites() * m * configSpace.beta * configSpace.zeta2);
 			if (configSpace.RemoveRandomWorms<1>(preFactor))
 			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W2toZ, state) += 1.0;
 				configSpace.state = StateType::Z;
 			}
@@ -363,10 +376,11 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW4, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice.Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
 			if (configSpace.AddRandomWorms<2>(preFactor))
 			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::ZtoW4, state) += 1.0;
 				configSpace.state = StateType::W4;
 			}
@@ -374,10 +388,11 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W4toZ, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice.Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
 			if (configSpace.RemoveRandomWorms<2>(preFactor))
 			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W4toZ, state) += 1.0;
 				configSpace.state = StateType::Z;
 			}
@@ -385,10 +400,11 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W2toW4, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = (configSpace.lattice.Sites() * m * configSpace.zeta4) / configSpace.zeta2;
 			if (configSpace.AddRandomWorms<1>(preFactor))
 			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W2toW4, state) += 1.0;
 				configSpace.state = StateType::W4;
 			}
@@ -396,10 +412,11 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W4toW2, state))
 		{
-			uint_t m = configSpace.lattice.Sites();
+			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.zeta2 / (configSpace.lattice.Sites() * m * configSpace.zeta4);
 			if (configSpace.RemoveRandomWorms<1>(preFactor))
 			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W4toW2, state) += 1.0;
 				configSpace.state = StateType::W2;
 			}
@@ -408,29 +425,34 @@ void mc::do_update()
 		else if (r < updateWeightMatrix(UpdateType::shiftWorm, state))
 		{
 			if (configSpace.ShiftWorm())
+			{
+				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::shiftWorm, state) += 1.0;
+			}
 			proposedUpdates(UpdateType::shiftWorm, state) += 1.0;
 		}
 
 		value_t avgError = 0.0;
-		value_t maxError = 0.0;
+		value_t relError = 0.0;
 			
 		++rebuildCnt;
 		if (rebuildCnt == nRebuild)
 		{
-			configSpace.updateHandler.StabilizeInvG(avgError, maxError);
+			configSpace.updateHandler.StabilizeInvG(avgError, relError);
 			//configSpace.updateHandler.SymmetrizeInvG();
 			measure.add("avgInvGError", avgError);
-			measure.add("maxInvGError", maxError);
+			measure.add("relInvGError", relError);
 			rebuildCnt = 0;
 		}
 		/*
-		if (avgError > std::pow(10.0, -3.0))
+		if (avgError > std::pow(10.0, -5.0))
 		{
+			std::cout << "Error: " << avgError << std::endl;
+			configSpace.PrintLastUpdates();
 			configSpace.updateHandler.PrintPropagatorMatrix();
 			configSpace.updateHandler.GetVertexHandler().PrintVertices();
-			configSpace.updateHandler.GetVertexHandler().PrintVertexBuffer();
-			std::cout << "------" << std::endl;
+			//configSpace.updateHandler.GetVertexHandler().PrintVertexBuffer();
+			//std::cout << "------" << std::endl;
 			std::cin.get();
 		}
 		*/
@@ -445,10 +467,7 @@ void mc::do_update()
 		}
 	}
 	if (sweep + 1 == nThermalize)
-	{
-		std::cout << "Done." << std::endl;
-		std::cout.flush();
-	}
+		std::cout << std::endl;
 	++sweep;
 }
 

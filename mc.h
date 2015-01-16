@@ -2,7 +2,6 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include <list>
 #include <utility>
 #include <cmath>
 #include <numeric>
@@ -20,6 +19,9 @@
 #include "random.h"
 #include "parser.h"
 #include "types.h"
+
+//#include <qd/qd_real.h>
+//#include <qd/fpu.h>
 
 class make_string
 {
@@ -46,6 +48,7 @@ class mc
 		using value_t = double;
 		using matrix_t = Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic>;
 		using ConfigSpace_t = ConfigSpace<HexagonalHoneycomb<Random, uint_t, int_t>, Random, value_t, matrix_t>;
+		//using ConfigSpace_t = ConfigSpace<RhombicHoneycomb<Random, uint_t, int_t>, Random, value_t, matrix_t>;
 
 		mc(const std::string& dir);
 		~mc();
@@ -66,6 +69,7 @@ class mc
 		void BuildUpdateWeightMatrix();
 		void PrintAcceptanceMatrix(std::ostream& out);
 		void SelfBalance();
+		void FinalizeSimulation();
 		
 	private:
 		uint_t& GetWithDef(std::map<uint_t, uint_t>& map, uint_t key, uint_t defval)
@@ -96,4 +100,5 @@ class mc
 		std::map<uint_t, uint_t> exporderHistZ;
 		std::map<uint_t, uint_t> exporderHistW2;
 		double* evalableParameters;
+		unsigned int old_cw;
 };

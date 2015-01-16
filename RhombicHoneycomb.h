@@ -12,6 +12,7 @@ class RhombicHoneycomb
 	public:
 		typedef Uint_t index_t;
 		typedef Int_t int_t;
+		using vector_t = std::vector< index_t >;
 		enum SublatticeType {A, B};
 		
 		RhombicHoneycomb()
@@ -22,10 +23,14 @@ class RhombicHoneycomb
 			L = l;
 			nSites = 2 * L * L;
 			nBonds = 3 * nSites / 2;
+			DeallocateNeighborList();
+			AllocateNeighborList();
 			distanceMap.AllocateTable(nSites, nSites);
 			distanceHistogram.resize(nSites, 0);
 			BuildLookUpTable(rng);
 			GenerateDistanceHistogram();
+			numNeighborhood.resize(maxDistance + 1, 0);
+			CountNeighborhood();
 		}
 		
 		int_t Distance(index_t s1, index_t s2)
@@ -60,13 +65,69 @@ class RhombicHoneycomb
 		
 		index_t MaxDistance()
 		{
-			index_t i = distanceHistogram.size() - 1;
-			while (i >= 0 && distanceHistogram[i] == 0)
-				--i;
-			return i;
+			return maxDistance;
 		}
 		
-		index_t ShiftSite(index_t site, int_t direction, int_t distance = 1)
+		index_t ShiftSite(index_t siteIndex, int_t direction, int_t distance = 1)
+		{
+			index_t newSite = siteIndex;
+			for (int_t i = 0; i < distance; ++i)
+				newSite = neighborList[newSite][direction];
+			return newSite;
+		}
+		
+		index_t RandomWalk(index_t site, int_t distance, RNG& rng)
+		{
+			index_t newSite = site;
+			for (int j = 0; j < distance; ++j)
+			{
+				int_t newDir = static_cast<int_t>(rng() * nDirections);
+				newSite = ShiftSite(newSite, newDir);
+			}
+			return newSite;
+		}
+
+		index_t FromNeighborhood(index_t site, int_t distance, RNG& rng)
+		{
+			index_t s = RandomSite(rng);
+			while (Distance(s, site) > distance)
+				s = RandomSite(rng);
+			return s;
+		}
+		
+		index_t NeighborhoodCount(int_t distance)
+		{
+			return numNeighborhood[distance];
+		}
+
+		index_t RandomSite(RNG& rng)
+		{
+			return static_cast<index_t>(rng() * nSites);
+		}
+	private:
+		void AllocateNeighborList()
+		{
+			neighborList = new index_t*[nSites];
+			for (index_t i = 0; i < nSites; ++i)
+			{
+				neighborList[i] = new index_t[4];
+			}
+			for (index_t i = 0; i < nSites; ++i)
+				for (index_t j = 0; j < 4; ++j)
+					neighborList[i][j] = 0;
+		}
+
+		void DeallocateNeighborList()
+		{
+			if (neighborList == 0)
+				return;
+			for (index_t i = 0; i < nSites; ++i)
+				delete[] neighborList[i];
+			delete[] neighborList;
+			neighborList = 0;
+		}
+		
+		index_t ShiftSiteHardCode(index_t site, int_t direction, int_t distance = 1)
 		{
 			index_t newSite = site;
 			for (int_t i = 0; i < distance; ++i)
@@ -141,27 +202,6 @@ class RhombicHoneycomb
 			return newSite;
 		}
 		
-		index_t RandomWalk(index_t site, int_t distance, RNG& rng)
-		{
-			index_t newSite = site;
-			for (int j = 0; j < distance; ++j)
-			{
-				int_t newDir = static_cast<int_t>(rng() * nDirections);
-				newSite = ShiftSite(newSite, newDir);
-			}
-			return newSite;
-		}
-
-		index_t FromNeighborhood(index_t site, int_t distance, RNG& rng)
-		{
-			return static_cast<index_t>(rng() * nSites);
-		}
-
-		index_t RandomSite(RNG& rng)
-		{
-			return static_cast<index_t>(rng() * nSites);
-		}
-	private:
 		void BuildLookUpTable(RNG& rng)
 		{
 			for (index_t i = 0; i < nSites; ++i)
@@ -185,7 +225,7 @@ class RhombicHoneycomb
 				index_t pos = i;
 				while (path < shortestPath)
 				{
-					pos = RandomWalk(pos, 1, rng);
+					pos = ShiftSiteHardCode(pos, static_cast<int_t>(rng() * nDirections));
 					++path;
 					if (pos == j)
 					{
@@ -200,8 +240,31 @@ class RhombicHoneycomb
 		void GenerateDistanceHistogram()
 		{
 			for (index_t i = 0; i < nSites; ++i)
+			{
 				for (index_t j = 0; j < nSites; ++j)
+				{
 					distanceHistogram[Distance(i, j)] += 1;
+					if (Distance(i, j) == 1)
+					{
+						neighborList[i][neighborList[i][3]] = j;
+						++neighborList[i][3];
+					}
+				}
+			}
+				
+			index_t i = distanceHistogram.size() - 1;
+			while (i >= 0 && distanceHistogram[i] == 0)
+				--i;
+			maxDistance = i;
+		}
+		
+		void CountNeighborhood()
+		{
+			index_t i = 0;
+			for (index_t j = 0; j < nSites; ++j)
+				numNeighborhood[Distance(i, j)] += 1;
+			for (index_t j = 1; j <= maxDistance; ++j)
+				numNeighborhood[j] += numNeighborhood[j-1];
 		}
 	private:
 		using array_t = std::array < int_t, 3 > ;
@@ -212,6 +275,9 @@ class RhombicHoneycomb
 		index_t nSites;
 		index_t nBonds;
 		int_t nDirections = 3;
+		index_t maxDistance;
 		lookup_t distanceMap;
 		histogram_t distanceHistogram;
+		index_t** neighborList;
+		vector_t numNeighborhood;
 };
