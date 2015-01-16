@@ -374,7 +374,8 @@ class UpdateHandler
 			vertexHandler.ShiftWorm();
 			vertexHandler.WoodburyWorm(shiftedWormU, shiftedWormV, shiftedWormA);
 				
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> shiftedInvS = shiftedWormA - shiftedWormV * invG * shiftedWormU;
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> shiftedInvS = shiftedWormA;
+			shiftedInvS.noalias() -= shiftedWormV * invG * shiftedWormU;
 			value_t detShiftedInvS = shiftedInvS.determinant();
 			value_t acceptRatio = detShiftedInvS * detWormS * vertexHandler.WormShiftParity();
 			if (acceptRatio < 0.0)
