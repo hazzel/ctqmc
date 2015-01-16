@@ -145,7 +145,7 @@ class VertexHandler
 			nodeBuffer[0] = node_t(site, tau);
 			for (uint_t i = 1; i < 2 * N; ++i)
 			{
-				uint_t nsite = configSpace.lattice.FromNeighborhood(site, 0, configSpace.rng);
+				uint_t nsite = configSpace.lattice.FromNeighborhood(site, configSpace.nhoodDist, configSpace.rng);
 				nodeBuffer[i] = node_t(nsite, tau);
 			}
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
