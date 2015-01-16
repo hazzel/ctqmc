@@ -412,36 +412,25 @@ class UpdateHandler
 			invG = solver.inverse();
 		}
 		
-		void StabilizeInvG(value_t& avgError, value_t& maxError)
+		void StabilizeInvG(value_t& avgError, value_t& relError)
 		{
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
 			vertexHandler.PropagatorMatrix(G);
 			inv_solver_t<Eigen::Dynamic> solver(G);
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = solver.inverse();
 			avgError = 0.0;
-			maxError = 0.0;
+			relError = 0.0;
 			value_t N = stabInvG.rows() * stabInvG.rows();
 			for (uint_t i = 0; i < stabInvG.rows(); ++i)
 			{
 				for (uint_t j = 0; j < stabInvG.cols(); ++j)
 				{
 					value_t err = std::abs(invG(i, j) - stabInvG(i, j));
-					if (err > maxError)
-						maxError = err;
 					avgError += err / N;
+					relError += std::abs(stabInvG(i, j));
 				}
 			}
-			/*
-			if (avgError > std::pow(10.0, -3.0))
-			{
-				std::cout << "Error: " << avgError << std::endl;
-				std::cout << "invG:" << std::endl;
-				PrintMatrix(invG);
-				std::cout << "stabInvG:" << std::endl;
-				PrintMatrix(stabInvG);
-				std::cin.get();
-			}
-			*/
+			relError = avgError * N / relError;
 			invG = stabInvG;
 		}
 		

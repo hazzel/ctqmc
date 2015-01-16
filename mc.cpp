@@ -72,9 +72,9 @@ mc::mc(const std::string& dir)
 	
 	configSpace.zeta2 = param.value_or_default<value_t>("zeta2", 1.0);
 	value_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
-	configSpace.zeta2 /= m / T;
+	configSpace.zeta2 /= configSpace.lattice.Sites() * m / T;
 	configSpace.zeta4 = param.value_or_default<value_t>("zeta4", 1.0);
-	configSpace.zeta4 /= m * m * m / T;
+	configSpace.zeta4 /= configSpace.lattice.Sites() * m * m * m / T;
 	
 	nThermalize = param.value_or_default<uint_t>("THERMALIZATION", 10000);
 	nMeasurements = param.value_or_default<uint_t>("SWEEPS", 10000);
