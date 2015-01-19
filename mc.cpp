@@ -376,7 +376,6 @@ void mc::do_update()
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W2toZ, state) += 1.0;
 				configSpace.state = StateType::Z;
-				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::W2toZ, state) += 1.0;
 		}
@@ -389,7 +388,6 @@ void mc::do_update()
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::ZtoW4, state) += 1.0;
 				configSpace.state = StateType::W4;
-				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::ZtoW4, state) += 1.0;
 		}
@@ -402,7 +400,6 @@ void mc::do_update()
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W4toZ, state) += 1.0;
 				configSpace.state = StateType::Z;
-				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::W4toZ, state) += 1.0;
 		}
@@ -415,7 +412,6 @@ void mc::do_update()
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W2toW4, state) += 1.0;
 				configSpace.state = StateType::W4;
-				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::W2toW4, state) += 1.0;
 		}
@@ -428,7 +424,6 @@ void mc::do_update()
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W4toW2, state) += 1.0;
 				configSpace.state = StateType::W2;
-				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::W4toW2, state) += 1.0;
 		}
@@ -438,7 +433,6 @@ void mc::do_update()
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::shiftWorm, state) += 1.0;
-				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::shiftWorm, state) += 1.0;
 		}

@@ -9,10 +9,10 @@ from ParseDataOutput import *
 
 color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-L = ["2", "3", "4", "5"]#, "6", "7", "9"]
+L = ["2", "3", "4", "5", "6"]#, "7", "9"]
 for l in range(len(L)):
-	filelist = glob.glob("out/job-*-L" + L[l] + "-T0.46-hex.task*.out")
-	#filelist = glob.glob("out/job-*-L" + L[l] + "-V2.0-hex.task*.out")
+	#filelist = glob.glob("out/job-*-L" + L[l] + "-T0.46-hex.task*.out")
+	filelist = glob.glob("out/job-*-L" + L[l] + "-V2.0-hex.task*.out")
 	if len(filelist) == 0:
 		continue
 	filelist.sort()
@@ -24,7 +24,7 @@ for l in range(len(L)):
 			continue
 		plist = ParseParameters(filelist[i])
 		elist = ParseEvalables(filelist[i])
-		x.append(float(plist["V"]))
+		x.append(float(plist["T"]))
 		y.append( ArrangePlot(elist, "Binder")[0][0] )
 		yerr.append( ArrangePlot(elist, "Binder")[1][0] )
 		y = [i for j, i in sorted(zip(x, y))]
@@ -32,7 +32,7 @@ for l in range(len(L)):
 	
 	plt.figure(1)
 	plt.title("Binder ratios")
-	plt.xlabel("V")
+	plt.xlabel("T")
 	plt.ylabel("B")
 	plt.plot(np.array(x), np.array(y), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 	plt.errorbar(np.array(x), np.array(y), yerr=np.array(yerr), color=color_cycle[l])
