@@ -159,17 +159,14 @@ class ConfigSpace
 			}
 		}
 
-		matrix_t EvaluateG0(value_t tau)
+		void EvaluateG0(value_t tau, matrix_t& g0)
 		{
-			
-			matrix_t D = matrix_t::Zero(hoppingMatrix.rows(), hoppingMatrix.cols());
-			for (uint_t i = 0; i < D.cols(); ++i)
+			for (uint_t i = 0; i < hopDiag.cols(); ++i)
 			{
 				value_t ev = evSolver.eigenvalues()[i];
-				D(i, i) = std::exp(-tau * ev) / (1.0 + std::exp(-beta * ev));
+				hopDiag(i, i) = std::exp(-tau * ev) / (1.0 + std::exp(-beta * ev));
 			}
-			matrix_t g0 = evSolver.eigenvectors() * D * evSolver.eigenvectors().adjoint();
-			return g0;
+			g0 = hopEV * hopDiag * hopEVT;
 		}
 		
 		void BuildG0LookUpTable()
@@ -177,7 +174,8 @@ class ConfigSpace
 			uint i = lattice.RandomSite(rng);
 			for (uint_t t = 0; t <= nTimeBins; ++t)
 			{
-				matrix_t G0 = EvaluateG0(dtau * t);
+				matrix_t G0(hopDiag.rows(), hopDiag.cols());
+				EvaluateG0(dtau * t, G0);
 				for (uint_t j = 0; j < lattice.Sites(); ++j)
 					lookUpTableG0[lattice.Distance(i, j)][t] = G0(i, j);
 				if (t % (nTimeBins / 3) == 0)
@@ -205,6 +203,9 @@ class ConfigSpace
 				}
 			}
 			evSolver.compute(hoppingMatrix);
+			hopDiag = matrix_t::Zero(hoppingMatrix.rows(), hoppingMatrix.cols());
+			hopEV = evSolver.eigenvectors();
+			hopEVT = evSolver.eigenvectors().adjoint();
 		}
 
 		void ResizeGeometry(uint_t l)
@@ -273,6 +274,9 @@ class ConfigSpace
 		value_t dtau;
 		StateType state = StateType::Z;
 		matrix_t hoppingMatrix;
+		matrix_t hopDiag;
+		matrix_t hopEV;
+		matrix_t hopEVT;
 		Eigen::SelfAdjointEigenSolver<matrix_t> evSolver;
 		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
 		Eigen::FullPivLU<matrix_t> invSolver;
