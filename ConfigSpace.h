@@ -161,14 +161,13 @@ class ConfigSpace
 
 		matrix_t EvaluateG0(value_t tau)
 		{
-			Eigen::SelfAdjointEigenSolver<matrix_t> solver(hoppingMatrix);
 			matrix_t D = matrix_t::Zero(hoppingMatrix.rows(), hoppingMatrix.cols());
 			for (uint_t i = 0; i < D.cols(); ++i)
 			{
-				value_t ev = solver.eigenvalues()[i];
+				value_t ev = evSolver.eigenvalues()[i];
 				D(i, i) = std::exp(-tau * ev) / (1.0 + std::exp(-beta * ev));
 			}
-			matrix_t g0 = solver.eigenvectors() * D * solver.eigenvectors().adjoint();
+			matrix_t g0 = evSolver.eigenvectors() * D * evSolver.eigenvectors().adjoint();
 			return g0;
 		}
 		
@@ -204,6 +203,7 @@ class ConfigSpace
 						hoppingMatrix(i, j) = 0;
 				}
 			}
+			evSolver.compute(hoppingMatrix);
 		}
 
 		void ResizeGeometry(uint_t l)
@@ -272,6 +272,7 @@ class ConfigSpace
 		value_t dtau;
 		StateType state = StateType::Z;
 		matrix_t hoppingMatrix;
+		Eigen::SelfAdjointEigenSolver<matrix_t> evSolver;
 		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
 		Eigen::FullPivLU<matrix_t> invSolver;
 		uint_t nhoodDist;
