@@ -41,7 +41,6 @@ class RhombicHoneycomb
 					std::cout << neighborList[i][j] << " ";
 				std::cout << std::endl;
 			}
-			std::cin.get();
 		}
 		
 		int_t Distance(index_t s1, index_t s2)

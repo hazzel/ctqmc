@@ -427,10 +427,9 @@ class UpdateHandler
 				{
 					value_t err = std::abs(invG(i, j) - stabInvG(i, j));
 					avgError += err / N;
-					relError += std::abs(stabInvG(i, j));
+					relError += err / std::abs(stabInvG(i, j)) / N;
 				}
 			}
-			relError = avgError * N / relError;
 			invG = stabInvG;
 		}
 		
