@@ -39,6 +39,12 @@ class VertexHandler
 		typedef typename ConfigSpace_t::value_t value_t;
 		typedef Node<uint_t, value_t> node_t;
 		
+		struct Configuration
+		{
+			std::vector<node_t> nodes;
+			std::vector<node_t> wormNodes;
+		};
+		
 		VertexHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace)
 		{
@@ -415,6 +421,18 @@ class VertexHandler
 				++i;
 			}
 		}
+
+		void SaveCheckpoint()
+		{
+			lastCheckpoint.nodes = nodes;
+			lastCheckpoint.wormNodes = wormNodes;
+		}
+		
+		void RestoreCheckpoint()
+		{
+			nodes = lastCheckpoint.nodes;
+			wormNodes = lastCheckpoint.wormNodes;
+		}
 		
 		void Serialize(odump& d)
 		{
@@ -429,6 +447,7 @@ class VertexHandler
 		}
 	private:
 		ConfigSpace_t& configSpace;
+		Configuration lastCheckpoint;
 		std::vector<node_t> nodes;
 		std::vector<node_t> wormNodes;
 		std::vector<node_t> nodeBuffer;

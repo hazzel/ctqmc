@@ -38,6 +38,15 @@ class UpdateHandler
 		typedef flens::DenseVector< flens::Array<IndexType> > IndexVector;
 		typedef flens::DenseVector< flens::Array<value_t> > GeVector;
 		
+		struct Matrices
+		{
+			GeMatrix invG;
+			GeMatrix wormU;
+			GeMatrix wormV;
+			GeMatrix wormA;
+			value_t detWormS;
+		};
+		
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace)), invG(GeMatrix(0, 0))
 		{}
@@ -433,21 +442,22 @@ class UpdateHandler
 			SymmetrizeMatrix(invG);
 		}
 
-		void StabalizeInvG()
+		value_t StabalizeInvG()
 		{
 			if (vertexHandler.Vertices() == 0)
-				return;
+				return 0.0;
 			GeMatrix stabInvG(invG.numRows(), invG.numCols());
 			vertexHandler.PropagatorMatrix(stabInvG);
 			MatrixOperation<value_t, 0> matop;
 			matop.Inverse(stabInvG);
 			invG = stabInvG;
+			return 0.0;
 		}
 		
-		void StabilizeInvG(value_t& avgError, value_t& relError)
+		value_t StabilizeInvG(value_t& avgError, value_t& relError)
 		{
 			if (vertexHandler.Vertices() == 0)
-				return;
+				return 0.0;
 			GeMatrix stabInvG(invG.numRows(), invG.numCols());
 			vertexHandler.PropagatorMatrix(stabInvG);
 			MatrixOperation<value_t, 0> matop;
@@ -466,6 +476,7 @@ class UpdateHandler
 			}
 			relError = avgError * N / relError;
 			invG = stabInvG;
+			return 0.0;
 		}
 		
 		template<typename Matrix>
@@ -498,6 +509,28 @@ class UpdateHandler
 			std::cout << "SVD (invG):" << std::endl;
 			SVD(invG, S);
 			std::cout << S << std::endl;
+		}
+		
+		void SaveCheckpoint()
+		{
+			lastCheckpoint.invG = invG;
+			lastCheckpoint.wormU = wormU;
+			lastCheckpoint.wormV = wormV;
+			lastCheckpoint.wormA = wormA;
+			lastCheckpoint.detWormS = detWormS;
+			vertexHandler.SaveCheckpoint();
+		}
+		
+		void RestoreCheckpoint()
+		{
+			invG = lastCheckpoint.invG;
+			wormU = lastCheckpoint.wormU;
+			wormV = lastCheckpoint.wormV;
+			wormA = lastCheckpoint.wormA;
+			detWormS = lastCheckpoint.detWormS;
+			vertexHandler.RestoreCheckpoint();
+			std::cout << std::endl;
+			PrintMatrix(invG);
 		}
 		
 		VertexHandler_t& GetVertexHandler()
@@ -533,6 +566,7 @@ class UpdateHandler
 		
 	private:
 		ConfigSpace_t& configSpace;
+		Matrices lastCheckpoint;
 		VertexHandler_t vertexHandler;
 		GeMatrix invG;
 		GeMatrix wormU;

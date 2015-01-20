@@ -171,13 +171,25 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable()
 		{
-			uint i = lattice.RandomSite(rng);
+			uint_t i = lattice.RandomSite(rng);
+			std::vector<uint_t> sites;
+			for (uint_t r = 0; r <= lattice.MaxDistance(); ++r)
+			{
+				for (int_t j = 0; j < lattice.Sites(); ++j)
+				{
+					if (lattice.Distance(i, j) == r)
+					{
+						sites.push_back(j);
+						break;
+					}
+				}
+			}
+			matrix_t G0(hopDiag.rows(), hopDiag.cols());
 			for (uint_t t = 0; t <= nTimeBins; ++t)
 			{
-				matrix_t G0(hopDiag.rows(), hopDiag.cols());
 				EvaluateG0(dtau * t, G0);
-				for (uint_t j = 0; j < lattice.Sites(); ++j)
-					lookUpTableG0[lattice.Distance(i, j)][t] = G0(i, j);
+				for (uint_t r = 0; r < sites.size(); ++r)
+					lookUpTableG0[r][t] = G0(i, sites[r]);
 				if (t % (nTimeBins / 3) == 0)
 				{
 					std::cout << ".";
@@ -186,8 +198,8 @@ class ConfigSpace
 			}
 
 			for (uint_t t = 0; t < nTimeBins; ++t)
-				for (uint_t j = 0; j < lattice.Sites(); ++j)
-					lookUpTableDtG0[lattice.Distance(i, j)][t] = (lookUpTableG0[lattice.Distance(i, j)][t + 1] - lookUpTableG0[lattice.Distance(i, j)][t]) / dtau;
+				for (uint_t r = 0; r < sites.size(); ++r)
+					lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
 		}
 
 		void BuildHoppingMatrix()
