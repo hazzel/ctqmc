@@ -39,7 +39,7 @@ APPMCLL = $(HOME)/mc/ctqmc/
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DEIGEN_USE_MKL_ALL -DNDEBUG $(FLAGS_OPENMP) $(DEFINES)
 	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-	LDFLAGS = $(FLAGS_OPENMP)
+	LDFLAGS = $(FLAGS_MATH_LINKER) $(FLAGS_OPENMP)
 	SUPERLP = 
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
         CFLAGS  = -O3 -Wno-deprecated -std=c++11 -fopenmp $(DEFINES)
