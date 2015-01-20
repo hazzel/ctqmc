@@ -52,7 +52,7 @@ class ConfigSpace
 			updateList.resize(10, "");
 		}
 		
-		template<int_t N>
+		template<int_t N, int_t W>
 		bool AddRandomVertices()
 		{
 			updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
@@ -66,11 +66,11 @@ class ConfigSpace
 			{
 				updateList.pop_front();
 				updateList.push_back("AddVerticesWithWorms N=" + std::to_string(N));
-				return updateHandler.template AddVerticesWithWorms<N>();
+				return updateHandler.template AddVerticesWithWorms<N, W>();
 			}
 		}
 		
-		template<int_t N>
+		template<int_t N, int_t W>
 		bool RemoveRandomVertices()
 		{
 			if (updateHandler.GetVertexHandler().Vertices() < N)
@@ -86,20 +86,20 @@ class ConfigSpace
 			{
 				updateList.pop_front();
 				updateList.push_back("RemoveVerticesWithWorms N=" + std::to_string(N));
-				return updateHandler.template RemoveVerticesWithWorms<N>();
+				return updateHandler.template RemoveVerticesWithWorms<N, W>();
 			}
 		}
 		
-		template<int_t N>
+		template<int_t N, int_t W>
 		bool AddRandomWorms(value_t preFactor)
 		{
 			updateList.pop_front();
 			updateList.push_back("AddWorms N=" + std::to_string(N));
 			updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>();
-			return updateHandler.template AddWorms<N>(preFactor);
+			return updateHandler.template AddWorms<N, W>(preFactor);
 		}
 		
-		template<int_t N>
+		template<int_t N, int_t W>
 		bool RemoveRandomWorms(value_t preFactor)
 		{
 			if (updateHandler.GetVertexHandler().Worms() < N)
@@ -107,14 +107,15 @@ class ConfigSpace
 			updateList.pop_front();
 			updateList.push_back("RemoveWorms N=" + std::to_string(N));
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
-			return updateHandler.template RemoveWorms<N>(preFactor);
+			return updateHandler.template RemoveWorms<N, W>(preFactor);
 		}
 		
+		template<int_t W>
 		bool ShiftWorm()
 		{
 			updateList.pop_front();
 			updateList.push_back("ShiftWorm");
-			return updateHandler.ShiftWorm();
+			return updateHandler.ShiftWorm<W>();
 		}
 		
 		void PrintMatrix(const matrix_t& m)

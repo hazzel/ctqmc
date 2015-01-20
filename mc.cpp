@@ -331,7 +331,14 @@ void mc::do_update()
 		
 		if (r < updateWeightMatrix(UpdateType::AddVertex, state))
 		{
-			if (configSpace.AddRandomVertices<1>())
+			bool result;
+			if (state == StateType::Z)
+				result = configSpace.AddRandomVertices<1, 0>();
+			else if (state == StateType::W2)
+				result = configSpace.AddRandomVertices<1, 1>();
+			else if (state == StateType::W4)
+				result = configSpace.AddRandomVertices<1, 2>();
+			if (result)
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::AddVertex, state) += 1.0;
@@ -341,7 +348,14 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::RemoveVertex, state))
 		{
-			if (configSpace.RemoveRandomVertices<1>())
+			bool result;
+			if (state == StateType::Z)
+				result = configSpace.RemoveRandomVertices<1, 0>();
+			else if (state == StateType::W2)
+				result = configSpace.RemoveRandomVertices<1, 1>();
+			else if (state == StateType::W4)
+				result = configSpace.RemoveRandomVertices<1, 2>();
+			if (result)
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::RemoveVertex, state) += 1.0;
@@ -351,7 +365,14 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::AddTwoVertices, state))
 		{
-			if (configSpace.AddRandomVertices<2>())
+			bool result;
+			if (state == StateType::Z)
+				result = configSpace.AddRandomVertices<2, 0>();
+			else if (state == StateType::W2)
+				result = configSpace.AddRandomVertices<2, 1>();
+			else if (state == StateType::W4)
+				result = configSpace.AddRandomVertices<2, 2>();
+			if (result)
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::AddTwoVertices, state) += 1.0;
@@ -361,7 +382,14 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::RemoveTwoVertices, state))
 		{
-			if (configSpace.RemoveRandomVertices<2>())
+			bool result;
+			if (state == StateType::Z)
+				result = configSpace.RemoveRandomVertices<2, 0>();
+			else if (state == StateType::W2)
+				result = configSpace.RemoveRandomVertices<2, 1>();
+			else if (state == StateType::W4)
+				result = configSpace.RemoveRandomVertices<2, 2>();
+			if (result)
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::RemoveTwoVertices, state) += 1.0;
@@ -373,7 +401,7 @@ void mc::do_update()
 		{
 			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice.Sites() * m * configSpace.beta * configSpace.zeta2;
-			if (configSpace.AddRandomWorms<1>(preFactor))
+			if (configSpace.AddRandomWorms<1, 0>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::ZtoW2, state) += 1.0;
@@ -385,7 +413,7 @@ void mc::do_update()
 		{
 			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice.Sites() * m * configSpace.beta * configSpace.zeta2);
-			if (configSpace.RemoveRandomWorms<1>(preFactor))
+			if (configSpace.RemoveRandomWorms<1, 1>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W2toZ, state) += 1.0;
@@ -397,7 +425,7 @@ void mc::do_update()
 		{
 			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice.Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
-			if (configSpace.AddRandomWorms<2>(preFactor))
+			if (configSpace.AddRandomWorms<2, 0>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::ZtoW4, state) += 1.0;
@@ -409,7 +437,7 @@ void mc::do_update()
 		{
 			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice.Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
-			if (configSpace.RemoveRandomWorms<2>(preFactor))
+			if (configSpace.RemoveRandomWorms<2, 2>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W4toZ, state) += 1.0;
@@ -421,7 +449,7 @@ void mc::do_update()
 		{
 			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = (configSpace.lattice.Sites() * m * configSpace.zeta4) / configSpace.zeta2;
-			if (configSpace.AddRandomWorms<1>(preFactor))
+			if (configSpace.AddRandomWorms<1, 1>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W2toW4, state) += 1.0;
@@ -433,7 +461,7 @@ void mc::do_update()
 		{
 			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.zeta2 / (configSpace.lattice.Sites() * m * configSpace.zeta4);
-			if (configSpace.RemoveRandomWorms<1>(preFactor))
+			if (configSpace.RemoveRandomWorms<1, 2>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::W4toW2, state) += 1.0;
@@ -443,7 +471,14 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::shiftWorm, state))
 		{
-			if (configSpace.ShiftWorm())
+			bool result;
+			if (state == StateType::Z)
+				result = configSpace.ShiftWorm<0>();
+			else if (state == StateType::W2)
+				result = configSpace.ShiftWorm<1>();
+			else if (state == StateType::W4)
+				result = configSpace.ShiftWorm<2>();
+			if (result)
 			{
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::shiftWorm, state) += 1.0;
