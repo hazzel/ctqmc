@@ -125,6 +125,7 @@ void mc::init()
 	measure.add_observable("deltaW4", nPrebins);
 	measure.add_observable("avgInvGError", nPrebins);
 	measure.add_observable("relInvGError", nPrebins);
+	measure.add_observable("condition", nPrebins);
 	measure.add_vectorobservable("Corr", configSpace.lattice.MaxDistance() + 1, nPrebins);
 }
 void mc::write(const std::string& dir)
@@ -206,6 +207,20 @@ bool mc::is_thermalized()
 
 void mc::BuildUpdateWeightMatrix()
 {
+/*
+	//ALL TRANSITIONS
+	updateWeightMatrix <<	1.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+									2.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+									3.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+									4.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+									7.0 / 10.0	,	0.0			,	0.0,
+									0.0			,	3.0 / 10.0	,	0.0, 
+									10.0 / 10.0	,	0.0			,	0.0,
+									0.0			,	0.0			,	3.0 / 10.0,
+									0.0			,	6.0 / 10.0	,	0.0,
+									0.0			,	0.0			,	6.0 / 10.0,
+									0.0			,	10.0 / 10.0	,	10.0 / 10.0;
+*/
 
 	//ALL TRANSITIONS
 	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	2.0 / 10.0,
@@ -264,8 +279,8 @@ void mc::BuildUpdateWeightMatrix()
 */
 /*
 	//ONLY Z
-	updateWeightMatrix <<	1.0 / 4.0,	0.0		,	0.0,
-									2.0 / 4.0,	0.0		,	0.0,
+	updateWeightMatrix <<	2.0 / 4.0,	0.0		,	0.0,
+									4.0 / 4.0,	0.0		,	0.0,
 									3.0 / 4.0,	0.0		,	0.0,
 									4.0 / 4.0,	0.0		,	0.0,
 									0.0		,	0.0		,	0.0,
@@ -363,7 +378,6 @@ void mc::do_update()
 				configSpace.updateList.back() += " - success.";
 				acceptedUpdates(UpdateType::ZtoW2, state) += 1.0;
 				configSpace.state = StateType::W2;
-				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::ZtoW2, state) += 1.0;
 		}
@@ -442,24 +456,12 @@ void mc::do_update()
 			
 		if (rebuildCnt == nRebuild)
 		{
-			configSpace.updateHandler.StabilizeInvG(avgError, relError);
-			//configSpace.updateHandler.SymmetrizeInvG();
+			double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
 			measure.add("avgInvGError", avgError);
 			measure.add("relInvGError", relError);
+			measure.add("condition", cond);
 			rebuildCnt = 0;
 		}
-		/*
-		if (avgError > std::pow(10.0, -5.0))
-		{
-			std::cout << "Error: " << avgError << std::endl;
-			configSpace.PrintLastUpdates();
-			configSpace.updateHandler.PrintPropagatorMatrix();
-			configSpace.updateHandler.GetVertexHandler().PrintVertices();
-			//configSpace.updateHandler.GetVertexHandler().PrintVertexBuffer();
-			//std::cout << "------" << std::endl;
-			std::cin.get();
-		}
-		*/
 	}
 	
 	if (!is_thermalized())

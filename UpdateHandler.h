@@ -37,6 +37,15 @@ class UpdateHandler
 		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M>;
 		template<int_t N> using inv_solver_t = Eigen::FullPivLU< matrix_t<N, N> >;
 		
+		struct Matrices
+		{
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormU;
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormV;
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormA;
+			value_t detWormS;
+		};
+		
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
 		{}
@@ -85,6 +94,13 @@ class UpdateHandler
 			{
 				inv_solver_t<n> solver(invS);
 				matrix_t<n, n> S = solver.inverse();
+				
+				/*
+				Eigen::JacobiSVD< matrix_t<n, n> > svd(invS, Eigen::ComputeFullU | Eigen::ComputeFullV);
+				matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
+				condAW.push_back(sv(0) / sv(n-1));
+				*/
+				
 				matrix_t<n, Eigen::Dynamic> R = -S * v * invG;
 				
 				invG.conservativeResize(k + n, k + n);
@@ -136,13 +152,17 @@ class UpdateHandler
 				u.conservativeResize(k, n);
 				v.conservativeResize(n, k);
 				a.conservativeResize(n, n);
-				invS.resize(n, n);
-				invS = a;
-				invS.noalias() -= v * invG * u;
+				matrix_t<n, n> invS = a;
+				matrix_t<Eigen::Dynamic, n> invGu = invG * u;
+				invS.noalias() -= v * invGu;
 				
 				inv_solver_t<n> solver(invS);
 				matrix_t<n, n> S = solver.inverse();
-				matrix_t<Eigen::Dynamic, n> invGu = invG * u;
+				/*
+				Eigen::JacobiSVD< matrix_t<n, n> > svd(invS, Eigen::ComputeFullU | Eigen::ComputeFullV);
+				matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
+				condAW.push_back(sv(0) / sv(n-1));
+				*/
 				matrix_t<n, Eigen::Dynamic> R = -S * v * invG;
 				
 				invG.conservativeResize(k + n, k + n);
@@ -185,6 +205,11 @@ class UpdateHandler
 			{
 				inv_solver_t<n> solver(S);
 				matrix_t<n, n> invS = solver.inverse();
+				/*
+				Eigen::JacobiSVD< matrix_t<n, n> > svd(S, Eigen::ComputeFullU | Eigen::ComputeFullV);
+				matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
+				condRW.push_back(sv(0) / sv(n-1));
+				*/
 				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
 				invG.conservativeResize(k - n, k - n);
 				
@@ -226,6 +251,11 @@ class UpdateHandler
 			
 			inv_solver_t<n> solver(S);
 			matrix_t<n, n> invS = solver.inverse();
+			/*
+			Eigen::JacobiSVD< matrix_t<n, n> > svd(S, Eigen::ComputeFullU | Eigen::ComputeFullV);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
+			condRW.push_back(sv(0) / sv(n-1));
+			*/
 			newInvG.noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
 			value_t newDetWormS = 1.0 / (wormA - wormV.leftCols(k - n) * newInvG * wormU.topRows(k - n)).determinant();
 			
@@ -406,14 +436,18 @@ class UpdateHandler
 
 		void StabalizeInvG()
 		{
+			if (invG.rows() == 0)
+				return;
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
 			vertexHandler.PropagatorMatrix(G);
 			inv_solver_t<Eigen::Dynamic> solver(G);
 			invG = solver.inverse();
 		}
 		
-		void StabilizeInvG(value_t& avgError, value_t& relError)
+		value_t StabilizeInvG(value_t& avgError, value_t& relError)
 		{
+			if (invG.rows() == 0)
+				return 0.0;
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
 			vertexHandler.PropagatorMatrix(G);
 			inv_solver_t<Eigen::Dynamic> solver(G);
@@ -427,10 +461,32 @@ class UpdateHandler
 				{
 					value_t err = std::abs(invG(i, j) - stabInvG(i, j));
 					avgError += err / N;
-					relError += err / std::abs(stabInvG(i, j)) / N;
+					relError += std::abs(stabInvG(i, j)) / N;
 				}
+				relError = avgError / relError;
 			}
 			invG = stabInvG;
+			return 0.0;
+			/*
+			if (avgError > std::pow(10.0, -6.0))
+			{
+				std::cout << "Error: " << avgError << endl;
+				std::cout << "AddWithWorm:" << std::endl;
+				for (auto v : condAW)
+					std::cout << v << std::endl;
+				std::cout << "RemoveWithWorm:" << std::endl;
+				for (auto v : condRW)
+					std::cout << v << std::endl;
+				std::cin.get();
+			}
+			
+			condAW.clear();
+			condRW.clear();
+			Eigen::JacobiSVD< matrix_t<Eigen::Dynamic, Eigen::Dynamic> > svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
+			invG = stabInvG;
+			return sv(0) / sv(G.rows()-1);
+			*/
 		}
 		
 		template<typename Matrix>
@@ -446,6 +502,28 @@ class UpdateHandler
 				}
 				M(i, i) = 0.;
 			}
+		}
+		
+		void SaveCheckpoint()
+		{
+			lastCheckpoint.invG = invG;
+			lastCheckpoint.wormU = wormU;
+			lastCheckpoint.wormV = wormV;
+			lastCheckpoint.wormA = wormA;
+			lastCheckpoint.detWormS = detWormS;
+			vertexHandler.SaveCheckpoint();
+		}
+		
+		void RestoreCheckpoint()
+		{
+			invG = lastCheckpoint.invG;
+			wormU = lastCheckpoint.wormU;
+			wormV = lastCheckpoint.wormV;
+			wormA = lastCheckpoint.wormA;
+			detWormS = lastCheckpoint.detWormS;
+			vertexHandler.RestoreCheckpoint();
+			std::cout << std::endl;
+			PrintMatrix(invG);
 		}
 		
 		VertexHandler_t& GetVertexHandler()
@@ -476,6 +554,7 @@ class UpdateHandler
 		
 	private:
 		ConfigSpace_t& configSpace;
+		Matrices lastCheckpoint;
 		VertexHandler_t vertexHandler;
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormU;
@@ -483,4 +562,6 @@ class UpdateHandler
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormA;
 		value_t detWormS;
 		uint_t maxWorms = 2;
+		std::vector< value_t > condAW;
+		std::vector< value_t > condRW;
 };
