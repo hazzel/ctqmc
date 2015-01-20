@@ -32,15 +32,6 @@ class RhombicHoneycomb
 			GenerateDistanceHistogram();
 			numNeighborhood.resize(maxDistance + 1, 0);
 			CountNeighborhood();
-
-			std::cout << std::endl;
-			for (index_t i = 0; i < nSites; ++i)
-			{
-				std::cout << i << std::endl;
-				for (index_t j = 0; j < nDirections + 1; ++j)
-					std::cout << neighborList[i][j] << " ";
-				std::cout << std::endl;
-			}
 		}
 		
 		int_t Distance(index_t s1, index_t s2)
