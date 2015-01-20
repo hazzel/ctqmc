@@ -23,6 +23,7 @@ class RhombicHoneycomb
 			L = l;
 			nSites = 2 * L * L;
 			nBonds = 3 * nSites / 2;
+			nDirections = (L == 1 ? 1 : 3);
 			DeallocateNeighborList();
 			AllocateNeighborList();
 			distanceMap.AllocateTable(nSites, nSites);
@@ -31,6 +32,16 @@ class RhombicHoneycomb
 			GenerateDistanceHistogram();
 			numNeighborhood.resize(maxDistance + 1, 0);
 			CountNeighborhood();
+
+			std::cout << std::endl;
+			for (index_t i = 0; i < nSites; ++i)
+			{
+				std::cout << i << std::endl;
+				for (index_t j = 0; j < nDirections + 1; ++j)
+					std::cout << neighborList[i][j] << " ";
+				std::cout << std::endl;
+			}
+			std::cin.get();
 		}
 		
 		int_t Distance(index_t s1, index_t s2)
@@ -110,10 +121,10 @@ class RhombicHoneycomb
 			neighborList = new index_t*[nSites];
 			for (index_t i = 0; i < nSites; ++i)
 			{
-				neighborList[i] = new index_t[4];
+				neighborList[i] = new index_t[nDirections + 1];
 			}
 			for (index_t i = 0; i < nSites; ++i)
-				for (index_t j = 0; j < 4; ++j)
+				for (index_t j = 0; j < nDirections + 1; ++j)
 					neighborList[i][j] = 0;
 		}
 
@@ -246,8 +257,8 @@ class RhombicHoneycomb
 					distanceHistogram[Distance(i, j)] += 1;
 					if (Distance(i, j) == 1)
 					{
-						neighborList[i][neighborList[i][3]] = j;
-						++neighborList[i][3];
+						neighborList[i][neighborList[i][nDirections]] = j;
+						++neighborList[i][nDirections];
 					}
 				}
 			}
@@ -267,14 +278,13 @@ class RhombicHoneycomb
 				numNeighborhood[j] += numNeighborhood[j-1];
 		}
 	private:
-		using array_t = std::array < int_t, 3 > ;
 		using lookup_t = LookUpTable < int_t, index_t, 2 > ;
 		using histogram_t = std::vector < int_t > ;
 		
 		index_t L;
 		index_t nSites;
 		index_t nBonds;
-		int_t nDirections = 3;
+		int_t nDirections;
 		index_t maxDistance;
 		lookup_t distanceMap;
 		histogram_t distanceHistogram;
