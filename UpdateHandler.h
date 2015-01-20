@@ -34,7 +34,7 @@ class UpdateHandler
 		typedef typename ConfigSpace_t::int_t int_t;
 		typedef typename ConfigSpace_t::value_t value_t;
 		typedef VertexHandler<ConfigSpace_t> VertexHandler_t;
-		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M>;
+		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M, Eigen::RowMajor>;
 		template<int_t N> using inv_solver_t = Eigen::FullPivLU< matrix_t<N, N> >;
 		
 		struct Matrices
