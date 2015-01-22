@@ -450,6 +450,18 @@ class UpdateHandler
 			vertexHandler.PropagatorMatrix(G);
 			inv_solver_t<Eigen::Dynamic> solver(G);
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = solver.inverse();
+			/*
+			Eigen::JacobiSVD< matrix_t<Eigen::Dynamic, Eigen::Dynamic> > svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues().asDiagonal();
+			for (uint_t i = 0; i < sv.rows(); ++i)
+			{
+				if (sv(i, i) < 0.00001)
+					sv(i, i) = 0.0;
+				else
+					sv(i, i) = 1.0 / sv(i, i);
+			}
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = svd.matrixV() * sv * svd.matrixU().transpose();
+			*/
 			avgError = 0.0;
 			relError = 0.0;
 			value_t N = stabInvG.rows() * stabInvG.rows();
