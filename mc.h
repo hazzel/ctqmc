@@ -100,5 +100,6 @@ class mc
 		std::map<uint_t, uint_t> exporderHistZ;
 		std::map<uint_t, uint_t> exporderHistW2;
 		double* evalableParameters;
+		bool isInitialized = false;
 		unsigned int old_cw;
 };

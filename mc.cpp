@@ -313,15 +313,16 @@ void mc::PrintAcceptanceMatrix(std::ostream& out)
 
 void mc::do_update()
 {
-	if (sweep == 0)
+	if (!isInitialized)
 	{
 		std::cout << "Build G0 look up table";
 		std::cout.flush();
 		configSpace.BuildG0LookUpTable();
 		std::cout << "Done." << std::endl;
 		configSpace.updateHandler.Init();
-		std::cout << "Thermalization";
-		std::cout.flush();
+		if (!is_thermalized())
+			std::cout << "Thermalization" << std::endl;
+		isInitialized = true;
 	}
 	
 	for (uint_t i = 0; i < nThermStep; ++i)

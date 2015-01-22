@@ -69,6 +69,21 @@ class VertexHandler
 			std::cout << std::endl;
 			std::cout << "MinTauDiff: " << minTauDiff / configSpace.dtau << std::endl;
 		}
+
+		void PrintWormVertices()
+		{
+			value_t minTauDiff = configSpace.beta;
+			for (uint_t i = 0; i < wormNodes.size(); i+=2)
+				std::cout << "(" << wormNodes[i].Site << " , " << wormNodes[i+1].Site << ", " << wormNodes[i].Tau << ") ";
+			for (uint_t i = 2; i < wormNodes.size(); i+=2)
+			{
+				value_t diff = std::abs(wormNodes[i-2].Tau - wormNodes[i].Tau);
+				if (diff < minTauDiff)
+					minTauDiff = diff;
+			}
+			std::cout << std::endl;
+			std::cout << "MinTauDiff: " << minTauDiff / configSpace.dtau << std::endl;
+		}
 		
 		void PrintVertexBuffer()
 		{
@@ -404,14 +419,18 @@ class VertexHandler
 		
 		void Serialize(odump& d)
 		{
+			std::cout << "Write VertexHandler" << std::endl;
 			d.write(nodes);
 			d.write(wormNodes);
+			PrintWormVertices();
 		}
 		
 		void Serialize(idump& d)
 		{
+			std::cout << "Read VertexHandler" << std::endl;
 			d.read(nodes);
 			d.read(wormNodes);
+			PrintWormVertices();
 		}
 	private:
 		ConfigSpace_t& configSpace;
