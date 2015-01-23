@@ -553,7 +553,7 @@ class UpdateHandler
 			d.read(detWormS);
 			vertexHandler.Serialize(d);
 			invG.resize(2 * vertexHandler.Vertices(), 2 * vertexHandler.Vertices());
-			StabalizeInvG();
+			StabilizeInvG();
 			if (vertexHandler.Worms() > 0)
 			{
 				wormU.resize(2 * vertexHandler.Vertices(), 2 * vertexHandler.Worms());
