@@ -35,7 +35,7 @@ endif
 
 MCLL  = $(HOME)/mc/load_leveller/trunk
 APPMCLL = $(HOME)/mc/ctqmc/
-USE_MKL = -DEIGEN_USE_MKL_ALL
+#USE_MKL = -DEIGEN_USE_MKL_ALL
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 $(USE_MKL) -DNDEBUG $(FLAGS_OPENMP) $(DEFINES)
