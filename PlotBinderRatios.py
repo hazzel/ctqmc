@@ -11,8 +11,8 @@ color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
 L = ["2", "3", "4", "5", "6"]#, "7", "9"]
 for l in range(len(L)):
-	filelist = glob.glob("out/job-*-L" + L[l] + "-T0.46-hex.task*.out")
-	#filelist = glob.glob("out/job-*-L" + L[l] + "-V2.0-hex.task*.out")
+	filelist = glob.glob("plot/job-*-L" + L[l] + "-T0.46-hex.task*.out")
+	#filelist = glob.glob("plot/job-*-L" + L[l] + "-V2.0-hex.task*.out")
 	if len(filelist) == 0:
 		continue
 	filelist.sort()

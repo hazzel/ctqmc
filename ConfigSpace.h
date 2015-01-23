@@ -51,6 +51,11 @@ class ConfigSpace
 		{
 			updateList.resize(10, "");
 		}
+
+		~ConfigSpace()
+		{
+			delete lattice;
+		}
 		
 		template<int_t N, int_t W>
 		bool AddRandomVertices()
@@ -145,7 +150,7 @@ class ConfigSpace
 		{
 			uint_t i = static_cast<uint_t>(std::abs(tau) / dtau);
 			value_t tau_i = i * dtau;
-			uint_t dist = lattice.Distance(i1, i2);
+			uint_t dist = lattice->Distance(i1, i2);
 			value_t g = lookUpTableG0[dist][i] + (std::abs(tau) - tau_i) * lookUpTableDtG0[dist][i];
 			if (tau >= 0.0)
 			{
@@ -153,7 +158,7 @@ class ConfigSpace
 			}
 			else
 			{
-				if (lattice.Sublattice(i1) == lattice.Sublattice(i2))
+				if (lattice->Sublattice(i1) == lattice->Sublattice(i2))
 					return -g;
 				else
 					return g;
@@ -172,13 +177,13 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable()
 		{
-			uint_t i = lattice.RandomSite(rng);
+			uint_t i = lattice->RandomSite(rng);
 			std::vector<uint_t> sites;
-			for (uint_t r = 0; r <= lattice.MaxDistance(); ++r)
+			for (uint_t r = 0; r <= lattice->MaxDistance(); ++r)
 			{
-				for (int_t j = 0; j < lattice.Sites(); ++j)
+				for (int_t j = 0; j < lattice->Sites(); ++j)
 				{
-					if (lattice.Distance(i, j) == r)
+					if (lattice->Distance(i, j) == r)
 					{
 						sites.push_back(j);
 						break;
@@ -205,11 +210,11 @@ class ConfigSpace
 
 		void BuildHoppingMatrix()
 		{
-			for (uint_t i = 0; i < lattice.Sites(); ++i)
+			for (uint_t i = 0; i < lattice->Sites(); ++i)
 			{
-				for (uint_t j = 0; j < lattice.Sites(); ++j)
+				for (uint_t j = 0; j < lattice->Sites(); ++j)
 				{
-					if (lattice.IsNeighbor(i, j))
+					if (lattice->IsNeighbor(i, j))
 						hoppingMatrix(i, j) = -t;
 					else
 						hoppingMatrix(i, j) = 0;
@@ -224,11 +229,11 @@ class ConfigSpace
 		void ResizeGeometry(uint_t l)
 		{
 			L = l;
-			lattice.Resize(l, rng);
-			hoppingMatrix.resize(lattice.Sites(), lattice.Sites());
-			lookUpTableG0.AllocateTable(lattice.MaxDistance() + 1, nTimeBins + 1);
-			lookUpTableDtG0.AllocateTable(lattice.MaxDistance() + 1, nTimeBins);
-			nhoodDist = std::min({uint_t(100), lattice.MaxDistance()});
+			lattice->Resize(l, rng);
+			hoppingMatrix.resize(lattice->Sites(), lattice->Sites());
+			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
+			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
+			nhoodDist = std::min({uint_t(100), lattice->MaxDistance()});
 		}
 		
 		void SetTemperature(value_t T)
@@ -272,7 +277,7 @@ class ConfigSpace
 	public:
 		RNG& rng;
 		uint_t L;
-		Geometry lattice;
+		Geometry* lattice;
 		UpdateHandler_t updateHandler;
 		value_t beta;
 		value_t V;

@@ -113,7 +113,7 @@ class VertexHandler
 		{
 			value_t parity = 1.0;
 			for (auto it = nodeBuffer.begin(); it != nodeBufferEnd; ++it)
-				parity *= (configSpace.lattice.Sublattice(it->Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+				parity *= (configSpace.lattice->Sublattice(it->Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			return parity;
 		}
 		
@@ -121,7 +121,7 @@ class VertexHandler
 		{
 			value_t parity = 1.0;
 			for (auto node : wormNodes)
-				parity *= (configSpace.lattice.Sublattice(node.Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+				parity *= (configSpace.lattice->Sublattice(node.Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			return parity;
 		}
 		
@@ -129,7 +129,7 @@ class VertexHandler
 		{
 			value_t parity = 1.0;
 			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
-				parity *= (configSpace.lattice.Sublattice(wormNodes[*it].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+				parity *= (configSpace.lattice->Sublattice(wormNodes[*it].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			return parity;
 		}
 		
@@ -140,7 +140,7 @@ class VertexHandler
 		
 		uint_t WormDistance()
 		{
-			return configSpace.lattice.Distance(wormNodes[0].Site, wormNodes[1].Site);
+			return configSpace.lattice->Distance(wormNodes[0].Site, wormNodes[1].Site);
 		}
 		
 		template<int_t N>
@@ -148,10 +148,10 @@ class VertexHandler
 		{
 			for (uint_t i = 0; i < N; ++i)
 			{
-				uint_t site = configSpace.lattice.RandomSite(configSpace.rng);
+				uint_t site = configSpace.lattice->RandomSite(configSpace.rng);
 				value_t tau = configSpace.rng() * configSpace.beta;
 				nodeBuffer[2*i] = node_t(site, tau);
-				nodeBuffer[2*i+1] = node_t(configSpace.lattice.RandomWalk(site, 1, configSpace.rng), tau);
+				nodeBuffer[2*i+1] = node_t(configSpace.lattice->RandomWalk(site, 1, configSpace.rng), tau);
 			}
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
 		}
@@ -159,14 +159,14 @@ class VertexHandler
 		template<int_t N>
 		void AddRandomWormsToBuffer()
 		{
-			uint_t site = configSpace.lattice.RandomSite(configSpace.rng);
+			uint_t site = configSpace.lattice->RandomSite(configSpace.rng);
 			value_t tau = configSpace.rng() * configSpace.beta;
 			if (wormNodes.size() > 0)
 				tau = wormNodes[0].Tau;
 			nodeBuffer[0] = node_t(site, tau);
 			for (uint_t i = 1; i < 2 * N; ++i)
 			{
-				uint_t nsite = configSpace.lattice.FromNeighborhood(site, configSpace.nhoodDist, configSpace.rng);
+				uint_t nsite = configSpace.lattice->FromNeighborhood(site, configSpace.nhoodDist, configSpace.rng);
 				nodeBuffer[i] = node_t(nsite, tau);
 			}
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
@@ -231,10 +231,10 @@ class VertexHandler
 			indexBuffer[0] = r;
 			indexBufferEnd = indexBuffer.begin() + 1;
 			wormShiftParity = 1.0;
-			wormShiftParity *= (configSpace.lattice.Sublattice(wormNodes[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			wormShiftParity *= (configSpace.lattice->Sublattice(wormNodes[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			
-			wormNodes[r].Site = configSpace.lattice.RandomWalk(wormNodes[r].Site, 1, configSpace.rng);
-			wormShiftParity *= (configSpace.lattice.Sublattice(wormNodes[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			wormNodes[r].Site = configSpace.lattice->RandomWalk(wormNodes[r].Site, 1, configSpace.rng);
+			wormShiftParity *= (configSpace.lattice->Sublattice(wormNodes[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			wormNodes[r].Tau += -0.05 * configSpace.beta + configSpace.rng() * 0.1 * configSpace.beta;
 			if (wormNodes[r].Tau > configSpace.beta)
 				wormNodes[r].Tau -= configSpace.beta;
@@ -419,18 +419,14 @@ class VertexHandler
 		
 		void Serialize(odump& d)
 		{
-			std::cout << "Write VertexHandler" << std::endl;
 			d.write(nodes);
 			d.write(wormNodes);
-			PrintWormVertices();
 		}
 		
 		void Serialize(idump& d)
 		{
-			std::cout << "Read VertexHandler" << std::endl;
 			d.read(nodes);
 			d.read(wormNodes);
-			PrintWormVertices();
 		}
 	private:
 		ConfigSpace_t& configSpace;

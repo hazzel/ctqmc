@@ -80,7 +80,7 @@ class UpdateHandler
 			matrix_t<Eigen::Dynamic, n> invGu = invG * u;
 			matrix_t<n, n> invS = a;
 			invS.noalias() -= v * invGu;
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), N) * configSpace.AdditionFactorialRatio(k / 2, N);
+			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(k / 2, N);
 			value_t acceptRatio = preFactor * invS.determinant();
 			if (acceptRatio < 0.0)
 			{
@@ -132,7 +132,7 @@ class UpdateHandler
 
 			matrix_t<l + n, l + n> invS = a;
 			invS.noalias() -= v * invG * u;
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), N) * configSpace.AdditionFactorialRatio(k / 2, N);
+			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(k / 2, N);
 			value_t acceptRatio = preFactor * invS.determinant() * detWormS;
 			if (acceptRatio < 0.0)
 			{
@@ -186,7 +186,7 @@ class UpdateHandler
 			invG = perm.transpose() * invG * perm;
 			
 			matrix_t<n, n> S = invG.template bottomRightCorner<n, n>();
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), -N) * configSpace.RemovalFactorialRatio(k / 2, N);
+			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(k / 2, N);
 			value_t acceptRatio = preFactor * S.determinant();
 			if (acceptRatio < 0.0)
 			{
@@ -256,7 +256,7 @@ class UpdateHandler
 			newInvG.noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
 			value_t newDetWormS = 1.0 / (wormA - wormV.leftCols(k - n) * newInvG * wormU.topRows(k - n)).determinant();
 			
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice.Bonds(), -N) * configSpace.RemovalFactorialRatio(k / 2, N);
+			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(k / 2, N);
 			value_t acceptRatio = preFactor / newDetWormS / (a - v * newInvG * u).determinant();
 			if (acceptRatio < 0.0)
 			{

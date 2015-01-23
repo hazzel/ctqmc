@@ -64,6 +64,11 @@ mc::mc(const std::string& dir)
 	configSpace.t = param.value_or_default<value_t>("t0", 1.0);
 	configSpace.V = param.value_or_default<value_t>("V", 1.4);
 	configSpace.SetTemperature(T);
+	std::string geometry = param.value_or_default<std::string>("GEOMETRY", "hex");
+	if (geometry == "hex")
+		configSpace.lattice = new Hex_t();
+	else if (geometry == "rhom")
+		configSpace.lattice = new Rhom_t();
 	std::cout << "Set up geometry...";
 	std::cout.flush();
 	configSpace.ResizeGeometry(L);
@@ -71,7 +76,7 @@ mc::mc(const std::string& dir)
 	std::cout << "Done." << std::endl;
 	
 	configSpace.zeta2 = param.value_or_default<value_t>("zeta2", 1.0);
-	value_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
+	value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 	configSpace.zeta2 /= m / T;
 	configSpace.zeta4 = param.value_or_default<value_t>("zeta4", 1.0);
 	configSpace.zeta4 /= m * m * m / T;
@@ -88,8 +93,8 @@ mc::mc(const std::string& dir)
 	evalableParameters[0] = configSpace.beta;
 	evalableParameters[1] = configSpace.zeta2;
 	evalableParameters[2] = configSpace.zeta4;
-	evalableParameters[3] = configSpace.lattice.Sites();
-	corrVector.resize(configSpace.lattice.MaxDistance() + 1, 0.0);
+	evalableParameters[3] = configSpace.lattice->Sites();
+	corrVector.resize(configSpace.lattice->MaxDistance() + 1, 0.0);
 	
 	BuildUpdateWeightMatrix();
 }
@@ -126,7 +131,7 @@ void mc::init()
 	measure.add_observable("avgInvGError", nPrebins);
 	measure.add_observable("relInvGError", nPrebins);
 	measure.add_observable("condition", nPrebins);
-	measure.add_vectorobservable("Corr", configSpace.lattice.MaxDistance() + 1, nPrebins);
+	measure.add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
 }
 void mc::write(const std::string& dir)
 {
@@ -224,16 +229,16 @@ void mc::BuildUpdateWeightMatrix()
 
 	//ALL TRANSITIONS
 	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	2.0 / 10.0,
-									4.0 / 10.0	,	3.0 / 10.0	,	4.0 / 10.0,
-									5.0 / 10.0	,	3.5 / 10.0	,	0.0 / 10.0,
-									6.0 / 10.0	,	4.0 / 10.0	,	0.0 / 10.0,
-									8.0 / 10.0	,	0.0			,	0.0,
-									0.0			,	6.0 / 10.0	,	0.0, 
-									10.0 / 10.0	,	0.0			,	0.0,
-									0.0			,	0.0			,	6.0 / 10.0,
-									0.0			,	8.0 / 10.0	,	0.0,
-									0.0			,	0.0			,	8.0 / 10.0,
-									0.0			,	10.0 / 10.0	,	10.0 / 10.0;
+												4.0 / 10.0	,	3.0 / 10.0	,	4.0 / 10.0,
+												5.0 / 10.0	,	3.5 / 10.0	,	0.0 / 10.0,
+												6.0 / 10.0	,	4.0 / 10.0	,	0.0 / 10.0,
+												8.0 / 10.0	,	0.0			,	0.0,
+												0.0			,	6.0 / 10.0	,	0.0, 
+												10.0 / 10.0	,	0.0			,	0.0,
+												0.0			,	0.0			,	6.0 / 10.0,
+												0.0			,	8.0 / 10.0	,	0.0,
+												0.0			,	0.0			,	8.0 / 10.0,
+												0.0			,	10.0 / 10.0	,	10.0 / 10.0;
 
 /*
 	//ONLY Z<->W2<->W4
@@ -400,8 +405,8 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW2, state))
 		{
-			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
-			value_t preFactor = configSpace.lattice.Sites() * m * configSpace.beta * configSpace.zeta2;
+			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+			value_t preFactor = configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2;
 			if (configSpace.AddRandomWorms<1, 0>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
@@ -412,8 +417,8 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W2toZ, state))
 		{
-			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
-			value_t preFactor = 1.0 / (configSpace.lattice.Sites() * m * configSpace.beta * configSpace.zeta2);
+			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
 			if (configSpace.RemoveRandomWorms<1, 1>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
@@ -424,8 +429,8 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW4, state))
 		{
-			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
-			value_t preFactor = configSpace.lattice.Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
+			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+			value_t preFactor = configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
 			if (configSpace.AddRandomWorms<2, 0>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
@@ -436,8 +441,8 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W4toZ, state))
 		{
-			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
-			value_t preFactor = 1.0 / (configSpace.lattice.Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
+			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
 			if (configSpace.RemoveRandomWorms<2, 2>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
@@ -448,8 +453,8 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W2toW4, state))
 		{
-			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
-			value_t preFactor = (configSpace.lattice.Sites() * m * configSpace.zeta4) / configSpace.zeta2;
+			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+			value_t preFactor = (configSpace.lattice->Sites() * m * configSpace.zeta4) / configSpace.zeta2;
 			if (configSpace.AddRandomWorms<1, 1>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
@@ -460,8 +465,8 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W4toW2, state))
 		{
-			uint_t m = configSpace.lattice.NeighborhoodCount(configSpace.nhoodDist);
-			value_t preFactor = configSpace.zeta2 / (configSpace.lattice.Sites() * m * configSpace.zeta4);
+			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+			value_t preFactor = configSpace.zeta2 / (configSpace.lattice->Sites() * m * configSpace.zeta4);
 			if (configSpace.RemoveRandomWorms<1, 2>(preFactor))
 			{
 				configSpace.updateList.back() += " - success.";
@@ -545,7 +550,7 @@ void mc::do_measurement()
 
 			R = configSpace.updateHandler.GetVertexHandler().WormDistance();
 			sign = configSpace.updateHandler.GetVertexHandler().WormParity();
-			corrVector[R] = sign / configSpace.lattice.DistanceHistogram(R);
+			corrVector[R] = sign / configSpace.lattice->DistanceHistogram(R);
 			break;
 		case StateType::W4:
 			measure.add("deltaZ", 0.0);
