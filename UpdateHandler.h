@@ -432,14 +432,15 @@ class UpdateHandler
 			SymmetrizeMatrix(invG);
 		}
 
-		void StabalizeInvG()
+		value_t StabalizeInvG()
 		{
 			if (invG.rows() == 0)
-				return;
+				return 0.0;
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
 			vertexHandler.PropagatorMatrix(G);
 			inv_solver_t<Eigen::Dynamic> solver(G);
 			invG = solver.inverse();
+			return 0.0;
 		}
 		
 		value_t StabilizeInvG(value_t& avgError, value_t& relError)
