@@ -432,7 +432,7 @@ class UpdateHandler
 			SymmetrizeMatrix(invG);
 		}
 
-		value_t StabalizeInvG()
+		value_t StabilizeInvG()
 		{
 			if (invG.rows() == 0)
 				return 0.0;
