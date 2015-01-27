@@ -66,11 +66,12 @@ mc::mc(const std::string& dir)
 	configSpace.V = param.value_or_default<value_t>("V", 1.4);
 	configSpace.SetTemperature(T);
 	std::string geometry = param.value_or_default<std::string>("GEOMETRY", "hex");
+	path = dir.substr(0, dir.rfind('/')+1);
 	if (geometry == "hex")
 		configSpace.lattice = new Hex_t();
 	else if (geometry == "rhom")
 	{
-		std::string filename = dir.substr(0, dir.rfind('/')+1) + "geometry/rhom-L" + std::to_string(L);
+		std::string filename = path + "geometry/rhom-L" + std::to_string(L);
 		configSpace.lattice = new Rhom_t(filename);
 	}
 	std::cout << "Set up geometry...";
@@ -327,7 +328,8 @@ void mc::do_update()
 	{
 		std::cout << "Build G0 look up table";
 		std::cout.flush();
-		configSpace.BuildG0LookUpTable();
+		std::string filename = path + "g0lookup/rhom-L" + std::to_string(L);
+		configSpace.BuildG0LookUpTable(filename);
 		std::cout << "Done." << std::endl;
 		configSpace.updateHandler.Init();
 		if (!is_thermalized())

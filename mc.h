@@ -103,5 +103,6 @@ class mc
 		double* evalableParameters;
 		uint_t L;
 		bool isInitialized = false;
+		std::string path;
 		unsigned int old_cw;
 };

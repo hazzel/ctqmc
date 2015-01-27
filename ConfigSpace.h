@@ -19,6 +19,7 @@
 #include "LookUpTable.h"
 #include "UpdateHandler.h"
 #include "VertexHandler.h"
+#include "GeometryBase.h"
 
 //#include <unsupported/Eigen/MPRealSupport>
 //using namespace mpfr;
@@ -175,37 +176,47 @@ class ConfigSpace
 			g0 = hopEV * hopDiag * hopEVT;
 		}
 		
-		void BuildG0LookUpTable()
+		void BuildG0LookUpTable(const std::string& filename)
 		{
-			uint_t i = lattice->RandomSite(rng);
-			std::vector<uint_t> sites;
-			for (uint_t r = 0; r <= lattice->MaxDistance(); ++r)
+			if (FileExists(filename))
 			{
-				for (int_t j = 0; j < lattice->Sites(); ++j)
+				std::cout << "...";
+				std::cout.flush();
+				ReadFromFile(filename);
+			}
+			else
+			{
+				uint_t i = lattice->RandomSite(rng);
+				std::vector<uint_t> sites;
+				for (uint_t r = 0; r <= lattice->MaxDistance(); ++r)
 				{
-					if (lattice->Distance(i, j) == r)
+					for (int_t j = 0; j < lattice->Sites(); ++j)
 					{
-						sites.push_back(j);
-						break;
+						if (lattice->Distance(i, j) == r)
+						{
+							sites.push_back(j);
+							break;
+						}
 					}
 				}
-			}
-			matrix_t G0(hopDiag.rows(), hopDiag.cols());
-			for (uint_t t = 0; t <= nTimeBins; ++t)
-			{
-				EvaluateG0(dtau * t, G0);
-				for (uint_t r = 0; r < sites.size(); ++r)
-					lookUpTableG0[r][t] = G0(i, sites[r]);
-				if (t % (nTimeBins / 3) == 0)
+				matrix_t G0(hopDiag.rows(), hopDiag.cols());
+				for (uint_t t = 0; t <= nTimeBins; ++t)
 				{
-					std::cout << ".";
-					std::cout.flush();
+					EvaluateG0(dtau * t, G0);
+					for (uint_t r = 0; r < sites.size(); ++r)
+						lookUpTableG0[r][t] = G0(i, sites[r]);
+					if (t % (nTimeBins / 3) == 0)
+					{
+						std::cout << ".";
+						std::cout.flush();
+					}
 				}
-			}
 
-			for (uint_t t = 0; t < nTimeBins; ++t)
-				for (uint_t r = 0; r < sites.size(); ++r)
-					lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
+				for (uint_t t = 0; t < nTimeBins; ++t)
+					for (uint_t r = 0; r < sites.size(); ++r)
+						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
+					SaveToFile(filename);
+			}
 		}
 
 		void BuildHoppingMatrix()
@@ -273,6 +284,37 @@ class ConfigSpace
 			for (uint_t i = 1; i <= n; ++i)
 				result *= k - n + i;
 			return result;
+		}
+
+		void SaveToFile(const std::string& filename)
+		{
+			std::ofstream os(filename, std::ofstream::binary);
+			for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
+			{
+				for (uint_t j = 0; j < nTimeBins + 1; ++j)
+				{
+					os.write((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
+					if (i < lattice->MaxDistance() && j < nTimeBins)
+						os.write((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
+				}
+			}
+			os.close();
+		}
+
+		void ReadFromFile(const std::string& filename)
+		{
+			std::ifstream is(filename, std::ofstream::binary);
+			
+			for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
+			{
+				for (uint_t j = 0; j < nTimeBins + 1; ++j)
+				{
+					is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
+					if (i < lattice->MaxDistance() && j < nTimeBins)
+						is.read((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
+				}
+			}
+			is.close();
 		}
 	public:
 		RNG& rng;
