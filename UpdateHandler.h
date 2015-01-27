@@ -82,7 +82,7 @@ class UpdateHandler
 			invS.noalias() -= v * invGu;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(k / 2, N);
 			value_t acceptRatio = preFactor * invS.determinant();
-			if (acceptRatio < 0.0)
+			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "AddVertices(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
 				std::cout << "Vertices:" << std::endl;
@@ -134,7 +134,7 @@ class UpdateHandler
 			invS.noalias() -= v * invG * u;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(k / 2, N);
 			value_t acceptRatio = preFactor * invS.determinant() * detWormS;
-			if (acceptRatio < 0.0)
+			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "AddVerticesWithWorm(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
 				std::cout << "Vertices:" << std::endl;
@@ -220,7 +220,7 @@ class UpdateHandler
 			matrix_t<n, n> S = invG.template bottomRightCorner<n, n>();
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(k / 2, N);
 			value_t acceptRatio = preFactor * S.determinant();
-			if (acceptRatio < 0.0)
+			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "RemoveVertices(" << N << "): AcceptRatio" << acceptRatio << std::endl;
 				std::cout << "Vertices:" << std::endl;
@@ -280,7 +280,7 @@ class UpdateHandler
 			
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(k / 2, N);
 			value_t acceptRatio = preFactor / newDetWormS / (a - v * newInvG * u).determinant();
-			if (acceptRatio < 0.0)
+			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "RemoveVerticesWithWorm(" << N << "): AcceptRatio" << acceptRatio << std::endl;
 				std::cout << "Vertices:" << std::endl;
@@ -362,8 +362,7 @@ class UpdateHandler
 			value_t detRatio = detInvS * (l > 0 ? detWormS : 1.0);
 			value_t acceptRatio = preFactor * detRatio * vertexHandler.VertexBufferParity();
 			//TODO: FIX ME
-			/*
-			if (acceptRatio < 0.0)
+			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "AddWorm(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
 				std::cout << "Vertices:" << std::endl;
@@ -373,7 +372,6 @@ class UpdateHandler
 				std::cout << "VertexBuffer:" << std::endl;
 				vertexHandler.PrintVertexBuffer();
 			}
-			*/
 			if (configSpace.rng() < acceptRatio)
 			{
 				detWormS = 1.0 / detInvS;
@@ -420,7 +418,7 @@ class UpdateHandler
 				detRatio = detWormS;
 			}
 			value_t acceptRatio = preFactor * detRatio * vertexHandler.WormIndexBufferParity();
-			if (acceptRatio < 0.0)
+			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "RemoveWorm(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
 				std::cout << "Vertices:" << std::endl;
@@ -476,7 +474,7 @@ class UpdateHandler
 				std::cout << "Worms:" << std::endl;
 				vertexHandler.PrintWormVertices();
 			}
-			if (configSpace.rng() < acceptRatio)
+			if (print && configSpace.rng() < acceptRatio)
 			{
 				detWormS = 1.0 / detShiftedInvS;
 				wormU = shiftedWormU;
@@ -648,4 +646,5 @@ class UpdateHandler
 		uint_t maxWorms = 2;
 		std::vector< value_t > condAW;
 		std::vector< value_t > condRW;
+		bool print = false;
 };

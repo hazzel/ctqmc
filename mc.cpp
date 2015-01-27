@@ -1,6 +1,7 @@
 #include "mc.h"
 #include <sstream>
 #include <fstream>
+#include <string>
 #include <limits>
 #include <functional>
 
@@ -58,7 +59,7 @@ mc::mc(const std::string& dir)
 	
 	param.read_file(dir);
 	value_t T = param.value_or_default<value_t>("T", 1.);
-	uint_t L = param.value_or_default<uint_t>("L", 4);
+	L = param.value_or_default<uint_t>("L", 4);
 	
 	configSpace.nTimeBins = param.value_or_default<uint_t>("TIMEBINS", 50000);
 	configSpace.t = param.value_or_default<value_t>("t0", 1.0);
@@ -68,11 +69,15 @@ mc::mc(const std::string& dir)
 	if (geometry == "hex")
 		configSpace.lattice = new Hex_t();
 	else if (geometry == "rhom")
-		configSpace.lattice = new Rhom_t();
+	{
+		std::string filename = dir.substr(0, dir.rfind('/')+1) + "geometry/rhom-L" + std::to_string(L);
+		configSpace.lattice = new Rhom_t(filename);
+	}
 	std::cout << "Set up geometry...";
 	std::cout.flush();
 	configSpace.ResizeGeometry(L);
 	configSpace.BuildHoppingMatrix();
+
 	std::cout << "Done." << std::endl;
 	
 	configSpace.zeta2 = param.value_or_default<value_t>("zeta2", 1.0);

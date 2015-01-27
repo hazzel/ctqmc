@@ -58,8 +58,17 @@ class VertexHandler
 		void PrintVertices()
 		{
 			value_t minTauDiff = configSpace.beta;
+			value_t minWormTauDiff = configSpace.beta;
 			for (uint_t i = 0; i < nodes.size(); i+=2)
+			{
 				std::cout << "(" << nodes[i].Site << " , " << nodes[i+1].Site << ", " << nodes[i].Tau << ") ";
+				if (wormNodes.size() > 0)
+				{
+					value_t diff = std::abs(nodes[i].Tau - wormNodes[0].Tau);
+					if (diff < minWormTauDiff)
+						minWormTauDiff = diff;
+				}
+			}
 			for (uint_t i = 2; i < nodes.size(); i+=2)
 			{
 				value_t diff = std::abs(nodes[i-2].Tau - nodes[i].Tau);
@@ -68,6 +77,7 @@ class VertexHandler
 			}
 			std::cout << std::endl;
 			std::cout << "MinTauDiff: " << minTauDiff / configSpace.dtau << std::endl;
+			std::cout << "MinWormTauDiff: " << minWormTauDiff / configSpace.dtau << std::endl;
 		}
 
 		void PrintWormVertices()
@@ -83,6 +93,8 @@ class VertexHandler
 			}
 			std::cout << std::endl;
 			std::cout << "MinTauDiff: " << minTauDiff / configSpace.dtau << std::endl;
+			for (uint_t i = 0; i < wormNodes.size(); i+=2)
+				std::cout << "R" << i << ": " << configSpace.lattice->Distance(wormNodes[i].Site, wormNodes[i+1].Site) << std::endl;
 		}
 		
 		void PrintVertexBuffer()
@@ -160,9 +172,11 @@ class VertexHandler
 		void AddRandomWormsToBuffer()
 		{
 			uint_t site = configSpace.lattice->RandomSite(configSpace.rng);
-			value_t tau = configSpace.rng() * configSpace.beta;
+			value_t tau;
 			if (wormNodes.size() > 0)
 				tau = wormNodes[0].Tau;
+			else
+				tau = configSpace.rng() * configSpace.beta;
 			nodeBuffer[0] = node_t(site, tau);
 			for (uint_t i = 1; i < 2 * N; ++i)
 			{

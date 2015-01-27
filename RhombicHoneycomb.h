@@ -4,7 +4,9 @@
 #include <array>
 #include <vector>
 #include <cstdint>
+#include <string>
 #include "LookUpTable.h"
+#include "GeometryBase.h"
 
 template<typename RNG, typename Uint_t = std::uint_fast32_t, typename Int_t = std::int_fast32_t>
 class RhombicHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
@@ -14,7 +16,9 @@ class RhombicHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
 		typedef Int_t int_t;
 		typedef typename GeometryBase<RNG, Uint_t, Int_t>::SublatticeType SublatticeType;
 		
-		RhombicHoneycomb() {}
+		RhombicHoneycomb(const std::string& filename)
+			: filename(filename)
+		{}
 		~RhombicHoneycomb() {}
 
 		void Resize(index_t l, RNG& rng)
@@ -27,10 +31,18 @@ class RhombicHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
 			this->AllocateNeighborList();
 			this->distanceMap.AllocateTable(this->nSites, this->nSites);
 			this->distanceHistogram.resize(this->nSites, 0);
-			this->BuildLookUpTable(rng);
-			this->GenerateDistanceHistogram();
-			this->numNeighborhood.resize(this->maxDistance + 1, 0);
-			this->CountNeighborhood();
+			if (!FileExists(filename))
+			{
+				this->BuildLookUpTable(rng);
+				this->GenerateDistanceHistogram();
+				this->numNeighborhood.resize(this->maxDistance + 1, 0);
+				this->CountNeighborhood();
+				this->SaveToFile(filename);
+			}
+			else
+			{
+				this->ReadFromFile(filename);
+			}
 		}
 
 		SublatticeType Sublattice(index_t site)
@@ -115,19 +127,20 @@ class RhombicHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
 		
 		void BuildLookUpTable(RNG& rng)
 		{
+			#pragma omp parallel for
 			for (index_t i = 0; i < this->nSites; ++i)
 			{
-				for (index_t j = 0; j < i; ++j)
+				for (index_t j = 0; j < this->nSites; ++j)
 				{
 					this->distanceMap[i][j] = this->SimulateDistance(i, j, rng);
-					this->distanceMap[j][i] = this->distanceMap[i][j];
 				}
-				this->distanceMap[i][i] = 0;
 			}
 		}
 
 		int_t SimulateDistance(index_t i, index_t j, RNG& rng)
 		{
+			if (i == j)
+				return 0;
 			int_t shortestPath = this->nSites;
 			int_t nRuns = 1000 * this->nSites;
 			for (int_t n = 0; n < nRuns; ++n)
@@ -147,4 +160,6 @@ class RhombicHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
 			}
 			return shortestPath;
 		}
+	private:
+		std::string filename;
 };

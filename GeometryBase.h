@@ -8,6 +8,13 @@
 #include <vector>
 #include <cstdint>
 #include "LookUpTable.h"
+#include <sys/stat.h>
+
+inline bool FileExists(const std::string& name)
+{
+  struct stat buffer;   
+  return (stat (name.c_str(), &buffer) == 0); 
+}
 
 template<typename RNG, typename Uint_t = std::uint_fast32_t, typename Int_t = std::int_fast32_t>
 class GeometryBase
@@ -17,7 +24,6 @@ class GeometryBase
 		typedef Int_t int_t;
 		using site_t = std::tuple < int_t, int_t, int_t >;
 		using lookup_t = LookUpTable < int_t, index_t, 2 >;
-		using histogram_t = std::vector < index_t >;
 		using vector_t = std::vector< index_t >;
 		enum SublatticeType {A, B};
 		
@@ -100,6 +106,56 @@ class GeometryBase
 		{
 			return static_cast<index_t>(rng() * nSites);
 		}
+
+		void SaveToFile(const std::string& filename)
+		{
+			std::ofstream os(filename, std::ofstream::binary);
+			os.write((char*)&maxDistance, sizeof(maxDistance));
+			os.write((char*)&nSites, sizeof(nSites));
+			for (index_t i = 0; i < nSites; ++i)
+			{
+				for (index_t j = 0; j < nSites; ++j)
+				{
+					os.write((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
+				}
+				for (index_t j = 0; j < nDirections; ++j)
+				{
+					os.write((char*)&neighborList[i][j], sizeof(neighborList[i][j]));
+				}
+				os.write((char*)&distanceHistogram[i], sizeof(distanceHistogram[i]));
+			}
+			for (index_t i = 0; i <= maxDistance; ++i)
+			{
+				os.write((char*)&numNeighborhood[i], sizeof(numNeighborhood[i]));
+			}
+			os.close();
+		}
+
+		void ReadFromFile(const std::string& filename)
+		{
+			std::ifstream is(filename, std::ofstream::binary);
+			is.read((char*)&maxDistance, sizeof(maxDistance));
+			is.read((char*)&nSites, sizeof(nSites));
+			this->numNeighborhood.resize(this->maxDistance + 1, 0);
+			
+			for (index_t i = 0; i < nSites; ++i)
+			{
+				for (index_t j = 0; j < nSites; ++j)
+				{
+					is.read((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
+				}
+				for (index_t j = 0; j < nDirections; ++j)
+				{
+					is.read((char*)&neighborList[i][j], sizeof(neighborList[i][j]));
+				}
+				is.read((char*)&distanceHistogram[i], sizeof(distanceHistogram[i]));
+			}
+			for (index_t i = 0; i <= maxDistance; ++i)
+			{
+				is.read((char*)&numNeighborhood[i], sizeof(numNeighborhood[i]));
+			}
+			is.close();
+		}
 	protected:
 		void AllocateNeighborList()
 		{
@@ -159,7 +215,7 @@ class GeometryBase
 		int_t nDirections;
 		index_t maxDistance;
 		lookup_t distanceMap;
-		histogram_t distanceHistogram;
+		vector_t distanceHistogram;
 		index_t** neighborList;
 		vector_t numNeighborhood;
 };
