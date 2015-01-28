@@ -466,7 +466,7 @@ class UpdateHandler
 			shiftedInvS.noalias() -= shiftedWormV * invG * shiftedWormU;
 			value_t detShiftedInvS = shiftedInvS.determinant();
 			value_t acceptRatio = detShiftedInvS * detWormS * vertexHandler.WormShiftParity();
-			if (acceptRatio < 0.0)
+			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
 				std::cout << "Vertices:" << std::endl;

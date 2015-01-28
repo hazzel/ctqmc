@@ -78,8 +78,14 @@ mc::mc(const std::string& dir)
 	std::cout.flush();
 	configSpace.ResizeGeometry(L);
 	configSpace.BuildHoppingMatrix();
-
 	std::cout << "Done." << std::endl;
+
+	std::cout << "Build G0 look up table";
+	std::cout.flush();
+	std::string filename = path + "g0lookup/rhom-L" + std::to_string(L);
+	configSpace.BuildG0LookUpTable(filename);
+	std::cout << "Done." << std::endl;
+	configSpace.updateHandler.Init();
 	
 	configSpace.zeta2 = param.value_or_default<value_t>("zeta2", 1.0);
 	value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
@@ -324,19 +330,9 @@ void mc::PrintAcceptanceMatrix(std::ostream& out)
 
 void mc::do_update()
 {
-	if (!isInitialized)
-	{
-		std::cout << "Build G0 look up table";
-		std::cout.flush();
-		std::string filename = path + "g0lookup/rhom-L" + std::to_string(L);
-		configSpace.BuildG0LookUpTable(filename);
-		std::cout << "Done." << std::endl;
-		configSpace.updateHandler.Init();
-		if (!is_thermalized())
-			std::cout << "Thermalization" << std::endl;
-		isInitialized = true;
-	}
-	
+	if (sweep == 0)
+		std::cout << "Thermalization" << std::endl;
+
 	for (uint_t i = 0; i < nThermStep; ++i)
 	{
 		value_t r = rng();
