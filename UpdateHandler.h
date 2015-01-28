@@ -646,5 +646,5 @@ class UpdateHandler
 		uint_t maxWorms = 2;
 		std::vector< value_t > condAW;
 		std::vector< value_t > condRW;
-		bool print = false;
+		bool print = true;
 };
