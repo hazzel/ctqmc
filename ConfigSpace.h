@@ -298,6 +298,10 @@ class ConfigSpace
 		void SaveToFile(const std::string& filename)
 		{
 			std::ofstream os(filename, std::ofstream::binary);
+			if (!os.is_open())
+			{
+				std::cout << "Error opening file: " << filename << std::endl;
+			}
 			for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
 			{
 				//std::ofstream os_txt(filename + "-R" + std::to_string(i) + ".txt");
