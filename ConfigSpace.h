@@ -224,7 +224,7 @@ class ConfigSpace
 				for (uint_t t = 0; t < nTimeBins; ++t)
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
-					SaveToFile(filename);
+				SaveToFile(filename);
 			}
 		}
 
@@ -321,6 +321,7 @@ class ConfigSpace
 				//os_txt.close();
 			}
 			os.close();
+			std::cout << "File " << filename << " written: " << FileExists(filename) << std::endl;
 		}
 
 		void ReadFromFile(const std::string& filename)
@@ -332,7 +333,7 @@ class ConfigSpace
 				for (uint_t j = 0; j < nTimeBins + 1; ++j)
 				{
 					is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-					if (i < lattice->MaxDistance() && j < nTimeBins)
+					if (j < nTimeBins)
 						is.read((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
 				}
 			}
