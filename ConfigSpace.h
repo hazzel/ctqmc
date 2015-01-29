@@ -65,13 +65,13 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Worms() == 0)
 			{
 				updateList.pop_front();
-				updateList.push_back("AddVertices N=" + std::to_string(N));
+				updateList.push_back("AddVertices N=" + std::to_string((int)N));
 				return updateHandler.template AddVertices<N>();
 			}
 			else
 			{
 				updateList.pop_front();
-				updateList.push_back("AddVerticesWithWorms N=" + std::to_string(N));
+				updateList.push_back("AddVerticesWithWorms N=" + std::to_string((int)N));
 				return updateHandler.template AddVerticesWithWorms<N, W>();
 			}
 		}
@@ -85,13 +85,13 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Worms() == 0)
 			{
 				updateList.pop_front();
-				updateList.push_back("RemoveVertices N=" + std::to_string(N));
+				updateList.push_back("RemoveVertices N=" + std::to_string((int)N));
 				return updateHandler.template RemoveVertices<N>();
 			}
 			else
 			{
 				updateList.pop_front();
-				updateList.push_back("RemoveVerticesWithWorms N=" + std::to_string(N));
+				updateList.push_back("RemoveVerticesWithWorms N=" + std::to_string((int)N));
 				return updateHandler.template RemoveVerticesWithWorms<N, W>();
 			}
 		}
@@ -100,7 +100,7 @@ class ConfigSpace
 		bool AddRandomWorms(value_t preFactor)
 		{
 			updateList.pop_front();
-			updateList.push_back("AddWorms N=" + std::to_string(N));
+			updateList.push_back("AddWorms N=" + std::to_string((int)N));
 			updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>();
 			return updateHandler.template AddWorms<N, W>(preFactor);
 		}
@@ -111,7 +111,7 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Worms() < N)
 				return false;
 			updateList.pop_front();
-			updateList.push_back("RemoveWorms N=" + std::to_string(N));
+			updateList.push_back("RemoveWorms N=" + std::to_string((int)N));
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 			return updateHandler.template RemoveWorms<N, W>(preFactor);
 		}
