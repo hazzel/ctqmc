@@ -83,7 +83,6 @@ mc::mc(const std::string& dir)
 	std::cout << "Build G0 look up table";
 	std::cout.flush();
 	std::string g0_file = path + "g0lookup/" + geometry + "-B" + ToString(configSpace.nTimeBins / 1000) + "-L" + ToString(L) + "-T" + ToString(T);
-	std::cout << "g0_file=" << g0_file << std::endl;
 	configSpace.BuildG0LookUpTable(g0_file);
 	std::cout << "Done." << std::endl;
 	configSpace.updateHandler.Init();
