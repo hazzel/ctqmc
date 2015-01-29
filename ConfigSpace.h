@@ -289,25 +289,25 @@ class ConfigSpace
 		void SaveToFile(const std::string& filename)
 		{
 			std::ofstream os(filename, std::ofstream::binary);
-			//std::ofstream os_txt(filename + ".txt");
-			//os_txt.precision(16);
 			for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
 			{
-				//os_txt << "R = " << i << std::endl;
+				//std::ofstream os_txt(filename + "-R" + std::to_string(i) + ".txt");
+				//os_txt.precision(16);
 				for (uint_t j = 0; j < nTimeBins + 1; ++j)
 				{
 					os.write((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-					//os_txt << lookUpTableG0[i][j] << std::endl;
+					//os_txt << lookUpTableG0[i][j] << "\t";
 					if (j < nTimeBins)
 					{
 						os.write((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
-						//os_txt << lookUpTableDtG0[i][j] << std::endl << std::endl;
+						//os_txt << lookUpTableDtG0[i][j] << std::endl;
 					}
+					//else
+						//os_txt << 0.0 << std::endl;
 				}
-				//os_txt << "--------" << std::endl;
+				//os_txt.close();
 			}
 			os.close();
-			//os_txt.close();
 		}
 
 		void ReadFromFile(const std::string& filename)
