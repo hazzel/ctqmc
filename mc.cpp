@@ -71,8 +71,8 @@ mc::mc(const std::string& dir)
 		configSpace.lattice = new Hex_t();
 	else if (geometry == "rhom")
 	{
-		std::string filename = path + "geometry/rhom-L" + std::to_string(L);
-		configSpace.lattice = new Rhom_t(filename);
+		std::string geo_file = path + "geometry/rhom-L" + std::to_string(L);
+		configSpace.lattice = new Rhom_t(geo_file);
 	}
 	std::cout << "Set up geometry...";
 	std::cout.flush();
@@ -82,8 +82,8 @@ mc::mc(const std::string& dir)
 
 	std::cout << "Build G0 look up table";
 	std::cout.flush();
-	std::string filename = path + "g0lookup/rhom" + "-B" + std::to_string(configSpace.nTimeBins / 1000) + "-L" + std::to_string(L) + "-T" + std::to_string(T);
-	configSpace.BuildG0LookUpTable(filename);
+	std::string g0_file = path + "g0lookup/" + geometry + "-B" + std::to_string(configSpace.nTimeBins / 1000) + "-L" + std::to_string(L) + "-T" + std::to_string(T);
+	configSpace.BuildG0LookUpTable(g0_file);
 	std::cout << "Done." << std::endl;
 	configSpace.updateHandler.Init();
 	

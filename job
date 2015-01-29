@@ -10,4 +10,4 @@ L = 3
 V = 2.0
 zeta2 = 0.8
 zeta4 = 2.0
-{T = 0.5}
+PARAMETERRANGE T 0.4 0.5 0.02
