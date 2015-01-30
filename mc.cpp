@@ -74,17 +74,13 @@ mc::mc(const std::string& dir)
 		std::string geo_file = path + "geometry/rhom-L" + ToString(L);
 		configSpace.lattice = new Rhom_t(geo_file);
 	}
-	std::cout << "Set up geometry...";
-	std::cout.flush();
+	//Set up geometry
 	configSpace.ResizeGeometry(L);
 	configSpace.BuildHoppingMatrix();
-	std::cout << "Done." << std::endl;
 
-	std::cout << "Build G0 look up table";
-	std::cout.flush();
+	//Build G0 look up table
 	std::string g0_file = path + "g0lookup/" + geometry + "-B" + ToString(configSpace.nTimeBins / 1000) + "-L" + ToString(L) + "-T" + ToString(T);
 	configSpace.BuildG0LookUpTable(g0_file);
-	std::cout << "Done." << std::endl;
 	configSpace.updateHandler.Init();
 	
 	configSpace.zeta2 = param.value_or_default<value_t>("zeta2", 1.0);
@@ -166,12 +162,14 @@ void mc::write(const std::string& dir)
 	std::ofstream f; f.open((dir + "bins").c_str());
 	f << ( sweep > nThermalize ? sweep-nThermalize : 0 ) << std::endl;
 	f.close();
+	/*
 	std::string ofile(dir+"exporderhist.txt");
 	std::ofstream ostream;
 	ostream.open(ofile.c_str());
 	for (uint_t i = 0; i < std::max(exporderHistZ.size(), exporderHistW2.size()); ++i)
 		ostream << i << " " << GetWithDef(exporderHistZ, i, 0) << " " << GetWithDef(exporderHistW2, i, 0) << std::endl;
 	ostream.close();
+	*/
 	ostream.open(dir+"probabilities.txt");
 	PrintAcceptanceMatrix(ostream);
 	ostream.close();
@@ -244,13 +242,13 @@ void mc::BuildUpdateWeightMatrix()
 												4.0 / 10.0	,	3.0 / 10.0	,	4.0 / 10.0,
 												5.0 / 10.0	,	3.5 / 10.0	,	0.0 / 10.0,
 												6.0 / 10.0	,	4.0 / 10.0	,	0.0 / 10.0,
-												8.0 / 10.0	,	0.0			,	0.0,
-												0.0			,	6.0 / 10.0	,	0.0, 
-												10.0 / 10.0	,	0.0			,	0.0,
-												0.0			,	0.0			,	6.0 / 10.0,
-												0.0			,	8.0 / 10.0	,	0.0,
-												0.0			,	0.0			,	8.0 / 10.0,
-												0.0			,	10.0 / 10.0	,	10.0 / 10.0;
+												8.0 / 10.0	,	0.0					,	0.0,
+												0.0					,	6.0 / 10.0	,	0.0, 
+												10.0 / 10.0	,	0.0					,	0.0,
+												0.0					,	0.0					,	6.0 / 10.0,
+												0.0					,	8.0 / 10.0	,	0.0,
+												0.0					,	0.0					,	8.0 / 10.0,
+												0.0					,	10.0 / 10.0	,	10.0 / 10.0;
 
 /*
 	//ONLY Z<->W2<->W4
@@ -320,9 +318,13 @@ void mc::PrintAcceptanceMatrix(std::ostream& out)
 		for (uint_t j = 0; j < nStateType; ++j)
 		{
 			if (proposedUpdates(i, j) == 0)
+			{
 				out << 0 << " ";
+			}
 			else
+			{
 				out << acceptedUpdates(i, j) / proposedUpdates(i, j) << " ";
+			}
 		}
 		out << std::endl;
 	}
@@ -502,9 +504,9 @@ void mc::do_update()
 		{
 			//double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
 			double cond = configSpace.updateHandler.StabilizeInvG();
-			measure.add("avgInvGError", avgError);
-			measure.add("relInvGError", relError);
-			measure.add("condition", cond);
+			//measure.add("avgInvGError", avgError);
+			//measure.add("relInvGError", relError);
+			//measure.add("condition", cond);
 			rebuildCnt = 0;
 		}
 	}
@@ -518,7 +520,7 @@ void mc::do_update()
 		}
 	}
 	if (sweep + 1 == nThermalize)
-		std::cout << std::endl;
+		std::cout << "Done" << std::endl;
 	++sweep;
 }
 

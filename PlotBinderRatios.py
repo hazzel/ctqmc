@@ -13,7 +13,7 @@ L = ["2", "3", "4", "5", "6", "7", "9"]
 for l in range(len(L)):
 	#filelist = glob.glob("plot_T0.46/job-*-L" + L[l] + "-T0.46-hex*.task*.out")
 	#filelist = glob.glob("plot/job-*-L" + L[l] + "-V2.0-hex.task*.out")
-	filelist = glob.glob("plot_rhom_V2.0/job-*-L" + L[l] + "*V2.0-rhom.task*.out")
+	filelist = glob.glob("plot_rhom_V2.0/job-*-L" + L[l] + "*V2*.0-rhom.task*.out")
 	if len(filelist) == 0:
 		continue
 	filelist.sort()
@@ -35,7 +35,7 @@ for l in range(len(L)):
 	plt.title("Binder ratios")
 	plt.xlabel("T")
 	plt.ylabel("B")
-	plt.plot(np.array(x), np.array(y), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
+	plt.plot(np.array(x), np.array(y), "o", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 	plt.errorbar(np.array(x), np.array(y), yerr=np.array(yerr), color=color_cycle[l])
 	plt.legend(loc=2)
 plt.show()
