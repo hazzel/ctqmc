@@ -164,12 +164,12 @@ void mc::write(const std::string& dir)
 	f.close();
 	/*
 	std::string ofile(dir+"exporderhist.txt");
-	std::ofstream ostream;
 	ostream.open(ofile.c_str());
 	for (uint_t i = 0; i < std::max(exporderHistZ.size(), exporderHistW2.size()); ++i)
 		ostream << i << " " << GetWithDef(exporderHistZ, i, 0) << " " << GetWithDef(exporderHistW2, i, 0) << std::endl;
 	ostream.close();
 	*/
+	std::ofstream ostream;
 	ostream.open(dir+"probabilities.txt");
 	PrintAcceptanceMatrix(ostream);
 	ostream.close();
