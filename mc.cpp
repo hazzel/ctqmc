@@ -66,7 +66,8 @@ mc::mc(const std::string& dir)
 	configSpace.V = param.value_or_default<value_t>("V", 1.4);
 	configSpace.SetTemperature(T);
 	std::string geometry = param.value_or_default<std::string>("GEOMETRY", "hex");
-	path = dir.substr(0, dir.rfind('/')+1);
+	path = dir.substr(0, dir.substr(0, dir.rfind('/')).rfind('/') + 1);
+	
 	if (geometry == "hex")
 		configSpace.lattice = new Hex_t();
 	else if (geometry == "rhom")
