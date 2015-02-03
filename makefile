@@ -10,49 +10,52 @@ OBJS = dump.o parser.o measurements.o evalable.o observable.o random.o mc.o main
 OBJSLN = dump.LN.o parser.LN.o measurements.LN.o evalable.LN.o observable.LN.o random.LN.o mc.LN.o ConfigSpace.LN.o runner_single.LN.o merge.LN.o
 
 ifeq ($(MODE),MPI)
-  OBJS+=runner.o
-  ifeq ($(MPICC),)
-    MPICC = /usr/lib64/mpi/gcc/openmpi/bin/mpiCC
-    #MPICC = /usr/lib64/openmpi/bin/mpiCC
-  endif
-  CC=$(MPICC)
-  LD=$(MPICC)
+	OBJS+=runner.o
+	ifeq ($(MPICC),)
+		MPICC = /usr/lib64/mpi/gcc/openmpi/bin/mpiCC
+		#MPICC = /usr/lib64/openmpi/bin/mpiCC
+	endif
+	CC=$(MPICC)
+	LD=$(MPICC)
 endif
 
 ifeq ($(MODE),SINGLE)
-  OBJS+=runner_single.o
-  DEFINES+= -DMCL_SINGLE
-  ifneq ($(MCLL_SYSTEM_INFO), rwthcluster)
-    CC=g++
-    LD=g++
-  endif
+	OBJS+=runner_single.o
+	DEFINES+= -DMCL_SINGLE
+	ifneq ($(MCLL_SYSTEM_INFO), rwthcluster)
+		CC=g++
+		LD=g++
+	endif
 endif
 
 ifeq ($(MODE),PT)
-  OBJS+=runner.o
-  DEFINES+= -DMCL_PT
+	OBJS+=runner.o
+	DEFINES+= -DMCL_PT
 endif
 
 MCLL  = $(HOME)/mc/load_leveller/trunk
 APPMCLL = $(HOME)/mc/ctqmc/
 #USE_MKL = -DEIGEN_USE_MKL_ALL
+USE_HPC = FALSE
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
-	APPMCLL = $(HPCWORK)/ctqmc/
+	ifeq ($(USE_HPC), TRUE)
+		APPMCLL = $(HPCWORK)/ctqmc/
+	endif
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 $(USE_MKL) -DNDEBUG $(FLAGS_OPENMP) $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
 	LDFLAGS = $(FLAGS_OPENMP)
 	SUPERLP = 
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
-        CFLAGS  = -O3 -Wno-deprecated -std=c++11 -fopenmp $(DEFINES)
-        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
-        LDFLAGS = -fopenmp
-        SUPERLP =
+	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -fopenmp $(DEFINES)
+	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
+	LDFLAGS = -fopenmp
+	SUPERLP =
 else
-        CFLAGS  = -O3 -Wno-deprecated -std=c++11 -fopenmp $(DEFINES)
-        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-        LDFLAGS = -fopenmp
-        SUPERLP =
+	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -fopenmp $(DEFINES)
+	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
+	LDFLAGS = -fopenmp
+	SUPERLP =
 endif
 
 CCLN = g++

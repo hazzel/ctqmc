@@ -223,20 +223,6 @@ bool mc::is_thermalized()
 
 void mc::BuildUpdateWeightMatrix()
 {
-/*
-	//ALL TRANSITIONS
-	updateWeightMatrix <<	1.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-									2.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-									3.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-									4.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-									7.0 / 10.0	,	0.0			,	0.0,
-									0.0			,	3.0 / 10.0	,	0.0, 
-									10.0 / 10.0	,	0.0			,	0.0,
-									0.0			,	0.0			,	3.0 / 10.0,
-									0.0			,	6.0 / 10.0	,	0.0,
-									0.0			,	0.0			,	6.0 / 10.0,
-									0.0			,	10.0 / 10.0	,	10.0 / 10.0;
-*/
 
 	//ALL TRANSITIONS
 	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	2.0 / 10.0,
@@ -505,9 +491,9 @@ void mc::do_update()
 		{
 			//double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
 			double cond = configSpace.updateHandler.StabilizeInvG();
-			//measure.add("avgInvGError", avgError);
-			//measure.add("relInvGError", relError);
-			//measure.add("condition", cond);
+			measure.add("avgInvGError", avgError);
+			measure.add("relInvGError", relError);
+			measure.add("condition", cond);
 			rebuildCnt = 0;
 		}
 	}

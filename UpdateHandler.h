@@ -93,14 +93,7 @@ class UpdateHandler
 			if (configSpace.rng() < acceptRatio)
 			{
 				inv_solver_t<n> solver(invS);
-				matrix_t<n, n> S = solver.inverse();
-				
-				/*
-				Eigen::JacobiSVD< matrix_t<n, n> > svd(invS, Eigen::ComputeFullU | Eigen::ComputeFullV);
-				matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
-				condAW.push_back(sv(0) / sv(n-1));
-				*/
-				
+				matrix_t<n, n> S = solver.inverse();			
 				matrix_t<n, Eigen::Dynamic> R = -S * v * invG;
 				
 				invG.conservativeResize(k + n, k + n);
@@ -159,47 +152,14 @@ class UpdateHandler
 				matrix_t<n, n> S = solver.inverse();
 				matrix_t<n, Eigen::Dynamic> R = -S * v.topLeftCorner(n, k) * invG;
 				
-				//value_t cond1 = MatrixCondition(invG);
-				//condAW.push_back(cond1);
 				invG.conservativeResize(k + n, k + n);
 				invG.topLeftCorner(k, k).noalias() -= invGu * R;
 				invG.topRightCorner(k, n).noalias() = -invGu * S;
 				invG.bottomLeftCorner(n, k) = R;
 				invG.template bottomRightCorner<n, n>() = S;
-				//value_t cond2 = MatrixCondition(invG);
-				//condAW.push_back(cond2);
-				/*
-				if (cond2 > 100000.0)
-				{
-					std::cout << "Add 1: " << cond1 << std::endl;
-					std::cout << "Vertices" << std::endl;
-					vertexHandler.PrintVertices();
-					std::cout << "Worms" << std::endl;
-					vertexHandler.PrintWormVertices();
-
-					matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(2 * vertexHandler.Vertices(), 2 * vertexHandler.Vertices());
-					vertexHandler.PropagatorMatrix(G);
-					std::cout << "cond(G): " << MatrixCondition(G) << std::endl;
-				}
-				*/
 
 				detWormS = 1.0 / (wormA - wormV * invG * wormU).determinant();
 				vertexHandler.AddBufferedVertices();
-				/*
-				if (cond2 > 100000.0)
-				{
-					std::cout << "Add 2: " << cond2 << std::endl;
-					std::cout << "Vertices" << std::endl;
-					vertexHandler.PrintVertices();
-					std::cout << "Worms" << std::endl;
-					vertexHandler.PrintWormVertices();
-
-					matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(2 * vertexHandler.Vertices(), 2 * vertexHandler.Vertices());
-					vertexHandler.PropagatorMatrix(G);
-					std::cout << "cond(G): " << MatrixCondition(G) << std::endl;
-				}
-				*/
-
 				return true;
 			}
 			return false;
@@ -292,45 +252,13 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				//value_t cond1 = MatrixCondition(invG);
-				//condRW.push_back(cond1);
 				invG.resize(k - n, k - n);
 				invG = newInvG;
-				//value_t cond2 = MatrixCondition(invG);
-				//condRW.push_back(cond2);
-				/*
-				if (cond2 > 100000.0)
-				{
-					std::cout << "Remove 1: " << cond1 << std::endl;
-					std::cout << "Vertices" << std::endl;
-					vertexHandler.PrintVertices();
-					std::cout << "Worms" << std::endl;
-					vertexHandler.PrintWormVertices();
-
-					matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(2 * vertexHandler.Vertices(), 2 * vertexHandler.Vertices());
-					vertexHandler.PropagatorMatrix(G);
-					std::cout << "cond(G): " << MatrixCondition(G) << std::endl;
-				}
-				*/
 				
 				wormU.conservativeResize(k - n, l);
 				wormV.conservativeResize(l, k - n);
 				detWormS = newDetWormS;
 				vertexHandler.RemoveBufferedVertices();
-				/*
-				if (cond2 > 100000.0)
-				{
-					std::cout << "Remove 2: " << cond2 << std::endl;
-					std::cout << "Vertices" << std::endl;
-					vertexHandler.PrintVertices();
-					std::cout << "Worms" << std::endl;
-					vertexHandler.PrintWormVertices();
-
-					matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(2 * vertexHandler.Vertices(), 2 * vertexHandler.Vertices());
-					vertexHandler.PropagatorMatrix(G);
-					std::cout << "cond(G): " << MatrixCondition(G) << std::endl;
-				}
-				*/
 				return true;
 			}
 			else
@@ -365,12 +293,17 @@ class UpdateHandler
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "AddWorm(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
+				matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
+				vertexHandler.PropagatorMatrix(G);
+				std::cout << MatrixCondition(G) << std::endl;
+				/*
 				std::cout << "Vertices:" << std::endl;
 				vertexHandler.PrintVertices();
 				std::cout << "Worms:" << std::endl;
 				vertexHandler.PrintWormVertices();
 				std::cout << "VertexBuffer:" << std::endl;
 				vertexHandler.PrintVertexBuffer();
+				*/
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
@@ -495,6 +428,7 @@ class UpdateHandler
 			if (M.rows() == 0)
 				return 0.0;
 			Eigen::JacobiSVD<Matrix> svd(M, Eigen::ComputeFullU | Eigen::ComputeFullV);
+			std::cout << svd.singularValues()(M.rows()-1) << std::endl;
 			return svd.singularValues()(0) / svd.singularValues()(M.rows()-1);
 		}
 
@@ -548,27 +482,10 @@ class UpdateHandler
 				relError = avgError / relError;
 			}
 
-			if (avgError > std::pow(10.0, -6.0))
-			{
-				std::cout << "Error: " << avgError << endl;
-				std::cout << "AddWithWorm:" << std::endl;
-				for (auto v : condAW)
-					std::cout << v << std::endl;
-				std::cout << "RemoveWithWorm:" << std::endl;
-				for (auto v : condRW)
-					std::cout << v << std::endl;
-				std::cin.get();
-			}
-			
-			condAW.clear();
-			condRW.clear();
+			Eigen::JacobiSVD< matrix_t<Eigen::Dynamic, Eigen::Dynamic> > svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
 			invG = stabInvG;
-			return 0.0;
-
-			//Eigen::JacobiSVD< matrix_t<Eigen::Dynamic, Eigen::Dynamic> > svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
-			//matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
-			//invG = stabInvG;
-			//return sv(0) / sv(G.rows()-1);
+			return sv(0) / sv(G.rows()-1);
 		}
 		
 		template<typename Matrix>
@@ -644,7 +561,5 @@ class UpdateHandler
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormA;
 		value_t detWormS;
 		uint_t maxWorms = 2;
-		std::vector< value_t > condAW;
-		std::vector< value_t > condRW;
 		bool print = false;
 };
