@@ -20,14 +20,15 @@ template<typename Index_t, typename Value_t>
 struct Node
 {
 	Node()
-		: Site(0), Tau(0.0)
+		: Site(0), Tau(0.0), Position(0)
 	{}
-	Node(Index_t site, Value_t tau)
-		: Site(site), Tau(tau)
+	Node(Index_t site, Value_t tau, bool pos)
+		: Site(site), Tau(tau), Position(pos)
 	{}
 	
 	Index_t Site;
 	Value_t Tau;
+	Index_t Position;
 };
 
 template<typename ConfigSpace_t>
@@ -162,8 +163,9 @@ class VertexHandler
 			{
 				uint_t site = configSpace.lattice->RandomSite(configSpace.rng);
 				value_t tau = configSpace.rng() * configSpace.beta;
-				nodeBuffer[2*i] = node_t(site, tau);
-				nodeBuffer[2*i+1] = node_t(configSpace.lattice->RandomWalk(site, 1, configSpace.rng), tau);
+				uint_t pos = nodes.size() + wormNodes.size() + 2 * i;
+				nodeBuffer[2*i] = node_t(site, tau, pos);
+				nodeBuffer[2*i+1] = node_t(configSpace.lattice->RandomWalk(site, 1, configSpace.rng), tau, pos + 1);
 			}
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
 		}
@@ -173,15 +175,16 @@ class VertexHandler
 		{
 			uint_t site = configSpace.lattice->RandomSite(configSpace.rng);
 			value_t tau;
+			uint_t pos = nodes.size() + wormNodes.size();
 			if (wormNodes.size() > 0)
 				tau = wormNodes[0].Tau;
 			else
 				tau = configSpace.rng() * configSpace.beta;
-			nodeBuffer[0] = node_t(site, tau);
+			nodeBuffer[0] = node_t(site, tau, pos);
 			for (uint_t i = 1; i < 2 * N; ++i)
 			{
 				uint_t nsite = configSpace.lattice->FromNeighborhood(site, configSpace.nhoodDist, configSpace.rng);
-				nodeBuffer[i] = node_t(nsite, tau);
+				nodeBuffer[i] = node_t(nsite, tau, pos + i);
 			}
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
 		}
@@ -189,13 +192,31 @@ class VertexHandler
 		void RemoveBufferedVertices()
 		{
 			for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
+			{
+				uint_t pos = (nodes.begin() + *(it-1))->Position;
+				for (auto node : nodes)
+					if (node.Position > pos)
+						--node.Position;
+				for (auto node : wormNodes)
+					if (node.Position > pos)
+						--node.Position;
 				nodes.erase(nodes.begin() + *(it-1));
+			}
 		}
 		
 		void RemoveBufferedWorms()
 		{
 			for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
+			{
+				uint_t pos = (nodes.begin() + *(it-1))->Position;
+				for (auto node : nodes)
+					if (node.Position > pos)
+						--node.Position;
+				for (auto node : wormNodes)
+					if (node.Position > pos)
+						--node.Position;
 				wormNodes.erase(wormNodes.begin() + *(it-1));
+			}
 		}
 		
 		template<int_t N>
@@ -345,74 +366,29 @@ class VertexHandler
 			}
 		}
 		
-		template<typename U, typename V, typename A>
-		void WoodburyAddWorm(U& u, V& v, A& a)
-		{
-			uint_t k = nodes.size();
-			uint_t l = wormNodes.size();
-			uint_t n = a.cols() - l;
-			for (uint_t i = 0; i < n; ++i)
-			{
-				for (uint_t j = 0; j < k; ++j)
-				{
-					u(j, l + i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-					v(l + i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
-				}
-				for (uint_t j = 0; j < n; ++j)
-				{
-					if (i < j)
-					{
-						a(i + l, j + l) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
-						a(j + l, i + l) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
-					}
-				}
-				for (uint_t j = 0; j < l; ++j)
-				{
-					a(j, i + l) = configSpace.LookUpG0(wormNodes[j].Site, nodeBuffer[i].Site, wormNodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-					a(i + l, j) = configSpace.LookUpG0(nodeBuffer[i].Site, wormNodes[j].Site, nodeBuffer[i].Tau - wormNodes[j].Tau - configSpace.infinTau);
-				}
-				a(i + l, i + l) = 0.0;
-			}
-		}
-		
-		template<typename U, typename V, typename A>
-		void WoodburyWorm(U& u, V& v, A& a)
-		{
-			uint_t k = nodes.size();
-			uint_t l = wormNodes.size();
-			for (uint_t i = 0; i < l; ++i)
-			{
-				for (uint_t j = 0; j < k; ++j)
-				{
-					u(j, i) = configSpace.LookUpG0(nodes[j].Site, wormNodes[i].Site, nodes[j].Tau - wormNodes[i].Tau + configSpace.infinTau);
-					v(i, j) = configSpace.LookUpG0(wormNodes[i].Site, nodes[j].Site, wormNodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
-				}
-				for (uint_t j = 0; j < l; ++j)
-				{
-					if (i < j)
-					{
-						a(i, j) = configSpace.LookUpG0(wormNodes[i].Site, wormNodes[j].Site, wormNodes[i].Tau - wormNodes[j].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(wormNodes[j].Site, wormNodes[i].Site, wormNodes[j].Tau - wormNodes[i].Tau - configSpace.infinTau);
-					}
-				}
-				a(i, i) = 0.0;
-			}
-		}
-		
 		template<typename P>
-		void PermutationMatrix(P& perm)
+		void PermutationMatrix(P& perm, bool isWorm)
 		{
+			std::vector<uint_t> posBuffer;
+			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+			{
+				if (isWorm)
+					posBuffer.push_back(wormNodes[*it].Position);
+				else
+					posBuffer.push_back(nodes[*it].Position);
+			}
+
 			uint_t cnt = 0;
 			for (uint_t i = 0; i < perm.size(); ++i)
 			{
-				if (find(indexBuffer.begin(), indexBufferEnd, i) == indexBufferEnd)
+				if (find(posBuffer.begin(), posBuffer.end(), i) == posBuffer.end())
 				{
 					perm[cnt] = i;
 					++cnt;
 				}
 			}
 			int i = 0;
-			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+			for (auto it = posBuffer.begin(); it != posBuffer.end(); ++it)
 			{
 				perm[cnt + i] = *it;
 				++i;

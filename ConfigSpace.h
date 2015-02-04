@@ -67,70 +67,39 @@ class ConfigSpace
 			delete lattice;
 		}
 		
-		template<int_t N, int_t W>
-		bool AddRandomVertices()
+		template<int_t N>
+		bool AddRandomVertices(value_t preFactor, bool isWorm)
 		{
-			updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
-			if (updateHandler.GetVertexHandler().Worms() == 0)
+			if (isWorm)
+				updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>();
+			else
+				updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
+			return updateHandler.template AddVertices<N>(preFactor, isWorm);
+		}
+		
+		template<int_t N>
+		bool RemoveRandomVertices(value_t preFactor, bool isWorm)
+		{
+			if (isWorm)
 			{
-				updateList.pop_front();
-				updateList.push_back("AddVertices N=" + ToString(N));
-				return updateHandler.template AddVertices<N>();
+				if (updateHandler.GetVertexHandler().Worms() < N)
+					return false;
+				else
+					updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 			}
 			else
 			{
-				updateList.pop_front();
-				updateList.push_back("AddVerticesWithWorms N=" + ToString(N));
-				return updateHandler.template AddVerticesWithWorms<N, W>();
+				if (updateHandler.GetVertexHandler().Vertices() < N)
+					return false;
+				else
+					updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
 			}
+			return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
 		}
 		
-		template<int_t N, int_t W>
-		bool RemoveRandomVertices()
-		{
-			if (updateHandler.GetVertexHandler().Vertices() < N)
-				return false;
-			updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
-			if (updateHandler.GetVertexHandler().Worms() == 0)
-			{
-				updateList.pop_front();
-				updateList.push_back("RemoveVertices N=" + ToString(N));
-				return updateHandler.template RemoveVertices<N>();
-			}
-			else
-			{
-				updateList.pop_front();
-				updateList.push_back("RemoveVerticesWithWorms N=" + ToString(N));
-				return updateHandler.template RemoveVerticesWithWorms<N, W>();
-			}
-		}
-		
-		template<int_t N, int_t W>
-		bool AddRandomWorms(value_t preFactor)
-		{
-			updateList.pop_front();
-			updateList.push_back("AddWorms N=" + ToString(N));
-			updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>();
-			return updateHandler.template AddWorms<N, W>(preFactor);
-		}
-		
-		template<int_t N, int_t W>
-		bool RemoveRandomWorms(value_t preFactor)
-		{
-			if (updateHandler.GetVertexHandler().Worms() < N)
-				return false;
-			updateList.pop_front();
-			updateList.push_back("RemoveWorms N=" + ToString(N));
-			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
-			return updateHandler.template RemoveWorms<N, W>(preFactor);
-		}
-		
-		template<int_t W>
 		bool ShiftWorm()
 		{
-			updateList.pop_front();
-			updateList.push_back("ShiftWorm");
-			return updateHandler.ShiftWorm<W>();
+			return updateHandler.ShiftWorm();
 		}
 		
 		void PrintMatrix(const matrix_t& m)
