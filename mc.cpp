@@ -452,10 +452,10 @@ void mc::do_update()
 		if (rebuildCnt == nRebuild)
 		{
 			//double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
-			double cond = configSpace.updateHandler.StabilizeInvG();
-			measure.add("avgInvGError", avgError);
-			measure.add("relInvGError", relError);
-			measure.add("condition", cond);
+			//double cond = configSpace.updateHandler.StabilizeInvG();
+			//measure.add("avgInvGError", avgError);
+			//measure.add("relInvGError", relError);
+			//measure.add("condition", cond);
 			rebuildCnt = 0;
 		}
 	}
