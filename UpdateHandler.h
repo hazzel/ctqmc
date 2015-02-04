@@ -428,7 +428,7 @@ class UpdateHandler
 			if (M.rows() == 0)
 				return 0.0;
 			Eigen::JacobiSVD<Matrix> svd(M, Eigen::ComputeFullU | Eigen::ComputeFullV);
-			std::cout << svd.singularValues()(M.rows()-1) << std::endl;
+			//std::cout << svd.singularValues()(M.rows()-1) << std::endl;
 			return svd.singularValues()(0) / svd.singularValues()(M.rows()-1);
 		}
 
@@ -486,6 +486,13 @@ class UpdateHandler
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
 			invG = stabInvG;
 			return sv(0) / sv(G.rows()-1);
+		}
+
+		double PropagatorMatrixCondition()
+		{
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(2 * vertexHandler.Vertices() + 2 * vertexHandler.Worms(), 2 * vertexHandler.Vertices() + 2 * vertexHandler.Worms());
+			vertexHandler.FullPropagatorMatrix(G);
+			return MatrixCondition(G);
 		}
 		
 		template<typename Matrix>

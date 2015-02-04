@@ -138,7 +138,7 @@ void mc::init()
 	measure.add_observable("deltaW2", nPrebins);
 	measure.add_observable("deltaW4", nPrebins);
 	measure.add_observable("avgInvGError", nPrebins);
-	measure.add_observable("relInvGError", nPrebins);
+	measure.add_observable("fullCondition", nPrebins);
 	measure.add_observable("condition", nPrebins);
 	measure.add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
 }
@@ -223,6 +223,21 @@ bool mc::is_thermalized()
 
 void mc::BuildUpdateWeightMatrix()
 {
+
+/*
+	//ALL TRANSITIONS
+	updateWeightMatrix <<	2.0 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
+												4.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+												5.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												6.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												8.0 / 10.0	,	0.0					,	0.0,
+												0.0					,	3.0 / 10.0	,	0.0, 
+												10.0 / 10.0	,	0.0					,	0.0,
+												0.0					,	0.0					,	3.0 / 10.0,
+												0.0					,	5.0 / 10.0	,	0.0,
+												0.0					,	0.0					,	5.0 / 10.0,
+												0.0					,	10.0 / 10.0	,	10.0 / 10.0;
+*/
 
 	//ALL TRANSITIONS
 	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	2.0 / 10.0,
@@ -491,9 +506,14 @@ void mc::do_update()
 		{
 			//double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
 			double cond = configSpace.updateHandler.StabilizeInvG();
-			measure.add("avgInvGError", avgError);
-			measure.add("relInvGError", relError);
-			measure.add("condition", cond);
+			/*
+			//if (state == StateType::Z)
+			{
+				measure.add("avgInvGError", avgError);
+				measure.add("fullCondition", configSpace.updateHandler.PropagatorMatrixCondition());
+				measure.add("condition", cond);
+			}
+			*/
 			rebuildCnt = 0;
 		}
 	}

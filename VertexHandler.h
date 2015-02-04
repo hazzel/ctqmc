@@ -289,6 +289,41 @@ class VertexHandler
 				G(i, i) = 0.0;
 			}
 		}
+
+		template<typename Matrix>
+		void FullPropagatorMatrix(Matrix& G)
+		{
+			uint_t k = nodes.size();
+			uint_t l = wormNodes.size();
+
+			for (uint_t i = 0; i < k; ++i)
+			{
+				for (uint_t j = 0; j < i; ++j)
+				{
+					G(j, i) = configSpace.LookUpG0(nodes[j].Site, nodes[i].Site, nodes[j].Tau - nodes[i].Tau + configSpace.infinTau);
+					G(i, j) = configSpace.LookUpG0(nodes[i].Site, nodes[j].Site, nodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
+				}
+				G(i, i) = 0.0;
+			}
+
+			for (uint_t i = 0; i < l; ++i)
+			{
+				for (uint_t j = 0; j < k; ++j)
+				{
+					G(j, i + k) = configSpace.LookUpG0(nodes[j].Site, wormNodes[i].Site, nodes[j].Tau - wormNodes[i].Tau + configSpace.infinTau);
+					G(i + k, j) = configSpace.LookUpG0(wormNodes[i].Site, nodes[j].Site, wormNodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
+				}
+				for (uint_t j = 0; j < l; ++j)
+				{
+					if (i < j)
+					{
+						G(i + k, j + k) = configSpace.LookUpG0(wormNodes[i].Site, wormNodes[j].Site, wormNodes[i].Tau - wormNodes[j].Tau + configSpace.infinTau);
+						G(j + k, i + k) = configSpace.LookUpG0(wormNodes[j].Site, wormNodes[i].Site, wormNodes[j].Tau - wormNodes[i].Tau - configSpace.infinTau);
+					}
+				}
+				G(i + k, i + k) = 0.0;
+			}
+		}
 		
 		template<typename U, typename V, typename A>
 		void WoodburyAddVertices(U& u, V& v, A& a)

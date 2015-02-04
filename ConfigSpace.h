@@ -253,7 +253,7 @@ class ConfigSpace
 			hoppingMatrix.resize(lattice->Sites(), lattice->Sites());
 			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
 			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
-			nhoodDist = std::min({uint_t(2000), lattice->MaxDistance()});
+			nhoodDist = std::min({uint_t(20000), lattice->MaxDistance()});
 		}
 		
 		void SetTemperature(value_t T)
