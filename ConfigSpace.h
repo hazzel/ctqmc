@@ -58,9 +58,7 @@ class ConfigSpace
 		
 		ConfigSpace(RNG& rng)
 			:rng(rng), updateHandler(UpdateHandler_t(*this))
-		{
-			updateList.resize(10, "");
-		}
+		{}
 
 		~ConfigSpace()
 		{
@@ -71,7 +69,10 @@ class ConfigSpace
 		bool AddRandomVertices(value_t preFactor, bool isWorm)
 		{
 			if (isWorm)
+			{
 				updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>();
+				preFactor *= updateHandler.GetVertexHandler().VertexBufferParity();
+			}
 			else
 				updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
 			return updateHandler.template AddVertices<N>(preFactor, isWorm);
@@ -85,7 +86,10 @@ class ConfigSpace
 				if (updateHandler.GetVertexHandler().Worms() < N)
 					return false;
 				else
+				{
 					updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
+					preFactor *= updateHandler.GetVertexHandler().WormIndexBufferParity();
+				}
 			}
 			else
 			{
@@ -112,14 +116,6 @@ class ConfigSpace
 			}
 		}
 		
-		void PrintLastUpdates()
-		{
-			std::cout << "Last Updates:" << std::endl;
-			for (auto str : updateList)
-				std::cout << str << std::endl;
-			std::cout << std::endl;
-		}
-
 		StateType State() const
 		{
 			return state;
@@ -333,5 +329,4 @@ class ConfigSpace
 		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
 		Eigen::FullPivLU<matrix_t> invSolver;
 		uint_t nhoodDist;
-		std::list<std::string> updateList;
 };

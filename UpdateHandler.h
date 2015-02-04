@@ -85,10 +85,7 @@ class UpdateHandler
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "AddVertices(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
-				std::cout << "Vertices:" << std::endl;
-				vertexHandler.PrintVertices();
-				std::cout << "VertexBuffer:" << std::endl;
-				vertexHandler.PrintVertexBuffer();
+				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
@@ -101,10 +98,7 @@ class UpdateHandler
 				invG.bottomLeftCorner(n, k) = R;
 				invG.template bottomRightCorner<n, n>() = S;
 				
-				if (isWorm)
-					vertexHandler.AddBufferedWorms();
-				else
-					vertexHandler.AddBufferedVertices();
+				vertexHandler.AddBufferedVertices(isWorm);
 				return true;
 			}
 			return false;
@@ -113,13 +107,13 @@ class UpdateHandler
 		template<int_t N>
 		bool RemoveVertices(double preFactor, bool isWorm)
 		{
-			if (isWorm && vertexHandler.Vertices() < N)
+			if (isWorm && vertexHandler.Worms() < N)
 				return false;
-			if (!isWorm && vertexHandler.Worms() < N)
+			if ((!isWorm) && vertexHandler.Vertices() < N)
 				return false;
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
-			
+
 			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k);
 			vertexHandler.PermutationMatrix(perm.indices(), isWorm);
 			invG = perm.transpose() * invG * perm;
@@ -129,10 +123,7 @@ class UpdateHandler
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "RemoveVertices(" << N << "): AcceptRatio" << acceptRatio << std::endl;
-				std::cout << "Vertices:" << std::endl;
-				vertexHandler.PrintVertices();
-				std::cout << "IndexBuffer:" << std::endl;
-				vertexHandler.PrintIndexBuffer();
+				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
@@ -140,10 +131,7 @@ class UpdateHandler
 				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
 				invG.conservativeResize(k - n, k - n);
 
-				if (isWorm)
-					vertexHandler.RemoveBufferedWorms();
-				else
-					vertexHandler.RemoveBufferedVertices();
+				vertexHandler.RemoveBufferedVertices(isWorm);
 				return true;
 			}
 			else
