@@ -108,7 +108,10 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Worms() < N)
 				return false;
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
-			return updateHandler.template RemoveWorms<N, W>(preFactor);
+			if (updateHandler.GetVertexHandler().WormIndexBufferDistance() <= nhoodDist)
+				return updateHandler.template RemoveWorms<N, W>(preFactor);
+			else
+				return false;
 		}
 		
 		template<int_t W>
@@ -127,14 +130,6 @@ class ConfigSpace
 			}
 		}
 		
-		void PrintLastUpdates()
-		{
-			std::cout << "Last Updates:" << std::endl;
-			for (auto str : updateList)
-				std::cout << str << std::endl;
-			std::cout << std::endl;
-		}
-
 		StateType State() const
 		{
 			return state;

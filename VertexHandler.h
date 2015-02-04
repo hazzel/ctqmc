@@ -154,6 +154,18 @@ class VertexHandler
 		{
 			return configSpace.lattice->Distance(wormNodes[0].Site, wormNodes[1].Site);
 		}
+
+		uint_t WormIndexBufferDistance()
+		{
+			uint_t dist = 0;
+			for (auto it = indexBuffer.begin(); it != indexBufferEnd; it+=2)
+			{
+				uint_t d = configSpace.lattice->Distance(wormNodes[*(it)].Site, wormNodes[*(it+1)].Site);
+				if (d > dist)
+					dist = d;
+			}
+			return dist;
+		}
 		
 		template<int_t N>
 		void AddRandomVerticesToBuffer()
