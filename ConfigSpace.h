@@ -58,9 +58,7 @@ class ConfigSpace
 		
 		ConfigSpace(RNG& rng)
 			:rng(rng), updateHandler(UpdateHandler_t(*this))
-		{
-			updateList.resize(10, "");
-		}
+		{}
 
 		~ConfigSpace()
 		{
@@ -73,14 +71,10 @@ class ConfigSpace
 			updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
 			if (updateHandler.GetVertexHandler().Worms() == 0)
 			{
-				updateList.pop_front();
-				updateList.push_back("AddVertices N=" + ToString(N));
 				return updateHandler.template AddVertices<N>();
 			}
 			else
 			{
-				updateList.pop_front();
-				updateList.push_back("AddVerticesWithWorms N=" + ToString(N));
 				return updateHandler.template AddVerticesWithWorms<N, W>();
 			}
 		}
@@ -93,14 +87,10 @@ class ConfigSpace
 			updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
 			if (updateHandler.GetVertexHandler().Worms() == 0)
 			{
-				updateList.pop_front();
-				updateList.push_back("RemoveVertices N=" + ToString(N));
 				return updateHandler.template RemoveVertices<N>();
 			}
 			else
 			{
-				updateList.pop_front();
-				updateList.push_back("RemoveVerticesWithWorms N=" + ToString(N));
 				return updateHandler.template RemoveVerticesWithWorms<N, W>();
 			}
 		}
@@ -108,8 +98,6 @@ class ConfigSpace
 		template<int_t N, int_t W>
 		bool AddRandomWorms(value_t preFactor)
 		{
-			updateList.pop_front();
-			updateList.push_back("AddWorms N=" + ToString(N));
 			updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>();
 			return updateHandler.template AddWorms<N, W>(preFactor);
 		}
@@ -119,8 +107,6 @@ class ConfigSpace
 		{
 			if (updateHandler.GetVertexHandler().Worms() < N)
 				return false;
-			updateList.pop_front();
-			updateList.push_back("RemoveWorms N=" + ToString(N));
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 			return updateHandler.template RemoveWorms<N, W>(preFactor);
 		}
@@ -128,8 +114,6 @@ class ConfigSpace
 		template<int_t W>
 		bool ShiftWorm()
 		{
-			updateList.pop_front();
-			updateList.push_back("ShiftWorm");
 			return updateHandler.ShiftWorm<W>();
 		}
 		
@@ -364,5 +348,4 @@ class ConfigSpace
 		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
 		Eigen::FullPivLU<matrix_t> invSolver;
 		uint_t nhoodDist;
-		std::list<std::string> updateList;
 };

@@ -170,7 +170,7 @@ class UpdateHandler
 		{
 			uint_t k = 2 * vertexHandler.Vertices();
 			const uint_t n = 2 * N;
-			if (k < N)
+			if (k < n)
 				return false;
 			
 			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k);
