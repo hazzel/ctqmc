@@ -124,6 +124,15 @@ class UpdateHandler
 			{
 				std::cout << "RemoveVertices(" << N << "): AcceptRatio" << acceptRatio << std::endl;
 				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
+				vertexHandler.PrintVertices();
+				vertexHandler.PrintWormVertices();
+				vertexHandler.PrintIndexBuffer();
+				for (uint_t i = 0; i < k; ++i)
+					std::cout << perm.indices()[i] << " ";
+				std::cout << std::endl;
+				std::cout << preFactor << std::endl;
+				std::cout << S.determinant() << std::endl;
+				std::cout << "---" << std::endl;
 			}
 			if (configSpace.rng() < acceptRatio)
 			{

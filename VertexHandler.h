@@ -62,7 +62,7 @@ class VertexHandler
 			value_t minWormTauDiff = configSpace.beta;
 			for (uint_t i = 0; i < nodes.size(); i+=2)
 			{
-				std::cout << "(" << nodes[i].Site << " , " << nodes[i+1].Site << ", " << nodes[i].Tau << ") ";
+				std::cout << "(" << nodes[i].Site << " , " << nodes[i+1].Site << ", " << nodes[i].Tau << ", " << nodes[i].Worm << ") ";
 			}
 			for (uint_t i = 2; i < nodes.size(); i+=2)
 			{
@@ -76,6 +76,9 @@ class VertexHandler
 
 		void PrintWormVertices()
 		{
+			for (auto node : wormNodes)
+				std::cout << node << " , ";
+			std::cout << " -> ";
 			for (auto node : wormNodes)
 				std::cout << "(" << nodes[node].Site << " , " << nodes[node].Tau << ") ";
 			std::cout << std::endl;
@@ -212,7 +215,7 @@ class VertexHandler
 			for (uint_t i = 0; i < N;)
 			{
 				uint_t r = configSpace.rng() * nodes.size() / 2;
-				if ((!nodes[r].Worm) && std::find(indexBuffer.begin(), indexBuffer.begin() + 2*N, 2 * r) == indexBuffer.begin() + 2*N)
+				if ((!nodes[2 * r].Worm) && std::find(indexBuffer.begin(), indexBuffer.begin() + 2*N, 2 * r) == indexBuffer.begin() + 2*N)
 				{
 					indexBuffer[2*i] = 2 * r;
 					indexBuffer[2*i + 1] = 2 * r + 1;
@@ -357,7 +360,7 @@ class VertexHandler
 			{
 				std::vector<std::size_t> buf;
 				for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
-					buf.push_back(*it);
+					buf.push_back(wormNodes[*it]);
 
 				for (uint_t i = 0; i < perm.size(); ++i)
 				{
