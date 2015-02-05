@@ -103,6 +103,7 @@ class ConfigSpace
 		
 		bool ShiftWorm()
 		{
+			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<2>();
 			return updateHandler.ShiftWorm();
 		}
 		

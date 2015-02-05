@@ -150,16 +150,23 @@ class UpdateHandler
 			}
 		}
 		
+		template<int_t W>
 		bool ShiftWorm()
 		{
 			uint_t k = 2 * vertexHandler.Vertices();
 			const uint_t l = 2 * W;
+
 			
-			matrix_t<Eigen::Dynamic, 1> shiftedWormU(k - 1, 1);
-			matrix_t<1, Eigen::Dynamic> shiftedWormV(1, k - 1);
+			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k + l);
+			vertexHandler.PermutationMatrix(perm.indices(), isWorm);
+			invG = perm.transpose() * invG * perm;
+
+			matrix_t<Eigen::Dynamic, l> shiftedWormU(k, l);
+			matrix_t<l, Eigen::Dynamic> shiftedWormV(l, k);
+			matrix_t<l, l> shiftedWormA(l, l);
 
 			vertexHandler.ShiftWorm();
-			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV);
+			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
 				
 			matrix_t<l, l> shiftedInvS = shiftedWormA;
 			shiftedInvS.noalias() -= shiftedWormV * invG * shiftedWormU;

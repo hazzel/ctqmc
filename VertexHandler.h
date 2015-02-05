@@ -226,6 +226,7 @@ class VertexHandler
 			std::sort(indexBuffer.begin(), indexBufferEnd);
 		}
 		
+		//TODO: simpplify
 		template<int_t N>
 		void AddRandomWormIndicesToBuffer()
 		{
@@ -244,7 +245,7 @@ class VertexHandler
 			indexBufferEnd = indexBuffer.begin() + 2 * N;
 			std::sort(indexBuffer.begin(), indexBufferEnd);
 		}
-		
+
 		void ShiftWorm()
 		{
 			uint_t l = wormNodes.size();
