@@ -439,7 +439,12 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::shiftWorm, state))
 		{
-			if (configSpace.ShiftWorm())
+			bool result;
+			if (state == StateType::W2)
+				result = configSpace.ShiftWorm<1>();
+			else if (state == StateType::W4)
+				result = configSpace.ShiftWorm<2>();
+			if (result)
 			{
 				acceptedUpdates(UpdateType::shiftWorm, state) += 1.0;
 			}

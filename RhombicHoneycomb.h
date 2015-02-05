@@ -142,7 +142,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
 			if (i == j)
 				return 0;
 			int_t shortestPath = this->nSites;
-			int_t nRuns = 1000 * this->nSites;
+			int_t nRuns = 500000 * this->nSites;
 			for (int_t n = 0; n < nRuns; ++n)
 			{
 				int_t path = 0;

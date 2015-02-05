@@ -101,10 +101,11 @@ class ConfigSpace
 			return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
 		}
 		
+		template<int_t W>
 		bool ShiftWorm()
 		{
-			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<2>();
-			return updateHandler.ShiftWorm();
+			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<W>();
+			return updateHandler.template ShiftWorm<W>();
 		}
 		
 		void PrintMatrix(const matrix_t& m)
