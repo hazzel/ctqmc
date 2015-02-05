@@ -232,20 +232,19 @@ class VertexHandler
 		template<int_t N>
 		void AddRandomWormIndicesToBuffer()
 		{
-			for (uint_t i = 0; i < 2 * N; ++i)
-				indexBuffer[i] = wormNodes.size();
-			for (uint_t i = 0; i < N;)
+			if (2 * N == wormNodes.size())
+			{
+				for (uint_t i = 0; i < 2 * N; ++i)
+					indexBuffer[i] = i;
+			}
+			//must be N=1, W=2 -> chose one worm at random
+			else
 			{
 				uint_t r = configSpace.rng() * wormNodes.size() / 2;
-				if (std::find(indexBuffer.begin(), indexBuffer.begin() + 2*N, 2 * r) == indexBuffer.begin() + 2*N)
-				{
-					indexBuffer[2*i] = 2 * r;
-					indexBuffer[2*i + 1] = 2 * r + 1;
-					++i;
-				}
+				indexBuffer[0] = 2 * r;
+				indexBuffer[1] = 2 * r + 1;
 			}
 			indexBufferEnd = indexBuffer.begin() + 2 * N;
-			std::sort(indexBuffer.begin(), indexBufferEnd);
 		}
 		
 		void ShiftWorm()
