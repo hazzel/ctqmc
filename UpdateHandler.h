@@ -82,6 +82,16 @@ class UpdateHandler
 			invS.noalias() -= v * invGu;
 	
 			value_t acceptRatio = preFactor * invS.determinant();
+
+			/*
+			if (isWorm && vertexHandler.Worms() > 0)
+			{
+				std::cout << preFactor << std::endl;
+				std::cout << invS.determinant() << std::endl;
+				std::cin.get();
+			}
+			*/
+
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "AddVertices(" << N << "): AcceptRatio: " << acceptRatio << std::endl;

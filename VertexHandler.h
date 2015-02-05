@@ -186,7 +186,7 @@ class VertexHandler
 				{
 					for (uint_t i = 0; i < wormNodes.size(); ++i)
 					{
-						if (wormNodes[i] > *(it-1))
+						if (wormNodes[i] > wormNodes[*(it-1)])
 							--wormNodes[i];
 					}
 				}
