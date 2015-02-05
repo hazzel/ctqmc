@@ -152,16 +152,14 @@ class UpdateHandler
 		
 		bool ShiftWorm()
 		{
-			return false;
-			/*
 			uint_t k = 2 * vertexHandler.Vertices();
 			const uint_t l = 2 * W;
 			
-			matrix_t<Eigen::Dynamic, l> shiftedWormU(wormU.rows(), wormU.cols());
-			matrix_t<l, Eigen::Dynamic> shiftedWormV(wormV.rows(), wormV.cols());
-			matrix_t<l, l> shiftedWormA(wormA.rows(), wormA.cols());
+			matrix_t<Eigen::Dynamic, 1> shiftedWormU(k - 1, 1);
+			matrix_t<1, Eigen::Dynamic> shiftedWormV(1, k - 1);
+
 			vertexHandler.ShiftWorm();
-			vertexHandler.WoodburyWorm(shiftedWormU, shiftedWormV, shiftedWormA);
+			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV);
 				
 			matrix_t<l, l> shiftedInvS = shiftedWormA;
 			shiftedInvS.noalias() -= shiftedWormV * invG * shiftedWormU;
@@ -188,7 +186,6 @@ class UpdateHandler
 				vertexHandler.UndoWormShift();
 				return false;
 			}
-			*/
 		}
 		
 		template<typename Matrix>

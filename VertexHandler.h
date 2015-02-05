@@ -247,7 +247,6 @@ class VertexHandler
 		
 		void ShiftWorm()
 		{
-			/*
 			uint_t l = wormNodes.size();
 			uint_t r = static_cast<uint_t>(configSpace.rng() * l);
 			nodeBuffer[0] = wormNodes[r];
@@ -267,7 +266,6 @@ class VertexHandler
 			
 			for (uint_t i = 0; i < wormNodes.size(); ++i)
 				wormNodes[i].Tau = wormNodes[r].Tau;
-			*/
 		}
 		
 		void UndoWormShift()
@@ -349,6 +347,17 @@ class VertexHandler
 					}
 				}
 				a(i, i) = 0.0;
+			}
+		}
+
+		template<typename U, typename V>
+		void WoodburyShiftWorm(U& u, V& v)
+		{
+			uint_t k = nodes.size();
+			for (uint_t i = 0; i < k - 1; ++i)
+			{
+				u(i, 0) = configSpace.LookUpG0(nodes[i].Site, nodeBuffer[0].Site, nodes[i].Tau - nodeBuffer[0].Tau + configSpace.infinTau);
+				v(0, i) = configSpace.LookUpG0(nodeBuffer[0].Site, nodes[i].Site, nodeBuffer[0].Tau - nodes[i].Tau - configSpace.infinTau);
 			}
 		}
 		
