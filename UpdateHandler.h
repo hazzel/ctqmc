@@ -92,8 +92,7 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				inv_solver_t<n> solver(invS);
-				matrix_t<n, n> S = solver.inverse();			
+				matrix_t<n, n> S = invS.inverse();			
 				matrix_t<n, Eigen::Dynamic> R = -S * v * invG;
 				
 				invG.conservativeResize(k + n, k + n);
@@ -148,8 +147,7 @@ class UpdateHandler
 				matrix_t<Eigen::Dynamic, n> invGu = invG * u.topLeftCorner(k, n);
 				invS.noalias() -= v.topLeftCorner(n, k) * invGu;
 				
-				inv_solver_t<n> solver(invS);
-				matrix_t<n, n> S = solver.inverse();
+				matrix_t<n, n> S = invS.inverse();
 				matrix_t<n, Eigen::Dynamic> R = -S * v.topLeftCorner(n, k) * invG;
 				
 				invG.conservativeResize(k + n, k + n);
@@ -190,8 +188,7 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				inv_solver_t<n> solver(S);
-				matrix_t<n, n> invS = solver.inverse();
+				matrix_t<n, n> invS = S.inverse();
 				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
 				invG.conservativeResize(k - n, k - n);
 				
@@ -233,9 +230,7 @@ class UpdateHandler
 			matrix_t<n, n> S = invG.template bottomRightCorner<n, n>();
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> newInvG = invG.topLeftCorner(k - n, k - n);
 			
-			inv_solver_t<n> solver(S);
-			matrix_t<n, n> invS = solver.inverse();
-			newInvG.noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
+			newInvG.noalias() -= invG.topRightCorner(k - n, n) * S.inverse() * invG.bottomLeftCorner(n, k - n);
 			value_t newDetWormS = 1.0 / (wormA - wormV.leftCols(k - n) * newInvG * wormU.topRows(k - n)).determinant();
 			
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(k / 2, N);
@@ -289,7 +284,6 @@ class UpdateHandler
 			value_t detInvS = invS.determinant();
 			value_t detRatio = detInvS * (l > 0 ? detWormS : 1.0);
 			value_t acceptRatio = preFactor * detRatio * vertexHandler.VertexBufferParity();
-			//TODO: FIX ME
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "AddWorm(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
