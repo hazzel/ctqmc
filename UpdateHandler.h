@@ -401,7 +401,7 @@ class UpdateHandler
 				std::cout << "Worms:" << std::endl;
 				vertexHandler.PrintWormVertices();
 			}
-			if (print && configSpace.rng() < acceptRatio)
+			if (configSpace.rng() < acceptRatio)
 			{
 				detWormS = 1.0 / detShiftedInvS;
 				wormU = shiftedWormU;

@@ -155,16 +155,17 @@ class VertexHandler
 			return configSpace.lattice->Distance(wormNodes[0].Site, wormNodes[1].Site);
 		}
 
+		template<int_t N, int_t W>
 		uint_t WormIndexBufferDistance()
 		{
-			uint_t dist = 0;
-			for (auto it = indexBuffer.begin(); it != indexBufferEnd; it+=2)
+			if (N == 1)
+				return configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[1]].Site);
+			else if(N == 2)
 			{
-				uint_t d = configSpace.lattice->Distance(wormNodes[*(it)].Site, wormNodes[*(it+1)].Site);
-				if (d > dist)
-					dist = d;
+				uint_t d1 = configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[1]].Site);
+				uint_t d2 = configSpace.lattice->Distance(wormNodes[indexBuffer[2]].Site, wormNodes[indexBuffer[3]].Site);
+				return std::max({d1, d2});
 			}
-			return dist;
 		}
 		
 		template<int_t N>

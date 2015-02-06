@@ -108,21 +108,11 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Worms() < N)
 				return false;
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
-			/*
-			uint_t d = updateHandler.GetVertexHandler().WormIndexBufferDistance();
-			updateHandler.GetVertexHandler().PrintWormVertices();
-			updateHandler.GetVertexHandler().PrintIndexBuffer();
-			std::cout << d << std::endl;
-			std::cin.get();
-			*/
-			/*
-			if (updateHandler.GetVertexHandler().WormIndexBufferDistance() <= nhoodDist)
+			
+			if (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N, W>() <= nhoodDist)
 				return updateHandler.template RemoveWorms<N, W>(preFactor);
 			else
 				return false;
-			*/
-
-			return updateHandler.template RemoveWorms<N, W>(preFactor);
 		}
 		
 		template<int_t W>
