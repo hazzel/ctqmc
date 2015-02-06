@@ -108,10 +108,21 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Worms() < N)
 				return false;
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
+			/*
+			uint_t d = updateHandler.GetVertexHandler().WormIndexBufferDistance();
+			updateHandler.GetVertexHandler().PrintWormVertices();
+			updateHandler.GetVertexHandler().PrintIndexBuffer();
+			std::cout << d << std::endl;
+			std::cin.get();
+			*/
+			/*
 			if (updateHandler.GetVertexHandler().WormIndexBufferDistance() <= nhoodDist)
 				return updateHandler.template RemoveWorms<N, W>(preFactor);
 			else
 				return false;
+			*/
+
+			return updateHandler.template RemoveWorms<N, W>(preFactor);
 		}
 		
 		template<int_t W>
@@ -232,7 +243,7 @@ class ConfigSpace
 			hoppingMatrix.resize(lattice->Sites(), lattice->Sites());
 			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
 			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
-			nhoodDist = std::min({uint_t(20000), lattice->MaxDistance()});
+			nhoodDist = std::min({uint_t(10000), lattice->MaxDistance()});
 		}
 		
 		void SetTemperature(value_t T)
@@ -276,6 +287,8 @@ class ConfigSpace
 
 		void SaveToFile(const std::string& filename)
 		{
+			if (FileExists(filename))
+				return;
 			std::ofstream os(filename, std::ofstream::binary);
 			if (!os.is_open())
 			{

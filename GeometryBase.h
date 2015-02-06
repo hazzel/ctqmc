@@ -109,6 +109,8 @@ class GeometryBase
 
 		void SaveToFile(const std::string& filename)
 		{
+			if FileExists(filename)
+				return;
 			std::ofstream os(filename, std::ofstream::binary);
 			os.write((char*)&maxDistance, sizeof(maxDistance));
 			os.write((char*)&nSites, sizeof(nSites));
