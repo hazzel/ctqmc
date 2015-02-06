@@ -108,7 +108,7 @@ class ConfigSpace
 			if (updateHandler.GetVertexHandler().Worms() < N)
 				return false;
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
-			
+
 			if (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N, W>() <= nhoodDist)
 				return updateHandler.template RemoveWorms<N, W>(preFactor);
 			else
@@ -233,7 +233,7 @@ class ConfigSpace
 			hoppingMatrix.resize(lattice->Sites(), lattice->Sites());
 			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
 			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
-			nhoodDist = std::min({uint_t(10000), lattice->MaxDistance()});
+			nhoodDist = std::min({uint_t(1000), lattice->MaxDistance()});
 		}
 		
 		void SetTemperature(value_t T)
