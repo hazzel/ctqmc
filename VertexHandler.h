@@ -165,7 +165,11 @@ class VertexHandler
 				uint_t d1 = configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[1]].Site);
 				uint_t d2 = configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[2]].Site);
 				uint_t d3 = configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[3]].Site);
-				return std::max({d1, d2, d3});
+
+				uint_t d4 = configSpace.lattice->Distance(wormNodes[indexBuffer[2]].Site, wormNodes[indexBuffer[0]].Site);
+				uint_t d5 = configSpace.lattice->Distance(wormNodes[indexBuffer[2]].Site, wormNodes[indexBuffer[1]].Site);
+				uint_t d6 = configSpace.lattice->Distance(wormNodes[indexBuffer[2]].Site, wormNodes[indexBuffer[3]].Site);
+				return std::min({std::max({d1, d2, d3}), std::max({d4, d5, d6})});
 				/*
 				uint_t max_dist[4];
 				for (uint_t i = 0; i < 3; ++i)
