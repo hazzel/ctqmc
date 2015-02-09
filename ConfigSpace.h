@@ -167,6 +167,7 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable(const std::string& filename)
 		{
+			/*
 			if (FileExists(filename))
 			{
 				std::cout << "...";
@@ -174,6 +175,7 @@ class ConfigSpace
 				ReadFromFile(filename);
 			}
 			else
+			*/
 			{
 				uint_t i = lattice->RandomSite(rng);
 				std::vector<uint_t> sites;
@@ -204,7 +206,7 @@ class ConfigSpace
 				for (uint_t t = 0; t < nTimeBins; ++t)
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
-				SaveToFile(filename);
+				//SaveToFile(filename);
 			}
 		}
 

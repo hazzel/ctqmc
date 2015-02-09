@@ -31,18 +31,20 @@ class RhombicHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
 			this->AllocateNeighborList();
 			this->distanceMap.AllocateTable(this->nSites, this->nSites);
 			this->distanceHistogram.resize(this->nSites, 0);
-			if (!FileExists(filename))
+			//if (!FileExists(filename))
 			{
 				this->BuildLookUpTable(rng);
 				this->GenerateDistanceHistogram();
 				this->numNeighborhood.resize(this->maxDistance + 1, 0);
 				this->CountNeighborhood();
-				this->SaveToFile(filename);
+				//this->SaveToFile(filename);
 			}
+			/*
 			else
 			{
 				this->ReadFromFile(filename);
 			}
+			*/
 		}
 
 		SublatticeType Sublattice(index_t site)
