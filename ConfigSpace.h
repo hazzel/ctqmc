@@ -167,15 +167,13 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable(const std::string& filename)
 		{
-			/*
 			if (FileExists(filename))
 			{
 				std::cout << "...";
 				std::cout.flush();
-				ReadFromFile(filename);
+				SyncMPI(filename, "read");
 			}
 			else
-			*/
 			{
 				uint_t i = lattice->RandomSite(rng);
 				std::vector<uint_t> sites;
@@ -206,7 +204,7 @@ class ConfigSpace
 				for (uint_t t = 0; t < nTimeBins; ++t)
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
-				//SaveToFile(filename);
+				SyncMPI(filename, "save");
 			}
 		}
 
@@ -284,8 +282,15 @@ class ConfigSpace
 			std::ofstream os(filename, std::ofstream::binary);
 			if (os.is_open())
 			{
-				os.write((char*)&lookUpTableG0[0][0], lattice->MaxDistance() * (nTimeBins + 1) * sizeof(lookUpTableG0[0][0]));
-				os.write((char*)&lookUpTableDtG0[0][0], lattice->MaxDistance() * nTimeBins * sizeof(lookUpTableDtG0[0][0]));
+				for (uint_t i = 0; i <= lattice->MaxDistance(); ++i)
+				{
+					for(uint_t j = 0; j <= nTimeBins; ++j)
+					{
+						os.write((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
+						if (j < nTimeBins)
+							os.write((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
+					}
+				}
 				os.close();
 				std::cout << "File " << filename << " written: " << FileExists(filename) << std::endl;
 			}
@@ -303,13 +308,44 @@ class ConfigSpace
 			{
 				while(is.good())
 				{
-					is.read((char*)&lookUpTableG0[0][0], lattice->MaxDistance() * (nTimeBins + 1) * sizeof(lookUpTableG0[0][0]));
-					is.read((char*)&lookUpTableDtG0[0][0], lattice->MaxDistance() * nTimeBins * sizeof(lookUpTableDtG0[0][0]));
+					for (uint_t i = 0; i <= lattice->MaxDistance(); ++i)
+					{
+						for(uint_t j = 0; j <= nTimeBins; ++j)
+						{
+							is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
+							if (j < nTimeBins)
+								is.read((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
+						}
+					}
 				}
 				is.close();
 			}
 			else
 				std::cout << "Error reading g0 look up file." << std::endl;
+		}
+
+		void SyncMPI(const std::string& filename, const std::string& type)
+		{
+			int file_free = 0;
+			int np;
+			int proc_id;
+			MPI_Comm_size(MPI_COMM_WORLD, &np);
+			MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
+			MPI_Status status;
+
+			if (proc_id == 1)
+				file_free = 1;
+			else
+				MPI_Recv(&file_free, 1, MPI_INT, proc_id-1, 1, MPI_COMM_WORLD, &status);
+			if (file_free == 1)
+			{
+				if (type == "save")
+					SaveToFile(filename);
+				else if (type == "read")
+					ReadFromFile(filename);
+			}
+			if (proc_id != np-1)
+				MPI_Send(&file_free, 1, MPI_INT, proc_id+1, 1, MPI_COMM_WORLD);
 		}
 	public:
 		RNG& rng;
