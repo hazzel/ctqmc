@@ -47,9 +47,9 @@ class mc
 		using int_t = std::int_fast32_t;
 		using value_t = double;
 		using matrix_t = Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic>;
-		using Hex_t = HexagonalHoneycomb<Random, uint_t, int_t>;
-		using Rhom_t = RhombicHoneycomb<Random, uint_t, int_t>;
-		using ConfigSpace_t = ConfigSpace<GeometryBase<Random, uint_t, int_t>, Random, value_t, matrix_t>;
+		using Hex_t = HexagonalHoneycomb<Random, int_t>;
+		using Rhom_t = RhombicHoneycomb<Random, int_t>;
+		using ConfigSpace_t = ConfigSpace<GeometryBase<Random, int_t>, Random, value_t, matrix_t>;
 
 		mc(const std::string& dir);
 		~mc();
