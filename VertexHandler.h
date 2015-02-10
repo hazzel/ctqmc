@@ -156,31 +156,23 @@ class VertexHandler
 		}
 
 		template<int_t N, int_t W>
-		uint_t WormIndexBufferDistance()
+		bool WormIndexBufferDistance()
 		{
 			if (N == 1)
-				return configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[1]].Site);
+				return configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[1]].Site) <= configSpace.nhoodDist;
 			else if(N == 2)
 			{
-				uint_t d1 = configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[1]].Site);
-				uint_t d2 = configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[2]].Site);
-				uint_t d3 = configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[3]].Site);
-
-				uint_t d4 = configSpace.lattice->Distance(wormNodes[indexBuffer[2]].Site, wormNodes[indexBuffer[0]].Site);
-				uint_t d5 = configSpace.lattice->Distance(wormNodes[indexBuffer[2]].Site, wormNodes[indexBuffer[1]].Site);
-				uint_t d6 = configSpace.lattice->Distance(wormNodes[indexBuffer[2]].Site, wormNodes[indexBuffer[3]].Site);
-				return std::min({std::max({d1, d2, d3}), std::max({d4, d5, d6})});
 				/*
-				uint_t max_dist[4];
-				for (uint_t i = 0; i < 3; ++i)
-				{
-					uint_t dist_i[4];
-					for (uint_t j = 0; j < 3; ++j)
-						dist_i[j] = configSpace.lattice->Distance(wormNodes[indexBuffer[i]].Site, wormNodes[indexBuffer[j]].Site);
-					max_dist[i] = *std::max_element(dist_i, dist_i+4);
-				}
-				return *std::min_element(max_dist, max_dist+4);
+				uint_t dist[16];
+				for (uint_t i = 0; i < 4; ++i)
+					for (uint_t j = 0; j < 4; ++j)
+						dist[i*4+j] = configSpace.lattice->Distance(wormNodes[indexBuffer[i]].Site, wormNodes[indexBuffer[j]].Site);
+				return *std::max_element(dist, dist+15) <= 2 * configSpace.nhoodDist;
 				*/
+				uint_t dist[4];
+				for (uint_t i = 0; i < 4; ++i)
+					dist[i] = configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[i]].Site);
+				return *std::max_element(dist, dist+3) <= configSpace.nhoodDist;
 			}
 		}
 		

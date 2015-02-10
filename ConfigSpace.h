@@ -50,7 +50,7 @@ class ConfigSpace
 {
 	public:
 		typedef Geometry Geometry_t;
-		typedef typename Geometry::index_t uint_t;
+		typedef typename Geometry::int_t uint_t;
 		typedef typename Geometry::int_t int_t;
 		typedef Value_t value_t;
 		typedef Matrix_t matrix_t;
@@ -109,7 +109,7 @@ class ConfigSpace
 				return false;
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 
-			if (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N, W>() <= nhoodDist)
+			if (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N, W>())
 				return updateHandler.template RemoveWorms<N, W>(preFactor);
 			else
 				return false;
@@ -235,7 +235,7 @@ class ConfigSpace
 			hoppingMatrix.resize(lattice->Sites(), lattice->Sites());
 			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
 			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
-			nhoodDist = std::min({uint_t(1000), lattice->MaxDistance()});
+			nhoodDist = std::min({uint_t(100000), lattice->MaxDistance()});
 		}
 		
 		void SetTemperature(value_t T)
@@ -312,16 +312,24 @@ class ConfigSpace
 		{
 			std::ifstream is(filename, std::ofstream::binary);
 			
-			for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
+			if (is.is_open())
 			{
-				for (uint_t j = 0; j < nTimeBins + 1; ++j)
+				while(is.good())
 				{
-					is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-					if (j < nTimeBins)
-						is.read((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
+					for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
+					{
+						for (uint_t j = 0; j < nTimeBins + 1; ++j)
+						{
+							is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
+							if (j < nTimeBins)
+								is.read((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
+						}
+					}
 				}
+				is.close();
 			}
-			is.close();
+			else
+				std::cout << "Error reading g0 look up file." << std::endl;
 		}
 	public:
 		RNG& rng;

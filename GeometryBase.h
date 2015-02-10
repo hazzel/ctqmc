@@ -9,6 +9,7 @@
 #include <cstdint>
 #include "LookUpTable.h"
 #include <sys/stat.h>
+#include <mpi.h>
 
 inline bool FileExists(const std::string& name)
 {
@@ -16,15 +17,14 @@ inline bool FileExists(const std::string& name)
   return (stat (name.c_str(), &buffer) == 0); 
 }
 
-template<typename RNG, typename Uint_t = std::uint_fast32_t, typename Int_t = std::int_fast32_t>
+template<typename RNG, typename Int_t = std::int_fast32_t>
 class GeometryBase
 {
 	public:
-		typedef Uint_t index_t;
 		typedef Int_t int_t;
 		using site_t = std::tuple < int_t, int_t, int_t >;
-		using lookup_t = LookUpTable < int_t, index_t, 2 >;
-		using vector_t = std::vector< index_t >;
+		using lookup_t = LookUpTable < int_t, int_t, 2 >;
+		using vector_t = std::vector< int_t >;
 		enum SublatticeType {A, B};
 		
 	public:
@@ -37,74 +37,74 @@ class GeometryBase
 			DeallocateNeighborList();
 		}
 		
-		virtual void Resize(index_t l, RNG& rng) = 0;
-		virtual SublatticeType Sublattice(index_t site) = 0;
+		virtual void Resize(int_t l, RNG& rng) = 0;
+		virtual SublatticeType Sublattice(int_t site) = 0;
 		
-		int_t Distance(index_t s1, index_t s2)
+		int_t Distance(int_t s1, int_t s2)
 		{
 			return distanceMap[s1][s2];
 		}
 
-		index_t DistanceHistogram(int_t distance)
+		int_t DistanceHistogram(int_t distance)
 		{
 			return distanceHistogram[distance];
 		}
 
-		bool IsNeighbor(index_t s1, index_t s2)
+		bool IsNeighbor(int_t s1, int_t s2)
 		{
 			return Distance(s1, s2) == 1;
 		}
 
-		index_t Sites()
+		int_t Sites()
 		{
 			return nSites;
 		}
 
-		index_t Bonds()
+		int_t Bonds()
 		{
 			return nBonds;
 		}
 		
-		index_t MaxDistance()
+		int_t MaxDistance()
 		{
 			return maxDistance;
 		}
 
-		index_t ShiftSite(index_t siteIndex, int_t direction, int_t distance = 1)
+		int_t ShiftSite(int_t siteIndex, int_t direction, int_t distance = 1)
 		{
-			index_t newSite = siteIndex;
+			int_t newSite = siteIndex;
 			for (int_t i = 0; i < distance; ++i)
 				newSite = neighborList[newSite][direction];
 			return newSite;
 		}
 
-		index_t RandomWalk(index_t site, int_t distance, RNG& rng)
+		int_t RandomWalk(int_t site, int_t distance, RNG& rng)
 		{
-			index_t newSite = site;
+			int_t newSite = site;
 			for (int j = 0; j < distance; ++j)
 			{
-				index_t newDir = static_cast<index_t>(rng() * nDirections);
+				int_t newDir = static_cast<int_t>(rng() * nDirections);
 				newSite = ShiftSite(newSite, newDir);
 			}
 			return newSite;
 		}
 		
-		index_t FromNeighborhood(index_t site, int_t distance, RNG& rng)
+		int_t FromNeighborhood(int_t site, int_t distance, RNG& rng)
 		{
-			index_t s = RandomSite(rng);
+			int_t s = RandomSite(rng);
 			while (Distance(s, site) > distance)
 				s = RandomSite(rng);
 			return s;
 		}
 		
-		index_t NeighborhoodCount(int_t distance)
+		int_t NeighborhoodCount(int_t distance)
 		{
 			return numNeighborhood[distance];
 		}
 
-		index_t RandomSite(RNG& rng)
+		int_t RandomSite(RNG& rng)
 		{
-			return static_cast<index_t>(rng() * nSites);
+			return static_cast<int_t>(rng() * nSites);
 		}
 
 		void SaveToFile(const std::string& filename)
@@ -114,19 +114,19 @@ class GeometryBase
 			std::ofstream os(filename, std::ofstream::binary);
 			os.write((char*)&maxDistance, sizeof(maxDistance));
 			os.write((char*)&nSites, sizeof(nSites));
-			for (index_t i = 0; i < nSites; ++i)
+			for (int_t i = 0; i < nSites; ++i)
 			{
-				for (index_t j = 0; j < nSites; ++j)
+				for (int_t j = 0; j < nSites; ++j)
 				{
 					os.write((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
 				}
-				for (index_t j = 0; j < nDirections; ++j)
+				for (int_t j = 0; j < nDirections; ++j)
 				{
 					os.write((char*)&neighborList[i][j], sizeof(neighborList[i][j]));
 				}
 				os.write((char*)&distanceHistogram[i], sizeof(distanceHistogram[i]));
 			}
-			for (index_t i = 0; i <= maxDistance; ++i)
+			for (int_t i = 0; i <= maxDistance; ++i)
 			{
 				os.write((char*)&numNeighborhood[i], sizeof(numNeighborhood[i]));
 			}
@@ -136,38 +136,98 @@ class GeometryBase
 		void ReadFromFile(const std::string& filename)
 		{
 			std::ifstream is(filename, std::ofstream::binary);
-			is.read((char*)&maxDistance, sizeof(maxDistance));
-			is.read((char*)&nSites, sizeof(nSites));
-			this->numNeighborhood.resize(this->maxDistance + 1, 0);
-			
-			for (index_t i = 0; i < nSites; ++i)
+			if (is.is_open())
 			{
-				for (index_t j = 0; j < nSites; ++j)
+				while(is.good())
 				{
-					is.read((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
+					is.read((char*)&maxDistance, sizeof(maxDistance));
+					is.read((char*)&nSites, sizeof(nSites));
+					this->numNeighborhood.resize(this->maxDistance + 1, 0);
+					
+					for (int_t i = 0; i < nSites; ++i)
+					{
+						for (int_t j = 0; j < nSites; ++j)
+						{
+							is.read((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
+						}
+						for (int_t j = 0; j < nDirections; ++j)
+						{
+							is.read((char*)&neighborList[i][j], sizeof(neighborList[i][j]));
+						}
+						is.read((char*)&distanceHistogram[i], sizeof(distanceHistogram[i]));
+					}
+					for (int_t i = 0; i <= maxDistance; ++i)
+					{
+						is.read((char*)&numNeighborhood[i], sizeof(numNeighborhood[i]));
+					}
 				}
-				for (index_t j = 0; j < nDirections; ++j)
-				{
-					is.read((char*)&neighborList[i][j], sizeof(neighborList[i][j]));
-				}
-				is.read((char*)&distanceHistogram[i], sizeof(distanceHistogram[i]));
+				is.close();
 			}
-			for (index_t i = 0; i <= maxDistance; ++i)
+			else
 			{
-				is.read((char*)&numNeighborhood[i], sizeof(numNeighborhood[i]));
+				std::cout << "Error opnening geometry file." << std::endl;
 			}
-			is.close();
 		}
+
+		/*
+		void ReadFromFileMPI(const std::string& filename)
+		{
+			std::vector<char> cstr(filename.begin(), filename.end());
+			cstr.push_back('\0');
+			MPI_File in;
+			int rank; MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+			int ierr = MPI_File_open(MPI_COMM_SELF, &cstr[0], MPI_MODE_RDONLY, MPI_INFO_NULL, &in);
+			if (ierr)
+				std::cout << "Error openening file " << filename << std::endl;
+
+			MPI_Status status;
+			int_t nints = 2;
+			int_t int_buff[nints];
+
+			MPI_File_set_view(in, 0, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
+			MPI_File_read(in, int_buff, 1, MPI_INT, &status);
+			maxDistance = int_buff[0];
+			MPI_File_read(in, int_buff, 1, MPI_INT, &status);
+			nSites = int_buff[0];
+			std::cout << maxDistance << " " << nSites << std::endl;
+			
+			//this->numNeighborhood.resize(this->maxDistance + 1, 0);
+			/*
+			for (int_t i = 0; i < nSites; ++i)
+			{
+				for (int_t j = 0; j < nSites; ++j)
+				{
+					MPI_File_read(in, &int_buff, sizeof(int_buff), MPI_UINT64_T, &status);
+					distanceMap[i][j] = int_buff;
+				}
+				for (int_t j = 0; j < nDirections; ++j)
+				{
+					MPI_File_read(in, &int_buff, sizeof(int_buff), MPI_UINT64_T, &status);
+					neighborList[i][j] = int_buff;
+				}
+				MPI_File_read(in, &int_buff, sizeof(int_buff), MPI_UINT64_T, &status);
+				distanceHistogram[i] = int_buff;
+			}
+			for (int_t i = 0; i <= maxDistance; ++i)
+			{
+				MPI_File_read(in, &int_buff, sizeof(int_buff), MPI_UINT64_T, &status);
+				numNeighborhood[i] = int_buff;
+			}
+
+			MPI_File_close(&in);
+		}
+		*/
+
 	protected:
 		void AllocateNeighborList()
 		{
-			neighborList = new index_t*[nSites];
-			for (index_t i = 0; i < nSites; ++i)
+			neighborList = new int_t*[nSites];
+			for (int_t i = 0; i < nSites; ++i)
 			{
-				neighborList[i] = new index_t[nDirections+1];
+				neighborList[i] = new int_t[nDirections+1];
 			}
-			for (index_t i = 0; i < nSites; ++i)
-				for (index_t j = 0; j < nDirections+1; ++j)
+			for (int_t i = 0; i < nSites; ++i)
+				for (int_t j = 0; j < nDirections+1; ++j)
 					neighborList[i][j] = 0;
 		}
 
@@ -175,7 +235,7 @@ class GeometryBase
 		{
 			if (neighborList == 0)
 				return;
-			for (index_t i = 0; i < nSites; ++i)
+			for (int_t i = 0; i < nSites; ++i)
 				delete[] neighborList[i];
 			delete[] neighborList;
 			neighborList = 0;
@@ -183,9 +243,9 @@ class GeometryBase
 
 		void GenerateDistanceHistogram()
 		{
-			for (index_t i = 0; i < nSites; ++i)
+			for (int_t i = 0; i < nSites; ++i)
 			{
-				for (index_t j = 0; j < nSites; ++j)
+				for (int_t j = 0; j < nSites; ++j)
 				{
 					distanceHistogram[Distance(i, j)] += 1;
 					if (Distance(i, j) == 1)
@@ -195,7 +255,7 @@ class GeometryBase
 					}
 				}
 			}
-			index_t i = distanceHistogram.size() - 1;
+			int_t i = distanceHistogram.size() - 1;
 			while (i >= 0 && distanceHistogram[i] == 0)
 				--i;
 			maxDistance = i;
@@ -203,21 +263,21 @@ class GeometryBase
 		
 		void CountNeighborhood()
 		{
-			index_t i = 0;
-			for (index_t j = 0; j < nSites; ++j)
+			int_t i = 0;
+			for (int_t j = 0; j < nSites; ++j)
 				numNeighborhood[Distance(i, j)] += 1;
-			for (index_t j = 1; j <= maxDistance; ++j)
+			for (int_t j = 1; j <= maxDistance; ++j)
 				numNeighborhood[j] += numNeighborhood[j-1];
 		}
 		
 	protected:
 		int_t L;
-		index_t nSites;
-		index_t nBonds;
+		int_t nSites;
+		int_t nBonds;
 		int_t nDirections;
-		index_t maxDistance;
+		int_t maxDistance;
 		lookup_t distanceMap;
 		vector_t distanceHistogram;
-		index_t** neighborList;
+		int_t** neighborList;
 		vector_t numNeighborhood;
 };

@@ -10,22 +10,21 @@
 #include "LookUpTable.h"
 #include "GeometryBase.h"
 
-template<typename RNG, typename Uint_t = std::uint_fast32_t, typename Int_t = std::int_fast32_t>
-class HexagonalHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
+template<typename RNG, typename Int_t = std::int_fast32_t>
+class HexagonalHoneycomb : public GeometryBase<RNG, Int_t>
 {
 	public:
-		typedef Uint_t index_t;
 		typedef Int_t int_t;
 		using site_t = std::tuple < int_t, int_t, int_t >;
-		using index_map_t = std::map < index_t, site_t >;
-		using reverse_map_t = std::map < site_t, index_t >;
-		typedef typename GeometryBase<RNG, Uint_t, Int_t>::SublatticeType SublatticeType;
+		using index_map_t = std::map < int_t, site_t >;
+		using reverse_map_t = std::map < site_t, int_t >;
+		typedef typename GeometryBase<RNG, Int_t>::SublatticeType SublatticeType;
 		
 	public:
 		HexagonalHoneycomb() {}
 		~HexagonalHoneycomb() {}
 		
-		void Resize(index_t l, RNG& rng)
+		void Resize(int_t l, RNG& rng)
 		{
 			this->L = l;
 			this->nSites = 6 * this->L * this->L;
@@ -42,7 +41,7 @@ class HexagonalHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
 			this->CountNeighborhood();
 		}
 
-		SublatticeType Sublattice(index_t site)
+		SublatticeType Sublattice(int_t site)
 		{
 			site_t s = this->indexMap[site];
 			if (std::get<0>(s) + std::get<1>(s) + std::get<2>(s) == 1)
@@ -53,7 +52,7 @@ class HexagonalHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
 	private:
 		void BuildIndexMap()
 		{
-			index_t cnt = 0;
+			int_t cnt = 0;
 			for (int_t i = -this->L + 1; i <= this->L; ++i)
 			{
 				for (int_t j = -this->L + 1; j <= this->L; ++j)
@@ -74,9 +73,9 @@ class HexagonalHoneycomb : public GeometryBase<RNG, Uint_t, Int_t>
 
 		void BuildLookUpTable()
 		{
-			for (index_t i = 0; i < this->nSites; ++i)
+			for (int_t i = 0; i < this->nSites; ++i)
 			{
-				for (index_t j = 0; j < i; ++j)
+				for (int_t j = 0; j < i; ++j)
 				{
 					site_t s1 = indexMap[i];
 					site_t s2 = indexMap[j];
