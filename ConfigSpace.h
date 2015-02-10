@@ -167,6 +167,7 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable(const std::string& filename)
 		{
+			/*
 			if (FileExists(filename))
 			{
 				std::cout << "...";
@@ -174,6 +175,7 @@ class ConfigSpace
 				ReadFromFile(filename);
 			}
 			else
+			*/
 			{
 				uint_t i = lattice->RandomSite(rng);
 				std::vector<uint_t> sites;
@@ -204,7 +206,7 @@ class ConfigSpace
 				for (uint_t t = 0; t < nTimeBins; ++t)
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
-				SaveToFile(filename);
+				//SaveToFile(filename);
 			}
 		}
 
@@ -233,7 +235,7 @@ class ConfigSpace
 			hoppingMatrix.resize(lattice->Sites(), lattice->Sites());
 			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
 			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
-			nhoodDist = std::min({uint_t(100000), lattice->MaxDistance()});
+			nhoodDist = std::min({uint_t(10000), lattice->MaxDistance()});
 		}
 		
 		void SetTemperature(value_t T)
@@ -280,30 +282,17 @@ class ConfigSpace
 			if (FileExists(filename))
 				return;
 			std::ofstream os(filename, std::ofstream::binary);
-			if (!os.is_open())
+			if (os.is_open())
+			{
+				os.write((char*)&lookUpTableG0[0][0], lattice->MaxDistance() * (nTimeBins + 1) * sizeof(lookUpTableG0[0][0]));
+				os.write((char*)&lookUpTableDtG0[0][0], lattice->MaxDistance() * nTimeBins * sizeof(lookUpTableDtG0[0][0]));
+				os.close();
+				std::cout << "File " << filename << " written: " << FileExists(filename) << std::endl;
+			}
+			else
 			{
 				std::cout << "Error opening file: " << filename << std::endl;
 			}
-			for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
-			{
-				//std::ofstream os_txt(filename + "-R" + std::to_string(i) + ".txt");
-				//os_txt.precision(16);
-				for (uint_t j = 0; j < nTimeBins + 1; ++j)
-				{
-					os.write((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-					//os_txt << lookUpTableG0[i][j] << "\t";
-					if (j < nTimeBins)
-					{
-						os.write((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
-						//os_txt << lookUpTableDtG0[i][j] << std::endl;
-					}
-					//else
-						//os_txt << 0.0 << std::endl;
-				}
-				//os_txt.close();
-			}
-			os.close();
-			std::cout << "File " << filename << " written: " << FileExists(filename) << std::endl;
 		}
 
 		void ReadFromFile(const std::string& filename)
@@ -314,15 +303,8 @@ class ConfigSpace
 			{
 				while(is.good())
 				{
-					for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
-					{
-						for (uint_t j = 0; j < nTimeBins + 1; ++j)
-						{
-							is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-							if (j < nTimeBins)
-								is.read((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
-						}
-					}
+					is.read((char*)&lookUpTableG0[0][0], lattice->MaxDistance() * (nTimeBins + 1) * sizeof(lookUpTableG0[0][0]));
+					is.read((char*)&lookUpTableDtG0[0][0], lattice->MaxDistance() * nTimeBins * sizeof(lookUpTableDtG0[0][0]));
 				}
 				is.close();
 			}

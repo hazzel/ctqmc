@@ -114,22 +114,10 @@ class GeometryBase
 			std::ofstream os(filename, std::ofstream::binary);
 			os.write((char*)&maxDistance, sizeof(maxDistance));
 			os.write((char*)&nSites, sizeof(nSites));
-			for (int_t i = 0; i < nSites; ++i)
-			{
-				for (int_t j = 0; j < nSites; ++j)
-				{
-					os.write((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
-				}
-				for (int_t j = 0; j < nDirections; ++j)
-				{
-					os.write((char*)&neighborList[i][j], sizeof(neighborList[i][j]));
-				}
-				os.write((char*)&distanceHistogram[i], sizeof(distanceHistogram[i]));
-			}
-			for (int_t i = 0; i <= maxDistance; ++i)
-			{
-				os.write((char*)&numNeighborhood[i], sizeof(numNeighborhood[i]));
-			}
+			os.write((char*)&distanceMap[0][0], nSites * nSites * sizeof(distanceMap[0][0]));
+			os.write((char*)&neighborList[0][0], nSites * nDirections * sizeof(neighborList[0][0]));
+			os.write((char*)&distanceHistogram[0], nSites * sizeof(distanceHistogram[0]));
+			os.write((char*)&numNeighborhood[0], (maxDistance + 1) * sizeof(numNeighborhood[0]));
 			os.close();
 		}
 
@@ -143,23 +131,11 @@ class GeometryBase
 					is.read((char*)&maxDistance, sizeof(maxDistance));
 					is.read((char*)&nSites, sizeof(nSites));
 					this->numNeighborhood.resize(this->maxDistance + 1, 0);
-					
-					for (int_t i = 0; i < nSites; ++i)
-					{
-						for (int_t j = 0; j < nSites; ++j)
-						{
-							is.read((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
-						}
-						for (int_t j = 0; j < nDirections; ++j)
-						{
-							is.read((char*)&neighborList[i][j], sizeof(neighborList[i][j]));
-						}
-						is.read((char*)&distanceHistogram[i], sizeof(distanceHistogram[i]));
-					}
-					for (int_t i = 0; i <= maxDistance; ++i)
-					{
-						is.read((char*)&numNeighborhood[i], sizeof(numNeighborhood[i]));
-					}
+					std::cout << "t1" << std::endl;
+					is.read((char*)&distanceMap[0][0], nSites * nSites * sizeof(distanceMap[0][0]));
+					is.read((char*)&neighborList[0][0], nSites * nDirections * sizeof(neighborList[0][0]));
+					is.read((char*)&distanceHistogram[0], nSites * sizeof(distanceHistogram[0]));
+					is.read((char*)&numNeighborhood[0], (maxDistance + 1) * sizeof(numNeighborhood[0]));
 				}
 				is.close();
 			}
