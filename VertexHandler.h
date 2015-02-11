@@ -167,12 +167,14 @@ class VertexHandler
 				for (uint_t i = 0; i < 4; ++i)
 					for (uint_t j = 0; j < 4; ++j)
 						dist[i*4+j] = configSpace.lattice->Distance(wormNodes[indexBuffer[i]].Site, wormNodes[indexBuffer[j]].Site);
-				return *std::max_element(dist, dist+15) <= 2 * configSpace.nhoodDist;
+				return *std::max_element(dist, dist+16) <= 2 * configSpace.nhoodDist;
 				*/
+				
 				uint_t dist[4];
+				uint_t r = configSpace.rng() * 2;
 				for (uint_t i = 0; i < 4; ++i)
-					dist[i] = configSpace.lattice->Distance(wormNodes[indexBuffer[0]].Site, wormNodes[indexBuffer[i]].Site);
-				return *std::max_element(dist, dist+3) <= configSpace.nhoodDist;
+					dist[i] = configSpace.lattice->Distance(wormNodes[indexBuffer[2*r]].Site, wormNodes[indexBuffer[i]].Site);
+				return (*std::max_element(dist, dist+4)) <= configSpace.nhoodDist;
 			}
 		}
 		
