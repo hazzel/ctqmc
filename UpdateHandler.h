@@ -197,7 +197,7 @@ class UpdateHandler
 				std::cout << "Worms:" << std::endl;
 				vertexHandler.PrintWormVertices();
 			}
-			if (print && configSpace.rng() < acceptRatio)
+			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t<l, l> S = shiftedInvS.inverse();
 				matrix_t<l, Eigen::Dynamic> R = -S * shiftedWormV * M;
