@@ -10,7 +10,7 @@
 #include "LookUpTable.h"
 #include "GeometryBase.h"
 
-template<typename RNG, typename Uint_t = std::uint_fast32_t, typename Int_t = std::int_fast32_t>
+template<typename RNG, typename Int_t = std::int_fast32_t>
 class HexagonalHoneycomb : public GeometryBase<RNG, Int_t>
 {
 	public:

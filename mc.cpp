@@ -50,7 +50,7 @@ void CorrFunction(std::valarray<double>& out, std::vector< std::valarray<double>
 }
 
 mc::mc(const std::string& dir)
-	: rng(Random()), configSpace(rng)
+	: rng(Random()), configSpace(rng), zeta(rng)
 {
 	//fpu_fix_start(&old_cw);
 	
@@ -84,10 +84,14 @@ mc::mc(const std::string& dir)
 	configSpace.BuildG0LookUpTable(g0_file);
 	configSpace.updateHandler.Init();
 	
+	int_t nhd = param.value_or_default<int_t>("NHOODDIST", 1);
+	configSpace.nhoodDist = std::min({nhd, configSpace.lattice->MaxDistance()});
 	configSpace.zeta2 = param.value_or_default<value_t>("zeta2", 1.0);
+	//configSpace.zeta2 = zeta.Zeta2();
 	value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 	configSpace.zeta2 /= m / T;
 	configSpace.zeta4 = param.value_or_default<value_t>("zeta4", 1.0);
+	//configSpace.zeta4 = zeta.Zeta4();
 	configSpace.zeta4 /= m * m * m / T;
 	
 	nThermalize = param.value_or_default<uint_t>("THERMALIZATION", 10000);
@@ -472,10 +476,60 @@ void mc::do_update()
 			std::cout << ".";
 			std::cout.flush();
 		}
+
+		//OptimizeZeta();
 	}
 	if (sweep + 1 == nThermalize)
 		std::cout << "Done" << std::endl;
 	++sweep;
+}
+
+void mc::OptimizeZeta()
+{
+	if ((sweep + 1) % (nThermalize / nOptimizationSteps) == 0)
+	{
+		zetaOptimization.insert(std::make_pair(therm.Sigma(), std::make_pair(configSpace.zeta2, configSpace.zeta4)));
+		if (nZetaOptimization < nOptimizationSteps)
+		{
+			therm.Reset();
+			zeta.NextConfig();
+			configSpace.zeta2 = zeta.Zeta2();
+			configSpace.zeta4 = zeta.Zeta4();
+			value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+			configSpace.zeta2 /= m * configSpace.beta;
+			configSpace.zeta4 /= m * m * m * configSpace.beta;
+			++nZetaOptimization;
+		}
+		else
+		{
+			configSpace.zeta2 = zetaOptimization.begin()->second.first;
+			configSpace.zeta4 = zetaOptimization.begin()->second.second;
+			for (auto it = zetaOptimization.begin(); it != zetaOptimization.end(); ++it)
+				std::cout << it->first << " : " << it->second.first << " " << it->second.second << std::endl;
+		}
+	}
+	else
+	{
+		switch (configSpace.State())
+		{
+			case StateType::Z:
+				therm.State[StateType::Z] = therm.State[StateType::Z] * therm.N / (therm.N + 1.0) + 1.0 / (therm.N + 1.0);
+				therm.State[StateType::W2] = therm.State[StateType::W2] * therm.N / (therm.N + 1.0);
+				therm.State[StateType::W4] = therm.State[StateType::W4] * therm.N / (therm.N + 1.0);
+				break;
+			case StateType::W2:
+				therm.State[StateType::Z] = therm.State[StateType::Z] * therm.N / (therm.N + 1.0);
+				therm.State[StateType::W2] = therm.State[StateType::W2] * therm.N / (therm.N + 1.0) + 1.0 / (therm.N + 1.0);
+				therm.State[StateType::W4] = therm.State[StateType::W4] * therm.N / (therm.N + 1.0);
+				break;
+			case StateType::W4:
+				therm.State[StateType::Z] = therm.State[StateType::Z] * therm.N / (therm.N + 1.0);
+				therm.State[StateType::W2] = therm.State[StateType::W2] * therm.N / (therm.N + 1.0);
+				therm.State[StateType::W4] = therm.State[StateType::W4] * therm.N / (therm.N + 1.0) + 1.0 / (therm.N + 1.0);
+				break;
+		}
+		therm.N += 1.0;
+	}
 }
 
 void mc::do_measurement()

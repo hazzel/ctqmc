@@ -160,64 +160,34 @@ class GeometryBase
 					{
 						is.read((char*)&numNeighborhood[i], sizeof(numNeighborhood[i]));
 					}
+					is.close();
 				}
-				is.close();
-			}
-			else
-			{
-				std::cout << "Error opnening geometry file." << std::endl;
 			}
 		}
 
-		/*
-		void ReadFromFileMPI(const std::string& filename)
+		void SyncMPI(const std::string& filename, const std::string& type)
 		{
-			std::vector<char> cstr(filename.begin(), filename.end());
-			cstr.push_back('\0');
-			MPI_File in;
-			int rank; MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-			int ierr = MPI_File_open(MPI_COMM_SELF, &cstr[0], MPI_MODE_RDONLY, MPI_INFO_NULL, &in);
-			if (ierr)
-				std::cout << "Error openening file " << filename << std::endl;
-
+			int file_free = 0;
+			int np;
+			int proc_id;
+			MPI_Comm_size(MPI_COMM_WORLD, &np);
+			MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
 			MPI_Status status;
-			int_t nints = 2;
-			int_t int_buff[nints];
 
-			MPI_File_set_view(in, 0, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
-			MPI_File_read(in, int_buff, 1, MPI_INT, &status);
-			maxDistance = int_buff[0];
-			MPI_File_read(in, int_buff, 1, MPI_INT, &status);
-			nSites = int_buff[0];
-			std::cout << maxDistance << " " << nSites << std::endl;
-			
-			//this->numNeighborhood.resize(this->maxDistance + 1, 0);
-			/*
-			for (int_t i = 0; i < nSites; ++i)
+			if (proc_id == 1)
+				file_free = 1;
+			else
+				MPI_Recv(&file_free, 1, MPI_INT, proc_id-1, 1, MPI_COMM_WORLD, &status);
+			if (file_free == 1)
 			{
-				for (int_t j = 0; j < nSites; ++j)
-				{
-					MPI_File_read(in, &int_buff, sizeof(int_buff), MPI_UINT64_T, &status);
-					distanceMap[i][j] = int_buff;
-				}
-				for (int_t j = 0; j < nDirections; ++j)
-				{
-					MPI_File_read(in, &int_buff, sizeof(int_buff), MPI_UINT64_T, &status);
-					neighborList[i][j] = int_buff;
-				}
-				MPI_File_read(in, &int_buff, sizeof(int_buff), MPI_UINT64_T, &status);
-				distanceHistogram[i] = int_buff;
+				if (type == "save")
+					SaveToFile(filename);
+				else if (type == "read")
+					ReadFromFile(filename);
 			}
-			for (int_t i = 0; i <= maxDistance; ++i)
-			{
-				MPI_File_read(in, &int_buff, sizeof(int_buff), MPI_UINT64_T, &status);
-				numNeighborhood[i] = int_buff;
-			}
-
-			MPI_File_close(&in);
+			if (proc_id != np-1)
+				MPI_Send(&file_free, 1, MPI_INT, proc_id+1, 1, MPI_COMM_WORLD);
 		}
-		*/
-
 	protected:
 		void AllocateNeighborList()
 		{
