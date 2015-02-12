@@ -81,10 +81,10 @@ public:
 	}
 private:
 	RNG& rng;
-	double zeta2Min = 0.001;
-	double zeta2Max = 2.0;
-	double zeta4Min = 0.001;
-	double zeta4Max = 2.0;
+	double zeta2Min = 0.0;
+	double zeta2Max = 1.0;
+	double zeta4Min = 0.0;
+	double zeta4Max = 1.0;
 	double zeta2;
 	double zeta4;
 };
@@ -160,4 +160,6 @@ class mc
 		std::map< value_t, std::pair<value_t, value_t> > zetaOptimization;
 		uint_t nZetaOptimization = 0;
 		uint_t nOptimizationSteps = 10;
+		uint_t nOptimizationTherm = 10000;
+		uint_t nOptimizationMeas = 10000;
 };
