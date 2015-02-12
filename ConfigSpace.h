@@ -22,9 +22,6 @@
 #include "VertexHandler.h"
 #include "GeometryBase.h"
 
-//#include <unsupported/Eigen/MPRealSupport>
-//using namespace mpfr;
-
 enum UpdateType {AddVertex, RemoveVertex, AddTwoVertices, RemoveTwoVertices, ZtoW2, W2toZ, ZtoW4, W4toZ, W2toW4, W4toW2, shiftWorm};
 enum StateType {Z, W2, W4};
 
@@ -108,8 +105,23 @@ class ConfigSpace
 		template<int_t W>
 		bool ShiftWorm()
 		{
-			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<W>();
-			return updateHandler.template ShiftWorm<W>();
+			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<W>(true);
+			uint_t m = lattice->NeighborhoodCount(nhoodDist);
+			value_t preFactorRemove = updateHandler.GetVertexHandler().WormIndexBufferParity() / (lattice->Sites() * m * beta * zeta2);
+			value_t preFactorAdd = updateHandler.GetVertexHandler().VertexBufferParity() * lattice->Sites() * m * beta * zeta2;
+			value_t detRemove, detAdd;
+			updateHandler.template RemoveVertices<W>(preFactorRemove, true, detRemove, UpdateFlag::NoUpdate);
+			updateHandler.template RemoveVertices<W>(preFactorAdd, true, detAdd, UpdateFlag::NoUpdate);
+			value_t detShift = std::min({preFactorRemove*detRemove, 1.0}) * std::min({preFactorAdd*detAdd, 1.0});
+
+			if (rng() < detShift)
+			{
+				updateHandler.template RemoveVertices<W>(preFactorRemove, true, detRemove, UpdateFlag::ForceUpdate);
+				updateHandler.template AddVertices<W>(preFactorAdd, true, detAdd, UpdateFlag::ForceUpdate);
+				return true;
+			}
+			else
+				return false;
 		}
 		
 		void PrintMatrix(const matrix_t& m)
@@ -224,7 +236,6 @@ class ConfigSpace
 			hoppingMatrix.resize(lattice->Sites(), lattice->Sites());
 			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
 			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
-			nhoodDist = std::min({uint_t(2000), lattice->MaxDistance()});
 		}
 		
 		void SetTemperature(value_t T)

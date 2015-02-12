@@ -147,20 +147,14 @@ class VertexHandler
 		bool WormIndexBufferDistance()
 		{
 			if (N == 1)
-				return configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[0]]].Site, nodes[wormNodes[indexBuffer[0]]].Site) <= configSpace.nhoodDist;
+				return configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[0]]].Site, nodes[wormNodes[indexBuffer[1]]].Site) <= configSpace.nhoodDist;
 			else if(N == 2)
-			{
-				/*
-				uint_t dist[16];
-				for (uint_t i = 0; i < 4; ++i)
-					for (uint_t j = 0; j < 4; ++j)
-						dist[i*4+j] = configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[i]]].Site, nodes[wormNodes[indexBuffer[j]]].Site);
-				return *std::max_element(dist, dist+15) <= 2 * configSpace.nhoodDist;
-				*/
+			{			
 				uint_t dist[4];
+				uint_t r = configSpace.rng() * 2;
 				for (uint_t i = 0; i < 4; ++i)
-					dist[i] = configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[0]]].Site, nodes[wormNodes[indexBuffer[i]]].Site);
-				return *std::max_element(dist, dist+3) <= configSpace.nhoodDist;
+					dist[i] = configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[2*r]]].Site, nodes[wormNodes[indexBuffer[i]]].Site);
+				return (*std::max_element(dist, dist+4)) <= configSpace.nhoodDist;
 			}
 		}
 		
@@ -248,7 +242,7 @@ class VertexHandler
 		}
 		
 		template<int_t N>
-		void AddRandomWormIndicesToBuffer()
+		void AddRandomWormIndicesToBuffer(bool saveToNodeBuffer = false)
 		{
 			if (2 * N == wormNodes.size())
 			{
@@ -263,6 +257,12 @@ class VertexHandler
 				indexBuffer[1] = 2 * r + 1;
 			}
 			indexBufferEnd = indexBuffer.begin() + 2 * N;
+			if (saveToNodeBuffer)
+			{
+				for (uint_t i = 0; i < 2 * N; ++i)
+					nodeBuffer[i] = nodes[wormNodes[indexBuffer[i]]];
+				nodeBufferEnd = nodeBuffer.begin() + 2 * N;
+			}
 		}
 
 		void ShiftWormToBuffer()
