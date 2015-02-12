@@ -20,9 +20,6 @@
 #include "parser.h"
 #include "types.h"
 
-//#include <qd/qd_real.h>
-//#include <qd/fpu.h>
-
 class make_string
 {
 public:

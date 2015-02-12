@@ -504,6 +504,8 @@ void mc::OptimizeZeta()
 		{
 			configSpace.zeta2 = zetaOptimization.begin()->second.first;
 			configSpace.zeta4 = zetaOptimization.begin()->second.second;
+			evalableParameters[1] = configSpace.zeta2;
+			evalableParameters[2] = configSpace.zeta4;
 			for (auto it = zetaOptimization.begin(); it != zetaOptimization.end(); ++it)
 				std::cout << it->first << " : " << it->second.first << " " << it->second.second << std::endl;
 		}

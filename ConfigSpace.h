@@ -242,7 +242,7 @@ class ConfigSpace
 		{
 			beta = 1.0 / T;
 			dtau = beta / static_cast<value_t>(nTimeBins);
-			infinTau = dtau / 10.0;
+			infinTau = dtau / 1000.0;
 		}
 		
 		void Serialize(odump& d)
