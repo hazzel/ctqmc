@@ -339,6 +339,64 @@ class VertexHandler
 				a(i, i) = 0.0;
 			}
 		}
+
+		template<typename U, typename V, typename A>
+		void WoodburyWorm(U& u, V& v, A& a)
+		{
+			uint_t k = nodes.size();
+			uint_t l = wormNodes.size();
+			for (uint_t i = 0; i < l; ++i)
+			{
+				uint_t n = 0;
+				for (uint_t j = 0; j < k; ++j)
+				{
+					if (!nodes[j].Worm)
+					{
+						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau + configSpace.infinTau);
+						v(i, n) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[j].Site, nodes[wormNodes[i]].Tau - nodes[j].Tau - configSpace.infinTau);
+						++n;
+					}
+				}
+				for (uint_t j = 0; j < l; ++j)
+				{
+					if (i < j)
+					{
+						a(i, j) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Tau - nodes[wormNodes[j]].Tau + configSpace.infinTau);
+						a(j, i) = configSpace.LookUpG0(nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Tau - nodes[wormNodes[i]].Tau - configSpace.infinTau);
+					}
+				}
+				a(i, i) = 0.0;
+			}
+		}
+
+		template<typename U, typename V, typename A>
+		void WoodburyShiftWorm(U& u, V& v, A& a)
+		{
+			uint_t k = nodes.size();
+			uint_t l = wormNodes.size();
+			for (uint_t i = 0; i < l; ++i)
+			{
+				uint_t n = 0;
+				for (uint_t j = 0; j < k; ++j)
+				{
+					if (!nodes[j].Worm)
+					{
+						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+						v(i, n) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
+						++n;
+					}
+				}
+				for (uint_t j = 0; j < l; ++j)
+				{
+					if (i < j)
+					{
+						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
+						a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+					}
+				}
+				a(i, i) = 0.0;
+			}
+		}
 		
 		template<typename P>
 		void PermutationMatrix(P& perm, bool isWorm)
