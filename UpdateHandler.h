@@ -218,7 +218,7 @@ class UpdateHandler
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
 			}
-			if (print && configSpace.rng() < acceptRatio)
+			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t<l, l> S = shiftedInvS.inverse();
 				matrix_t<l, Eigen::Dynamic> R = -S * shiftedWormV * M;
@@ -238,6 +238,12 @@ class UpdateHandler
 				invG = perm * invG * perm.transpose();
 				return false;
 			}
+		}
+
+		void Clear()
+		{
+			invG.resize(0, 0);
+			vertexHandler.Clear();
 		}
 
 		template<typename Matrix>
@@ -332,5 +338,5 @@ class UpdateHandler
 		VertexHandler_t vertexHandler;
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
 		uint_t maxWorms = 2;
-		bool print = true;
+		bool print = false;
 };

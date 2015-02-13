@@ -301,6 +301,12 @@ class VertexHandler
 		{
 			return wormNodes.size() / 2;
 		}
+
+		void Clear()
+		{
+			nodes.clear();
+			wormNodes.clear();
+		}
 		
 		template<typename Matrix>
 		void PropagatorMatrix(Matrix& G)

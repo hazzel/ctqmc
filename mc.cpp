@@ -222,7 +222,7 @@ void mc::write_output(const std::string& dir)
 
 bool mc::is_thermalized()
 {
-	return sweep >= nThermalize;
+	return (nZetaOptimization >= nOptimizationSteps) && (sweep >= nThermalize);
 }
 
 void mc::BuildUpdateWeightMatrix()
@@ -323,7 +323,7 @@ void mc::PrintAcceptanceMatrix(std::ostream& out)
 
 void mc::do_update()
 {
-	if (sweep == 0)
+	if (sweep == 0 && nZetaOptimization == 0)
 		std::cout << "Thermalization" << std::endl;
 
 	for (uint_t i = 0; i < nThermStep; ++i)
@@ -338,7 +338,6 @@ void mc::do_update()
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
 				acceptedUpdates(UpdateType::AddVertex, state) += 1.0;
-				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::AddVertex, state) += 1.0;
 		}
@@ -349,7 +348,6 @@ void mc::do_update()
 			if (configSpace.RemoveRandomVertices<N>(preFactor, false))
 			{
 				acceptedUpdates(UpdateType::RemoveVertex, state) += 1.0;
-				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::RemoveVertex, state) += 1.0;
 		}
@@ -360,7 +358,6 @@ void mc::do_update()
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
 				acceptedUpdates(UpdateType::AddTwoVertices, state) += 1.0;
-				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::AddTwoVertices, state) += 1.0;
 		}
@@ -383,6 +380,7 @@ void mc::do_update()
 			{
 				acceptedUpdates(UpdateType::ZtoW2, state) += 1.0;
 				configSpace.state = StateType::W2;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::ZtoW2, state) += 1.0;
 		}
@@ -394,6 +392,7 @@ void mc::do_update()
 			{
 				acceptedUpdates(UpdateType::W2toZ, state) += 1.0;
 				configSpace.state = StateType::Z;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::W2toZ, state) += 1.0;
 		}
@@ -405,6 +404,7 @@ void mc::do_update()
 			{
 				acceptedUpdates(UpdateType::ZtoW4, state) += 1.0;
 				configSpace.state = StateType::W4;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::ZtoW4, state) += 1.0;
 		}
@@ -416,6 +416,7 @@ void mc::do_update()
 			{
 				acceptedUpdates(UpdateType::W4toZ, state) += 1.0;
 				configSpace.state = StateType::Z;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::W4toZ, state) += 1.0;
 		}
@@ -427,6 +428,7 @@ void mc::do_update()
 			{
 				acceptedUpdates(UpdateType::W2toW4, state) += 1.0;
 				configSpace.state = StateType::W4;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::W2toW4, state) += 1.0;
 		}
@@ -438,6 +440,7 @@ void mc::do_update()
 			{
 				acceptedUpdates(UpdateType::W4toW2, state) += 1.0;
 				configSpace.state = StateType::W2;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::W4toW2, state) += 1.0;
 		}
@@ -451,6 +454,7 @@ void mc::do_update()
 			if (result)
 			{
 				acceptedUpdates(UpdateType::shiftWorm, state) += 1.0;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::shiftWorm, state) += 1.0;
 		}
@@ -460,34 +464,30 @@ void mc::do_update()
 			
 		if (rebuildCnt == nRebuild)
 		{
-			double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
-			//double cond = configSpace.updateHandler.StabilizeInvG();
-			measure.add("avgInvGError", avgError);
-			measure.add("relInvGError", relError);
-			measure.add("condition", cond);
+			//double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
+			double cond = configSpace.updateHandler.StabilizeInvG();
+			//measure.add("avgInvGError", avgError);
+			//measure.add("relInvGError", relError);
+			//measure.add("condition", cond);
 			rebuildCnt = 0;
 		}
 	}
 	
-	if (!is_thermalized())
-	{
-		//OptimizeZeta();
-	}
-	if (sweep + 1 == nThermalize)
-		std::cout << "Done" << std::endl;
 	++sweep;
+	if (nZetaOptimization < nOptimizationSteps)
+	{
+		OptimizeZeta();
+	}
+	else
+	{
+		if (sweep == nThermalize)
+			std::cout << "Done" << std::endl;
+	}
 }
 
 void mc::OptimizeZeta()
 {
-	if (sweep % (nThermalize / 5) == 0)
-	{
-		configSpace.zeta2 += (1./3. - therm.State[StateType::W2]) * 3.0 * configSpace.zeta2;
-		configSpace.zeta4 += (1./3. - therm.State[StateType::W4]) * 3.0 * configSpace.zeta4;
-		std::cout << configSpace.zeta2 << " " << configSpace.zeta4 << std::endl;
-		therm.Reset();
-	}
-	else
+	if (sweep < nOptimizationTherm)
 	{
 		switch (configSpace.State())
 		{
@@ -509,10 +509,29 @@ void mc::OptimizeZeta()
 		}
 		therm.N += 1.0;
 	}
+	else if (sweep == nOptimizationTherm)
+	{
+		configSpace.zeta2 += (1./3. - therm.State[StateType::W2]) * configSpace.zeta2;
+		configSpace.zeta2 *= (2./3. + therm.State[StateType::Z]);
+		configSpace.zeta4 += (1./3. - therm.State[StateType::W4]) * configSpace.zeta4;
+		configSpace.zeta4 *= (2./3. + therm.State[StateType::Z]);
+		evalableParameters[1] = configSpace.zeta2;
+		evalableParameters[2] = configSpace.zeta4;
+		value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+		//std::cout << configSpace.zeta2 * m * configSpace.beta << " " << configSpace.zeta4 * m * m * m * configSpace.beta << std::endl;
+		therm.Reset();
+		++nZetaOptimization;
+		sweep = 0;
+		if (nZetaOptimization == nOptimizationSteps)
+		{
+			//configSpace.Clear();
+			//sweep = nThermalize;
+		}
+	}
 }
 
 void mc::do_measurement()
-{	
+{
 	if ((sweep - nThermalize + 1) % (nMeasurements / 3) == 0)
 	{
 		std::cout << "Vertices: " << configSpace.updateHandler.GetVertexHandler().Vertices() << std::endl;

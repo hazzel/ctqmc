@@ -105,6 +105,13 @@ class ConfigSpace
 		template<int_t W>
 		bool ShiftWorm()
 		{
+			return updateHandler.template ShiftWorm<W>();
+		}
+
+		/*
+		template<int_t W>
+		bool ShiftWorm()
+		{
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<W>();
 			updateHandler.GetVertexHandler().ShiftWormToBuffer();
 			uint_t m = lattice->MaxDistance();
@@ -124,6 +131,13 @@ class ConfigSpace
 			}
 			else
 				return false;
+		}
+		*/
+
+		void Clear()
+		{
+			updateHandler.Clear();
+			state = StateType::Z;
 		}
 		
 		void PrintMatrix(const matrix_t& m)
