@@ -185,6 +185,61 @@ class UpdateHandler
 			}
 		}
 
+		template<int_t W>
+		bool ShiftWorm()
+		{
+			uint_t k = 2 * vertexHandler.Vertices();
+			const uint_t l = 2 * W;
+
+			matrix_t<Eigen::Dynamic, l> wormU(k, l), shiftedWormU(k, l);
+			matrix_t<l, Eigen::Dynamic> wormV(l, k), shiftedWormV(l, k);
+			matrix_t<l, l> wormA(l, l), shiftedWormA(l, l);
+
+			vertexHandler.ShiftWormToBuffer();
+			vertexHandler.WoodburyWorm(wormU, wormV, wormA);
+			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
+
+			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k + l);
+			vertexHandler.PermutationMatrix(perm.indices(), true);
+			invG = perm.transpose() * invG * perm;
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> M = invG.topLeftCorner(k, k);
+			M.noalias() -= invG.topRightCorner(k, l) * invG.template bottomRightCorner<l, l>().inverse() * invG.bottomLeftCorner(l, k);
+
+			matrix_t<l, l> invS = wormA;
+			invS.noalias() -= wormV * M * wormU;
+			value_t detInvS = invS.determinant();
+
+			matrix_t<l, l> shiftedInvS = shiftedWormA;
+			shiftedInvS.noalias() -= shiftedWormV * M * shiftedWormU;
+			value_t detShiftedInvS = shiftedInvS.determinant();
+
+			value_t acceptRatio = detShiftedInvS / detInvS * vertexHandler.WormShiftParity();
+			if (print && acceptRatio < 0.0)
+			{
+				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
+			}
+			if (print && configSpace.rng() < acceptRatio)
+			{
+				matrix_t<l, l> S = shiftedInvS.inverse();
+				matrix_t<l, Eigen::Dynamic> R = -S * shiftedWormV * M;
+				matrix_t<Eigen::Dynamic, l> Mu = M * shiftedWormU;
+				invG.topLeftCorner(k, k) = M;
+				invG.topLeftCorner(k, k).noalias() -= Mu * R;
+				invG.topRightCorner(k, l).noalias() = -Mu * S;
+				invG.bottomLeftCorner(l, k) = R;
+				invG.template bottomRightCorner<l, l>() = S;
+				invG = perm * invG * perm.transpose();
+
+				vertexHandler.ApplyWormShift();
+				return true;
+			}
+			else
+			{
+				invG = perm * invG * perm.transpose();
+				return false;
+			}
+		}
+
 		template<typename Matrix>
 		value_t MatrixCondition(Matrix& M)
 		{

@@ -265,11 +265,17 @@ class VertexHandler
 			for (uint_t i = 0; i < l; ++i)
 			{
 				nodeBuffer[i] = nodes[wormNodes[i]];
+				indexBuffer[i] = i;
 			}
 			nodeBufferEnd = nodeBuffer.begin() + l;
+			indexBufferEnd = indexBuffer.begin() + l;
 
-			uint_t r = static_cast<uint_t>(configSpace.rng() * l);			
+			uint_t r = static_cast<uint_t>(configSpace.rng() * l);
+			wormShiftParity = 1.0;
+			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			
 			nodeBuffer[r].Site = configSpace.lattice->RandomWalk(nodeBuffer[r].Site, 1, configSpace.rng);
+			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			nodeBuffer[r].Tau += -0.05 * configSpace.beta + configSpace.rng() * 0.1 * configSpace.beta;
 			if (nodeBuffer[r].Tau > configSpace.beta)
 				nodeBuffer[r].Tau -= configSpace.beta;
@@ -278,6 +284,12 @@ class VertexHandler
 			
 			for (uint_t i = 0; i < l; ++i)
 				nodeBuffer[i].Tau = nodeBuffer[r].Tau;
+		}
+		
+		void ApplyWormShift()
+		{
+			for (uint_t i = 0; i < wormNodes.size(); ++i)
+				nodes[wormNodes[i]] = nodeBuffer[i];
 		}
 		
 		std::size_t Vertices()
