@@ -460,8 +460,8 @@ void mc::do_update()
 			
 		if (rebuildCnt == nRebuild)
 		{
-			//double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
-			double cond = configSpace.updateHandler.StabilizeInvG();
+			double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
+			//double cond = configSpace.updateHandler.StabilizeInvG();
 			measure.add("avgInvGError", avgError);
 			measure.add("relInvGError", relError);
 			measure.add("condition", cond);
@@ -480,56 +480,34 @@ void mc::do_update()
 
 void mc::OptimizeZeta()
 {
-	if (nZetaOptimization < nOptimizationSteps)
+	if (sweep % (nThermalize / 5) == 0)
 	{
-		if (sweep < nOptimizationTherm)
-			return;
-		else if (sweep < nOptimizationTherm + nOptimizationMeas)
-		{
-			switch (configSpace.State())
-			{
-				case StateType::Z:
-					therm.State[StateType::Z] = therm.State[StateType::Z] * therm.N / (therm.N + 1.0) + 1.0 / (therm.N + 1.0);
-					therm.State[StateType::W2] = therm.State[StateType::W2] * therm.N / (therm.N + 1.0);
-					therm.State[StateType::W4] = therm.State[StateType::W4] * therm.N / (therm.N + 1.0);
-					break;
-				case StateType::W2:
-					therm.State[StateType::Z] = therm.State[StateType::Z] * therm.N / (therm.N + 1.0);
-					therm.State[StateType::W2] = therm.State[StateType::W2] * therm.N / (therm.N + 1.0) + 1.0 / (therm.N + 1.0);
-					therm.State[StateType::W4] = therm.State[StateType::W4] * therm.N / (therm.N + 1.0);
-					break;
-				case StateType::W4:
-					therm.State[StateType::Z] = therm.State[StateType::Z] * therm.N / (therm.N + 1.0);
-					therm.State[StateType::W2] = therm.State[StateType::W2] * therm.N / (therm.N + 1.0);
-					therm.State[StateType::W4] = therm.State[StateType::W4] * therm.N / (therm.N + 1.0) + 1.0 / (therm.N + 1.0);
-					break;
-			}
-			therm.N += 1.0;
-		}
-		else if (sweep == nOptimizationTherm + nOptimizationMeas)
-		{
-			zetaOptimization.insert(std::make_pair(therm.Sigma(), std::make_pair(configSpace.zeta2, configSpace.zeta4)));
-			therm.Reset();
-			zeta.NextConfig();
-			configSpace.zeta2 = zeta.Zeta2();
-			configSpace.zeta4 = zeta.Zeta4();
-			value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-			configSpace.zeta2 /= m * configSpace.beta;
-			configSpace.zeta4 /= m * m * m * configSpace.beta;
-			++nZetaOptimization;
-			sweep = 0;
-		}
+		configSpace.zeta2 += (1./3. - therm.State[StateType::W2]) * 3.0 * configSpace.zeta2;
+		configSpace.zeta4 += (1./3. - therm.State[StateType::W4]) * 3.0 * configSpace.zeta4;
+		std::cout << configSpace.zeta2 << " " << configSpace.zeta4 << std::endl;
+		therm.Reset();
 	}
-	else if(nZetaOptimization == nZetaOptimization)
+	else
 	{
-		sweep = nThermalize - 1;
-		configSpace.zeta2 = zetaOptimization.begin()->second.first;
-		configSpace.zeta4 = zetaOptimization.begin()->second.second;
-		evalableParameters[1] = configSpace.zeta2;
-		evalableParameters[2] = configSpace.zeta4;
-		value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-		for (auto it = zetaOptimization.begin(); it != zetaOptimization.end(); ++it)
-			std::cout << it->first << " " << it->second.first * m * configSpace.beta << " " << it->second.second * m * m * m * configSpace.beta << std::endl;
+		switch (configSpace.State())
+		{
+			case StateType::Z:
+				therm.State[StateType::Z] = therm.State[StateType::Z] * therm.N / (therm.N + 1.0) + 1.0 / (therm.N + 1.0);
+				therm.State[StateType::W2] = therm.State[StateType::W2] * therm.N / (therm.N + 1.0);
+				therm.State[StateType::W4] = therm.State[StateType::W4] * therm.N / (therm.N + 1.0);
+				break;
+			case StateType::W2:
+				therm.State[StateType::Z] = therm.State[StateType::Z] * therm.N / (therm.N + 1.0);
+				therm.State[StateType::W2] = therm.State[StateType::W2] * therm.N / (therm.N + 1.0) + 1.0 / (therm.N + 1.0);
+				therm.State[StateType::W4] = therm.State[StateType::W4] * therm.N / (therm.N + 1.0);
+				break;
+			case StateType::W4:
+				therm.State[StateType::Z] = therm.State[StateType::Z] * therm.N / (therm.N + 1.0);
+				therm.State[StateType::W2] = therm.State[StateType::W2] * therm.N / (therm.N + 1.0);
+				therm.State[StateType::W4] = therm.State[StateType::W4] * therm.N / (therm.N + 1.0) + 1.0 / (therm.N + 1.0);
+				break;
+		}
+		therm.N += 1.0;
 	}
 }
 

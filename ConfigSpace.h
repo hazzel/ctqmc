@@ -67,7 +67,7 @@ class ConfigSpace
 		{
 			if (isWorm)
 			{
-				updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>();
+				updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>(nhoodDist);
 				preFactor *= updateHandler.GetVertexHandler().VertexBufferParity();
 			}
 			else
@@ -105,14 +105,16 @@ class ConfigSpace
 		template<int_t W>
 		bool ShiftWorm()
 		{
-			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<W>(true);
-			uint_t m = lattice->NeighborhoodCount(nhoodDist);
+			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<W>();
+			updateHandler.GetVertexHandler().ShiftWormToBuffer();
+			uint_t m = lattice->MaxDistance();
 			value_t preFactorRemove = updateHandler.GetVertexHandler().WormIndexBufferParity() / (lattice->Sites() * m * beta * zeta2);
 			value_t preFactorAdd = updateHandler.GetVertexHandler().VertexBufferParity() * lattice->Sites() * m * beta * zeta2;
 			value_t detRemove, detAdd;
 			updateHandler.template RemoveVertices<W>(preFactorRemove, true, detRemove, UpdateFlag::NoUpdate);
-			updateHandler.template RemoveVertices<W>(preFactorAdd, true, detAdd, UpdateFlag::NoUpdate);
+			updateHandler.template AddVertices<W>(preFactorAdd, true, detAdd, UpdateFlag::NoUpdate);
 			value_t detShift = std::min({preFactorRemove*detRemove, 1.0}) * std::min({preFactorAdd*detAdd, 1.0});
+			//value_t detShift = detRemove*detAdd;
 
 			if (rng() < detShift)
 			{

@@ -172,7 +172,7 @@ class VertexHandler
 		}
 		
 		template<int_t N>
-		void AddRandomWormsToBuffer()
+		void AddRandomWormsToBuffer(uint_t nhoodDist)
 		{
 			uint_t site = configSpace.lattice->RandomSite(configSpace.rng);
 			value_t tau;
@@ -183,7 +183,7 @@ class VertexHandler
 			nodeBuffer[0] = node_t(site, tau, true);
 			for (uint_t i = 1; i < 2 * N; ++i)
 			{
-				uint_t nsite = configSpace.lattice->FromNeighborhood(site, configSpace.nhoodDist, configSpace.rng);
+				uint_t nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
 				nodeBuffer[i] = node_t(nsite, tau, true);
 			}
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
@@ -242,7 +242,7 @@ class VertexHandler
 		}
 		
 		template<int_t N>
-		void AddRandomWormIndicesToBuffer(bool saveToNodeBuffer = false)
+		void AddRandomWormIndicesToBuffer()
 		{
 			if (2 * N == wormNodes.size())
 			{
@@ -257,12 +257,6 @@ class VertexHandler
 				indexBuffer[1] = 2 * r + 1;
 			}
 			indexBufferEnd = indexBuffer.begin() + 2 * N;
-			if (saveToNodeBuffer)
-			{
-				for (uint_t i = 0; i < 2 * N; ++i)
-					nodeBuffer[i] = nodes[wormNodes[indexBuffer[i]]];
-				nodeBufferEnd = nodeBuffer.begin() + 2 * N;
-			}
 		}
 
 		void ShiftWormToBuffer()
@@ -271,17 +265,11 @@ class VertexHandler
 			for (uint_t i = 0; i < l; ++i)
 			{
 				nodeBuffer[i] = nodes[wormNodes[i]];
-				indexBuffer[i] = i;
 			}
 			nodeBufferEnd = nodeBuffer.begin() + l;
-			indexBufferEnd = indexBuffer.begin() + l;
 
-			uint_t r = static_cast<uint_t>(configSpace.rng() * l);
-			wormShiftParity = 1.0;
-			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
-			
+			uint_t r = static_cast<uint_t>(configSpace.rng() * l);			
 			nodeBuffer[r].Site = configSpace.lattice->RandomWalk(nodeBuffer[r].Site, 1, configSpace.rng);
-			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			nodeBuffer[r].Tau += -0.05 * configSpace.beta + configSpace.rng() * 0.1 * configSpace.beta;
 			if (nodeBuffer[r].Tau > configSpace.beta)
 				nodeBuffer[r].Tau -= configSpace.beta;
@@ -290,12 +278,6 @@ class VertexHandler
 			
 			for (uint_t i = 0; i < l; ++i)
 				nodeBuffer[i].Tau = nodeBuffer[r].Tau;
-		}
-		
-		void ApplyWormShift()
-		{
-			for (uint_t i = 0; i < wormNodes.size(); ++i)
-				nodes[wormNodes[i]] = nodeBuffer[i];
 		}
 		
 		std::size_t Vertices()
@@ -335,89 +317,6 @@ class VertexHandler
 					v(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
 				for (uint_t j = 0; j < n; ++j)
-				{
-					if (i < j)
-					{
-						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
-					}
-				}
-				a(i, i) = 0.0;
-			}
-		}
-		
-		template<typename U, typename V, typename A, typename P>
-		void WoodburyRemoveVertices(U& u, V& v, A& a, const P& perm)
-		{
-			uint_t k = nodes.size();
-			uint_t l = wormNodes.size();
-			uint_t n = a.cols();
-			for (uint_t i = 0; i < n; ++i)
-			{
-				for (uint_t j = 0; j < k - n; ++j)
-				{
-					u(j, i) = configSpace.LookUpG0(nodes[perm[j]].Site, nodes[indexBuffer[i]].Site, nodes[perm[j]].Tau - nodes[indexBuffer[i]].Tau + configSpace.infinTau);
-					v(i, j) = configSpace.LookUpG0(nodes[indexBuffer[i]].Site, nodes[perm[j]].Site, nodes[indexBuffer[i]].Tau - nodes[perm[j]].Tau - configSpace.infinTau);
-				}
-				for (uint_t j = 0; j < n; ++j)
-				{
-					if (i < j)
-					{
-						a(i, j) = configSpace.LookUpG0(nodes[indexBuffer[i]].Site, nodes[indexBuffer[j]].Site, nodes[indexBuffer[i]].Tau - nodes[indexBuffer[j]].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(nodes[indexBuffer[j]].Site, nodes[indexBuffer[i]].Site, nodes[indexBuffer[j]].Tau - nodes[indexBuffer[i]].Tau - configSpace.infinTau);
-					}
-				}
-				a(i, i) = 0.0;
-			}
-		}
-
-		template<typename U, typename V, typename A>
-		void WoodburyWorm(U& u, V& v, A& a)
-		{
-			uint_t k = nodes.size();
-			uint_t l = wormNodes.size();
-			for (uint_t i = 0; i < l; ++i)
-			{
-				uint_t n = 0;
-				for (uint_t j = 0; j < k; ++j)
-				{
-					if (!nodes[j].Worm)
-					{
-						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau + configSpace.infinTau);
-						v(i, n) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[j].Site, nodes[wormNodes[i]].Tau - nodes[j].Tau - configSpace.infinTau);
-						++n;
-					}
-				}
-				for (uint_t j = 0; j < l; ++j)
-				{
-					if (i < j)
-					{
-						a(i, j) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Tau - nodes[wormNodes[j]].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Tau - nodes[wormNodes[i]].Tau - configSpace.infinTau);
-					}
-				}
-				a(i, i) = 0.0;
-			}
-		}
-
-		template<typename U, typename V, typename A>
-		void WoodburyShiftWorm(U& u, V& v, A& a)
-		{
-			uint_t k = nodes.size();
-			uint_t l = wormNodes.size();
-			for (uint_t i = 0; i < l; ++i)
-			{
-				uint_t n = 0;
-				for (uint_t j = 0; j < k; ++j)
-				{
-					if (!nodes[j].Worm)
-					{
-						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-						v(i, n) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
-						++n;
-					}
-				}
-				for (uint_t j = 0; j < l; ++j)
 				{
 					if (i < j)
 					{
