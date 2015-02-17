@@ -190,7 +190,7 @@ class ConfigSpace
 			{
 				std::cout << "...";
 				std::cout.flush();
-				ReadFromFile(filename);
+				SyncMPI(filename, "write");
 			}
 			else
 			{
@@ -223,7 +223,7 @@ class ConfigSpace
 				for (uint_t t = 0; t < nTimeBins; ++t)
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
-				SaveToFile(filename);
+				
 			}
 		}
 
@@ -344,6 +344,30 @@ class ConfigSpace
 			}
 			else
 				std::cout << "Error reading g0 look up file." << std::endl;
+		}
+
+		void SyncMPI(const std::string& filename, const std::string& type)
+		{
+			int file_free = 0;
+			int np;
+			int proc_id;
+			MPI_Comm_size(MPI_COMM_WORLD, &np);
+			MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
+			MPI_Status status;
+
+			if (proc_id == 1)
+				file_free = 1;
+			else
+				MPI_Recv(&file_free, 1, MPI_INT, proc_id-1, 1, MPI_COMM_WORLD, &status);
+			if (file_free == 1)
+			{
+				if (type == "save")
+					SaveToFile(filename);
+				else if (type == "read")
+					ReadFromFile(filename);
+			}
+			if (proc_id != np-1)
+				MPI_Send(&file_free, 1, MPI_INT, proc_id+1, 1, MPI_COMM_WORLD);
 		}
 	public:
 		RNG& rng;
