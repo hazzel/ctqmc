@@ -100,6 +100,8 @@ class VertexHandler
 		
 		void AddBufferedVertices(bool isWorm)
 		{
+			for (auto it = nodeBuffer.begin(); it != nodeBufferEnd; ++it)
+				it->Worm = isWorm;
 			nodes.insert(nodes.end(), nodeBuffer.begin(), nodeBufferEnd);
 			if (isWorm)
 			{
@@ -107,6 +109,22 @@ class VertexHandler
 				for (uint_t i = 0; i < n; ++i)
 					wormNodes.push_back(nodes.size() - n + i);
 			}
+		}
+
+		void OpenUpdate()
+		{
+			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+			{
+				nodes[*it].Worm = true;
+				wormNodes.push_back(*it);
+			}
+		}
+
+		void CloseUpdate()
+		{
+			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+				nodes[wormNodes[*it]].Worm = false;
+			wormNodes.clear();
 		}
 		
 		value_t VertexBufferParity()

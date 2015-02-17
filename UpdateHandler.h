@@ -185,21 +185,27 @@ class UpdateHandler
 			}
 		}
 
-		bool SingleWormUpdate(value_t preFactor, bool isOpenUpdate)
+		bool OpenUpdate(value_t preFactor)
 		{
 			value_t acceptRatio = preFactor;
 			if (configSpace.rng() < acceptRatio)
 			{
-				if (isOpenUpdate)
-				{
-					vertexHandler.RemoveBufferedVertices(false);
-					vertexHandler.AddBufferedVertices(true);
-				}
+				if (vertexHandler.Vertices() == 0)
+					return false;
 				else
 				{
-					vertexHandler.RemoveBufferedVertices(true);
-					vertexHandler.AddBufferedVertices(false);
+					vertexHandler.OpenUpdate();
+					return true;
 				}
+			}
+		}
+
+		bool CloseUpdate(value_t preFactor)
+		{
+			value_t acceptRatio = preFactor;
+			if (configSpace.rng() < acceptRatio)
+			{
+				vertexHandler.CloseUpdate();
 				return true;
 			}
 		}
@@ -237,6 +243,12 @@ class UpdateHandler
 			invG = perm.transpose() * invG * perm;
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> M = invG.topLeftCorner(k, k);
 			M.noalias() -= invG.topRightCorner(k, l) * invG.template bottomRightCorner<l, l>().inverse() * invG.bottomLeftCorner(l, k);
+
+			/*
+			value_t condm = MatrixCondition(M);
+			if (condm > 10000.0)
+				std::cout << condm << std::endl;
+			*/
 
 			matrix_t<l, l> invS = wormA;
 			invS.noalias() -= wormV * M * wormU;
@@ -288,7 +300,6 @@ class UpdateHandler
 			if (M.rows() == 0)
 				return 0.0;
 			Eigen::JacobiSVD<Matrix> svd(M, Eigen::ComputeFullU | Eigen::ComputeFullV);
-			std::cout << svd.singularValues()(M.rows()-1) << std::endl;
 			return svd.singularValues()(0) / svd.singularValues()(M.rows()-1);
 		}
 

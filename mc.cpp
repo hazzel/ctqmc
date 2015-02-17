@@ -475,7 +475,6 @@ void mc::do_update()
 			rebuildCnt = 0;
 		}
 	}
-	
 	++sweep;
 
 	if (nZetaOptimization < nOptimizationSteps)
@@ -523,10 +522,10 @@ void mc::OptimizeZeta()
 		evalableParameters[1] = configSpace.zeta2;
 		evalableParameters[2] = configSpace.zeta4;
 		value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-		//std::cout << configSpace.zeta2 * m * configSpace.beta << " " << configSpace.zeta4 * m * m * m * configSpace.beta << std::endl;
 		therm.Reset();
 		++nZetaOptimization;
 		sweep = 0;
+		std::cout << nZetaOptimization << std::endl;
 		if (nZetaOptimization == nOptimizationSteps)
 		{
 			sweep = nOptimizationSteps * nOptimizationTherm;

@@ -36,11 +36,11 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 				this->GenerateDistanceHistogram();
 				this->numNeighborhood.resize(this->maxDistance + 1, 0);
 				this->CountNeighborhood();
-				this->SyncMPI(filename, "save");
+				this->SaveToFile(filename);
 			}
 			else
 			{
-				this->SyncMPI(filename, "read");
+				this->ReadFromFile(filename);
 			}
 		}
 

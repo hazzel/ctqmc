@@ -65,6 +65,14 @@ class ConfigSpace
 		template<int_t N>
 		bool AddRandomVertices(value_t preFactor, bool isWorm)
 		{
+			/*
+			if (isWorm && N == 1 && updateHandler.GetVertexHandler().Worms() == 0 && updateHandler.GetVertexHandler().Vertices() > 0)
+			{
+				updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
+				preFactor = 2.0 * zeta2 * updateHandler.GetVertexHandler().Vertices() / V;
+				return updateHandler.OpenUpdate(preFactor);
+			}
+			*/
 			if (isWorm)
 			{
 				updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>(nhoodDist);
@@ -78,6 +86,14 @@ class ConfigSpace
 		template<int_t N>
 		bool RemoveRandomVertices(value_t preFactor, bool isWorm)
 		{
+			/*
+			if (isWorm && updateHandler.GetVertexHandler().Worms() == 1 && updateHandler.GetVertexHandler().WormDistance() == 1)
+			{
+				updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
+				preFactor = V / (2.0 * zeta2 * (updateHandler.GetVertexHandler().Vertices() + 1.0));
+				return updateHandler.CloseUpdate(preFactor);
+			}
+			*/
 			if (isWorm)
 			{
 				if (updateHandler.GetVertexHandler().Worms() < N)
@@ -190,7 +206,7 @@ class ConfigSpace
 			{
 				std::cout << "...";
 				std::cout.flush();
-				SyncMPI(filename, "read");
+				ReadFromFile(filename);
 			}
 			else
 			{
@@ -223,7 +239,7 @@ class ConfigSpace
 				for (uint_t t = 0; t < nTimeBins; ++t)
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
-				SyncMPI(filename, "write");
+				SaveToFile(filename);
 			}
 		}
 
