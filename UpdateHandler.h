@@ -128,14 +128,14 @@ class UpdateHandler
 		}
 
 		template<int_t N>
-		bool RemoveVertices(double preFactor, bool isWorm)
+		bool RemoveVertices(value_t preFactor, bool isWorm)
 		{
 			value_t det;
 			return RemoveVertices<N>(preFactor, isWorm, det, UpdateFlag::NormalUpdate);
 		}
 
 		template<int_t N>
-		bool RemoveVertices(double preFactor, bool isWorm, value_t& det, UpdateFlag flag)
+		bool RemoveVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
 		{
 			if (isWorm && vertexHandler.Worms() < N)
 				return false;
@@ -185,11 +185,44 @@ class UpdateHandler
 			}
 		}
 
+		bool SingleWormUpdate(value_t preFactor, bool isOpenUpdate)
+		{
+			value_t acceptRatio = preFactor;
+			if (configSpace.rng() < acceptRatio)
+			{
+				if (isOpenUpdate)
+				{
+					vertexHandler.RemoveBufferedVertices(false);
+					vertexHandler.AddBufferedVertices(true);
+				}
+				else
+				{
+					vertexHandler.RemoveBufferedVertices(true);
+					vertexHandler.AddBufferedVertices(false);
+				}
+				return true;
+			}
+		}
+
 		template<int_t W>
 		bool ShiftWorm()
 		{
 			uint_t k = 2 * vertexHandler.Vertices();
 			const uint_t l = 2 * W;
+
+			value_t preFactorAdd, preFactorRemove;
+			if (W == 1)
+			{
+				value_t m = configSpace.lattice->Sites();
+				preFactorAdd = configSpace.zeta2 * configSpace.lattice->Sites() * m * configSpace.beta;
+				preFactorRemove = 1.0 / preFactorAdd;
+			}
+			else if (W == 2)
+			{
+				value_t m = configSpace.lattice->Sites();
+				preFactorAdd = configSpace.zeta4 * configSpace.lattice->Sites() * m * m * m * configSpace.beta;
+				preFactorRemove = 1.0 / preFactorAdd;
+			}
 
 			matrix_t<Eigen::Dynamic, l> wormU(k, l), shiftedWormU(k, l);
 			matrix_t<l, Eigen::Dynamic> wormV(l, k), shiftedWormV(l, k);
@@ -214,6 +247,9 @@ class UpdateHandler
 			value_t detShiftedInvS = shiftedInvS.determinant();
 
 			value_t acceptRatio = detShiftedInvS / detInvS * vertexHandler.WormShiftParity();
+			//value_t acceptRemove = std::min({std::abs(preFactorRemove / detInvS), 1.0});
+			//value_t acceptAdd = std::min({std::abs(preFactorAdd * detShiftedInvS), 1.0});
+			//value_t acceptRatio = acceptRemove * acceptAdd;
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;

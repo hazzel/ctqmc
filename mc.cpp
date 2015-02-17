@@ -222,7 +222,8 @@ void mc::write_output(const std::string& dir)
 
 bool mc::is_thermalized()
 {
-	return (nZetaOptimization >= nOptimizationSteps) && (sweep >= nThermalize);
+	//return (nZetaOptimization >= nOptimizationSteps) && (sweep >= nThermalize);
+	return sweep >= nThermalize;
 }
 
 void mc::BuildUpdateWeightMatrix()
@@ -474,6 +475,7 @@ void mc::do_update()
 	}
 	
 	++sweep;
+	/*
 	if (nZetaOptimization < nOptimizationSteps)
 	{
 		OptimizeZeta();
@@ -483,6 +485,7 @@ void mc::do_update()
 		if (sweep == nThermalize)
 			std::cout << "Done" << std::endl;
 	}
+	*/
 }
 
 void mc::OptimizeZeta()
