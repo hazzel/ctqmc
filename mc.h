@@ -159,6 +159,6 @@ class mc
 		Zeta<Random> zeta;
 		std::map< value_t, std::pair<value_t, value_t> > zetaOptimization;
 		uint_t nZetaOptimization = 0;
-		uint_t nOptimizationSteps = 20;
-		uint_t nOptimizationTherm = 2500;
+		uint_t nOptimizationSteps;
+		uint_t nOptimizationTherm;
 };

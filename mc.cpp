@@ -93,7 +93,10 @@ mc::mc(const std::string& dir)
 	configSpace.zeta4 = param.value_or_default<value_t>("zeta4", 1.0);
 	//configSpace.zeta4 = zeta.Zeta4();
 	configSpace.zeta4 /= m * m * m / T;
-	
+
+	nOptimizationSteps = param.value_or_default<value_t>("ZETA_OPTIMIZATION", 25.0);
+	nOptimizationTherm = param.value_or_default<value_t>("ZETA_THERM", 2000.0);
+
 	nThermalize = param.value_or_default<uint_t>("THERMALIZATION", 10000);
 	nMeasurements = param.value_or_default<uint_t>("SWEEPS", 10000);
 	nPrebins = param.value_or_default<uint_t>("PREBINS", 100);
@@ -222,8 +225,7 @@ void mc::write_output(const std::string& dir)
 
 bool mc::is_thermalized()
 {
-	//return (nZetaOptimization >= nOptimizationSteps) && (sweep >= nThermalize);
-	return sweep >= nThermalize;
+	return (nZetaOptimization >= nOptimizationSteps) && (sweep >= nThermalize);
 }
 
 void mc::BuildUpdateWeightMatrix()
@@ -326,8 +328,6 @@ void mc::do_update()
 {
 	if (sweep == 0 && nZetaOptimization == 0)
 		std::cout << "Thermalization" << std::endl;
-
-	std::cout << sweep << std::endl;
 
 	for (uint_t i = 0; i < nThermStep; ++i)
 	{
@@ -469,15 +469,15 @@ void mc::do_update()
 		{
 			//double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
 			double cond = configSpace.updateHandler.StabilizeInvG();
-			//measure.add("avgInvGError", avgError);
-			//measure.add("relInvGError", relError);
-			//measure.add("condition", cond);
+			measure.add("avgInvGError", avgError);
+			measure.add("relInvGError", relError);
+			measure.add("condition", cond);
 			rebuildCnt = 0;
 		}
 	}
 	
 	++sweep;
-	/*
+
 	if (nZetaOptimization < nOptimizationSteps)
 	{
 		OptimizeZeta();
@@ -487,7 +487,7 @@ void mc::do_update()
 		if (sweep == nThermalize)
 			std::cout << "Done" << std::endl;
 	}
-	*/
+
 }
 
 void mc::OptimizeZeta()
@@ -529,8 +529,9 @@ void mc::OptimizeZeta()
 		sweep = 0;
 		if (nZetaOptimization == nOptimizationSteps)
 		{
-			//configSpace.Clear();
-			//sweep = nThermalize;
+			sweep = nOptimizationSteps * nOptimizationTherm;
+			std::cout << "Zeta2(T=" << 1./configSpace.beta << ",V=" << configSpace.V << ") = " << configSpace.zeta2 * m * configSpace.beta << std::endl;
+			std::cout << "Zeta4(T=" << 1./configSpace.beta << ",V=" << configSpace.V << ") = " << configSpace.zeta4 * m * m * m * configSpace.beta << std::endl;
 		}
 	}
 }

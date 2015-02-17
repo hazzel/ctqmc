@@ -42,19 +42,19 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	ifeq ($(USE_HPC), TRUE)
 		APPMCLL = $(HPCWORK)/ctqmc/
 	endif
-	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 $(USE_MKL) -DNDEBUG $(FLAGS_OPENMP) $(DEFINES)
+	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DNDEBUG $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-	LDFLAGS = $(FLAGS_OPENMP)
+	LDFLAGS = 
 	SUPERLP = 
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
-	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -fopenmp $(DEFINES)
+	CFLAGS  = -O3 -Wno-deprecated -std=c++11 $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
-	LDFLAGS = -fopenmp
+	LDFLAGS =
 	SUPERLP =
 else
-	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -fopenmp $(DEFINES)
+	CFLAGS  = -O3 -Wno-deprecated -std=c++11 $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-	LDFLAGS = -fopenmp
+	LDFLAGS =
 	SUPERLP =
 endif
 
