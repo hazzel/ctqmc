@@ -190,7 +190,7 @@ class ConfigSpace
 			{
 				std::cout << "...";
 				std::cout.flush();
-				SyncMPI(filename, "write");
+				SyncMPI(filename, "read");
 			}
 			else
 			{
@@ -223,7 +223,7 @@ class ConfigSpace
 				for (uint_t t = 0; t < nTimeBins; ++t)
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
-				
+				SyncMPI(filename, "write");
 			}
 		}
 
