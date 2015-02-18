@@ -209,7 +209,7 @@ class UpdateHandler
 				return true;
 			}
 		}
-
+		/*
 		template<int_t W>
 		bool ShiftWorm()
 		{
@@ -268,8 +268,8 @@ class UpdateHandler
 				return false;
 			}
 		}
-
-		/*
+		*/
+		
 		template<int_t W>
 		bool ShiftWorm()
 		{
@@ -289,23 +289,22 @@ class UpdateHandler
 				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
 				preFactorAdd = 1.0 / preFactorRem;
 			}
-			if (RemoveVertices<W>(preFactorRem, true))
+			if (RemoveVertices<W>(preFactorRem * vertexHandler.WormIndexBufferParity(), true))
 			{
-				if (AddVertices<W>(preFactorAdd, true))
+				if (AddVertices<W>(preFactorAdd * vertexHandler.VertexBufferParity(), true))
 				{
 					return true;
 				}
 				else
 				{
-					vertexHandler.RestoreAfterShift();
+					vertexHandler.template RestoreAfterShift<W>();
 					value_t det;
-					AddVertices<W>(preFactorAdd, true, det, UpdateFlag::ForceUpdate);
+					AddVertices<W>(preFactorAdd * vertexHandler.VertexBufferParity(), true, det, UpdateFlag::ForceUpdate);
 					return false;
 				}
 			}
 			return false;
 		}
-		*/
 
 		void Clear()
 		{

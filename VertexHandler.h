@@ -305,9 +305,10 @@ class VertexHandler
 				nodeBuffer[i].Tau = nodeBuffer[r].Tau;
 		}
 
+		template<int_t W>
 		void RestoreAfterShift()
 		{
-			uint_t l = wormNodes.size();
+			uint_t l = 2 * W;
 			for (uint_t i = 0; i < l; ++i)
 				nodeBuffer[i] = nodeBuffer[i+l];
 			nodeBufferEnd = nodeBuffer.begin() + l;
