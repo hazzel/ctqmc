@@ -145,7 +145,6 @@ void mc::init()
 	measure.add_observable("deltaW2", nPrebins);
 	measure.add_observable("deltaW4", nPrebins);
 	measure.add_observable("avgInvGError", nPrebins);
-	measure.add_observable("relInvGError", nPrebins);
 	measure.add_observable("condition", nPrebins);
 	measure.add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
 }
@@ -463,14 +462,12 @@ void mc::do_update()
 		}
 
 		value_t avgError = 0.0;
-		value_t relError = 0.0;
 			
 		if (rebuildCnt == nRebuild)
 		{
-			//double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
-			double cond = configSpace.updateHandler.StabilizeInvG();
-			//measure.add("avgInvGError", avgError);
-			//measure.add("relInvGError", relError);
+			double cond = configSpace.updateHandler.StabilizeInvG(avgError);
+			//double cond = configSpace.updateHandler.StabilizeInvG();
+			measure.add("avgInvGError", avgError);
 			//measure.add("condition", cond);
 			rebuildCnt = 0;
 		}

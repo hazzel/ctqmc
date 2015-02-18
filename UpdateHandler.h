@@ -337,7 +337,7 @@ class UpdateHandler
 			return 0.0;
 		}
 		
-		value_t StabilizeInvG(value_t& avgError, value_t& relError)
+		value_t StabilizeInvG(value_t& avgError)
 		{
 			if (invG.rows() == 0)
 				return 0.0;
@@ -347,7 +347,6 @@ class UpdateHandler
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = solver.inverse();
 
 			avgError = 0.0;
-			relError = 0.0;
 			value_t N = stabInvG.rows() * stabInvG.rows();
 			for (uint_t i = 0; i < stabInvG.rows(); ++i)
 			{
@@ -355,15 +354,16 @@ class UpdateHandler
 				{
 					value_t err = std::abs(invG(i, j) - stabInvG(i, j));
 					avgError += err / N;
-					relError += std::abs(stabInvG(i, j)) / N;
 				}
-				relError = avgError / relError;
 			}
 
+			/*
 			Eigen::JacobiSVD< matrix_t<Eigen::Dynamic, Eigen::Dynamic> > svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
-			invG = stabInvG;
 			return sv(0) / sv(G.rows()-1);
+			*/
+			invG = stabInvG;
+			return 0.0;
 		}
 		
 		template<typename Matrix>
