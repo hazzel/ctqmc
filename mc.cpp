@@ -4,6 +4,7 @@
 #include <string>
 #include <limits>
 #include <functional>
+#include <omp.h>
 
 void M2Function(double& out, std::vector< std::valarray<double>* >& o, double* p)
 {
@@ -52,8 +53,6 @@ void CorrFunction(std::valarray<double>& out, std::vector< std::valarray<double>
 mc::mc(const std::string& dir)
 	: rng(Random()), configSpace(rng), zeta(rng)
 {
-	//fpu_fix_start(&old_cw);
-	
 	std::cout.precision(15);
 	std::cout << std::fixed;
 	

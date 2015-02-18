@@ -229,11 +229,12 @@ class ConfigSpace
 					EvaluateG0(dtau * t, G0);
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableG0[r][t] = G0(i, sites[r]);
-					if (t % (nTimeBins / 3) == 0)
+					if (t % (nTimeBins / 10) == 0)
 					{
 						std::cout << ".";
 						std::cout.flush();
 					}
+					//std::cout << t << std::endl;
 				}
 
 				for (uint_t t = 0; t < nTimeBins; ++t)

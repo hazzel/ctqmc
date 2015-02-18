@@ -30,13 +30,14 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 			this->AllocateNeighborList();
 			this->distanceMap.AllocateTable(this->nSites, this->nSites);
 			this->distanceHistogram.resize(this->nSites, 0);
-			if (!FileExists(filename))
+			if (!this->fileIO && !FileExists(filename))
 			{
 				this->BuildLookUpTable(rng);
 				this->GenerateDistanceHistogram();
 				this->numNeighborhood.resize(this->maxDistance + 1, 0);
 				this->CountNeighborhood();
-				this->SaveToFile(filename);
+				if (!this->fileIO)
+					this->SaveToFile(filename);
 			}
 			else
 			{

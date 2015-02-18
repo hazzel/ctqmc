@@ -250,4 +250,5 @@ class GeometryBase
 		vector_t distanceHistogram;
 		int_t** neighborList;
 		vector_t numNeighborhood;
+		bool fileIO = false;
 };
