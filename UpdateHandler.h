@@ -403,5 +403,5 @@ class UpdateHandler
 		VertexHandler_t vertexHandler;
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
 		uint_t maxWorms = 2;
-		bool print = false;
+		bool print = true;
 };
