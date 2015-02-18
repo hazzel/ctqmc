@@ -49,7 +49,7 @@ class VertexHandler
 		VertexHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace)
 		{
-			std::size_t maxBufferSize = 4;
+			std::size_t maxBufferSize = 8;
 			nodeBuffer.resize(maxBufferSize);
 			nodeBufferEnd = nodeBuffer.end();
 			indexBuffer.resize(maxBufferSize);
@@ -283,6 +283,7 @@ class VertexHandler
 			for (uint_t i = 0; i < l; ++i)
 			{
 				nodeBuffer[i] = nodes[wormNodes[i]];
+				nodeBuffer[i+l] = nodes[wormNodes[i]];
 				indexBuffer[i] = i;
 			}
 			nodeBufferEnd = nodeBuffer.begin() + l;
@@ -302,6 +303,14 @@ class VertexHandler
 			
 			for (uint_t i = 0; i < l; ++i)
 				nodeBuffer[i].Tau = nodeBuffer[r].Tau;
+		}
+
+		void RestoreAfterShift()
+		{
+			uint_t l = wormNodes.size();
+			for (uint_t i = 0; i < l; ++i)
+				nodeBuffer[i] = nodeBuffer[i+l];
+			nodeBufferEnd = nodeBuffer.begin() + l;
 		}
 		
 		void ApplyWormShift()

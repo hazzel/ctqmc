@@ -61,6 +61,7 @@ mc::mc(const std::string& dir)
 	value_t T = param.value_or_default<value_t>("T", 1.);
 	L = param.value_or_default<uint_t>("L", 4);
 	
+	configSpace.fileIO = param.value_or_default<uint_t>("FILEIO", 0);
 	configSpace.nTimeBins = param.value_or_default<uint_t>("TIMEBINS", 50000);
 	configSpace.t = param.value_or_default<value_t>("t0", 1.0);
 	configSpace.V = param.value_or_default<value_t>("V", 1.4);

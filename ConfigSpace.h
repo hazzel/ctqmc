@@ -202,7 +202,7 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable(const std::string& filename)
 		{
-			if (FileExists(filename))
+			if (fileIO && FileExists(filename))
 			{
 				std::cout << "...";
 				std::cout.flush();
@@ -239,7 +239,8 @@ class ConfigSpace
 				for (uint_t t = 0; t < nTimeBins; ++t)
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
-				SaveToFile(filename);
+				if (fileIO)
+					SaveToFile(filename);
 			}
 		}
 
@@ -410,4 +411,5 @@ class ConfigSpace
 		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
 		Eigen::FullPivLU<matrix_t> invSolver;
 		uint_t nhoodDist;
+		bool fileIO;
 };

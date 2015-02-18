@@ -216,20 +216,6 @@ class UpdateHandler
 			uint_t k = 2 * vertexHandler.Vertices();
 			const uint_t l = 2 * W;
 
-			value_t preFactorAdd, preFactorRemove;
-			if (W == 1)
-			{
-				value_t m = configSpace.lattice->Sites();
-				preFactorAdd = configSpace.zeta2 * configSpace.lattice->Sites() * m * configSpace.beta;
-				preFactorRemove = 1.0 / preFactorAdd;
-			}
-			else if (W == 2)
-			{
-				value_t m = configSpace.lattice->Sites();
-				preFactorAdd = configSpace.zeta4 * configSpace.lattice->Sites() * m * m * m * configSpace.beta;
-				preFactorRemove = 1.0 / preFactorAdd;
-			}
-
 			matrix_t<Eigen::Dynamic, l> wormU(k, l), shiftedWormU(k, l);
 			matrix_t<l, Eigen::Dynamic> wormV(l, k), shiftedWormV(l, k);
 			matrix_t<l, l> wormA(l, l), shiftedWormA(l, l);
@@ -244,11 +230,9 @@ class UpdateHandler
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> M = invG.topLeftCorner(k, k);
 			M.noalias() -= invG.topRightCorner(k, l) * invG.template bottomRightCorner<l, l>().inverse() * invG.bottomLeftCorner(l, k);
 
-			/*
-			value_t condm = MatrixCondition(M);
-			if (condm > 10000.0)
-				std::cout << condm << std::endl;
-			*/
+			//value_t condm = MatrixCondition(M);
+			//if (condm > 10000.0)
+			//	std::cout << condm << std::endl;
 
 			matrix_t<l, l> invS = wormA;
 			invS.noalias() -= wormV * M * wormU;
@@ -259,9 +243,6 @@ class UpdateHandler
 			value_t detShiftedInvS = shiftedInvS.determinant();
 
 			value_t acceptRatio = detShiftedInvS / detInvS * vertexHandler.WormShiftParity();
-			//value_t acceptRemove = std::min({std::abs(preFactorRemove / detInvS), 1.0});
-			//value_t acceptAdd = std::min({std::abs(preFactorAdd * detShiftedInvS), 1.0});
-			//value_t acceptRatio = acceptRemove * acceptAdd;
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
@@ -287,6 +268,44 @@ class UpdateHandler
 				return false;
 			}
 		}
+
+		/*
+		template<int_t W>
+		bool ShiftWorm()
+		{
+			uint_t k = 2 * vertexHandler.Vertices();
+			const uint_t l = 2 * W;
+
+			vertexHandler.ShiftWormToBuffer();
+			value_t preFactorRem, preFactorAdd;
+			value_t m = configSpace.lattice->Sites();
+			if (W == 1)
+			{
+				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
+				preFactorAdd = 1.0 / preFactorRem;
+			}
+			else if (W == 2)
+			{
+				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
+				preFactorAdd = 1.0 / preFactorRem;
+			}
+			if (RemoveVertices<W>(preFactorRem, true))
+			{
+				if (AddVertices<W>(preFactorAdd, true))
+				{
+					return true;
+				}
+				else
+				{
+					vertexHandler.RestoreAfterShift();
+					value_t det;
+					AddVertices<W>(preFactorAdd, true, det, UpdateFlag::ForceUpdate);
+					return false;
+				}
+			}
+			return false;
+		}
+		*/
 
 		void Clear()
 		{
