@@ -327,6 +327,7 @@ void mc::do_update()
 {
 	if (sweep == 0 && nZetaOptimization == 0)
 	{
+		std::cout << std::endl;
 		std::cout << "Thermalization" << std::endl;
 	}
 

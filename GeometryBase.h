@@ -70,6 +70,11 @@ class GeometryBase
 			return maxDistance;
 		}
 
+		int_t RandomDirection(RNG& rng)
+		{
+			return static_cast<int_t>(rng() * nDirections);
+		}
+
 		int_t ShiftSite(int_t siteIndex, int_t direction, int_t distance = 1)
 		{
 			int_t newSite = siteIndex;

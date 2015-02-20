@@ -44,6 +44,10 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 				this->CountNeighborhood();
 				if (this->fileIO)
 					this->SaveToFile(filename);
+				std::cout << "Distance Histogram:" << std::endl;
+				for (int_t i = 0; i <= this->maxDistance; ++i)
+					std::cout << this->distanceHistogram[i] << std::endl;
+				std::cout << "Dist(0, N/2) = " << this->distanceMap[0][this->nSites / 2] << std::endl;
 			}
 		}
 
@@ -51,7 +55,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 		{
 			return ((site % 2) == 0 ? SublatticeType::A : SublatticeType::B);
 		}
-	private:		
+	private:
 		int_t ShiftSiteHardCode(int_t site, int_t direction, int_t distance = 1)
 		{
 			int_t newSite = site;
@@ -127,6 +131,61 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 			return newSite;
 		}
 		
+		/*
+		void BuildLookUpTable(RNG& rng)
+		{
+			for (int_t i = 0; i < this->nSites; ++i)
+				for (int_t j = 0; j < this->nSites; ++j)
+					this->distanceMap[i][j] = -1;
+			int_t cnt = 0;
+			
+			for (int_t i = 0; i < 2; ++i)
+			{
+				for (int_t j = 0; j < this->nSites; ++j)
+				{
+					this->distanceMap[i][j] = this->SimulateDistance(i, j, rng);
+					this->distanceMap[j][i] = this->distanceMap[i][j];
+					cnt += 2;
+				}
+			}
+			for (int_t k = 0; k < 10000; ++k)
+			{
+				int_t dir = this->RandomDirection(rng);
+				int_t dist = 1;
+				int_t i = this->RandomSite(rng);
+				int_t j = this->RandomSite(rng);
+				while(this->distanceMap[i][j] < 0 || (this->Sublattice(i) != this->Sublattice(j)))
+				{
+					i = this->RandomSite(rng);
+					j = this->RandomSite(rng);
+				}
+				int_t u = ShiftSiteHardCode(i, dir, dist);
+				int_t v = ShiftSiteHardCode(j, dir, dist);
+				if (this->distanceMap[u][v] < 0)
+				{
+					this->distanceMap[u][v] = this->distanceMap[i][j];
+					this->distanceMap[v][u] = this->distanceMap[i][j];
+					cnt += 2;
+					std::cout << cnt << std::endl;
+				}
+			}
+			
+			for (int_t i = 0; i < this->nSites; ++i)
+			{
+				for (int_t j = 0; j < this->nSites; ++j)
+				{
+					if (this->distanceMap[i][j] < 0)
+					{
+						this->distanceMap[i][j] = this->SimulateDistance(i, j, rng);
+						this->distanceMap[j][i] = this->distanceMap[i][j];
+						cnt += 2;
+						std::cout << cnt << std::endl;
+					}
+				}
+			}
+		}
+		*/
+		
 		void BuildLookUpTable(RNG& rng)
 		{
 			#pragma omp parallel for
@@ -138,15 +197,17 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 					this->distanceMap[j][i] = this->distanceMap[i][j];
 				}
 				this->distanceMap[i][i] = 0;
+				std::cout << i << std::endl;
 			}
 		}
+		
 
 		int_t SimulateDistance(int_t i, int_t j, RNG& rng)
 		{
 			if (i == j)
 				return 0;
 			int_t shortestPath = this->nSites;
-			int_t nRuns = 100000 * this->nSites;
+			int_t nRuns = 10000 * this->nSites;
 			for (int_t n = 0; n < nRuns; ++n)
 			{
 				int_t path = 0;
