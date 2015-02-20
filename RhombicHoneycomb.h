@@ -35,6 +35,10 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 			if (this->fileIO && FileExists(filename))
 			{
 				this->ReadFromFile(filename);
+				std::cout << "Distance Histogram:" << std::endl;
+				for (int_t i = 0; i <= this->maxDistance; ++i)
+					std::cout << this->distanceHistogram[i] << std::endl;
+				std::cout << "Dist(0, N/2) = " << this->distanceMap[0][this->nSites / 2] << std::endl;
 			}
 			else
 			{
@@ -71,10 +75,10 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 								newSite = static_cast<int_t>(newSite - 4 * this->L + 1 + this->nSites) % this->nSites;
 								break;
 							case 1:
-								newSite = static_cast<int_t>(newSite - 1 + this->nSites) % this->nSites;
+								newSite = static_cast<int_t>(newSite - 2 * this->L + 1 + this->nSites) % this->nSites;
 								break;
 							case 2:
-								newSite = static_cast<int_t>(newSite - 2 * this->L + 1 + this->nSites) % this->nSites;
+								newSite = static_cast<int_t>(newSite - 1 + this->nSites) % this->nSites;
 								break;
 						}
 					}
@@ -101,13 +105,13 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 						switch (direction)
 						{
 							case 0:
-								newSite = static_cast<int_t>(newSite + 1 + this->nSites) % this->nSites;
+								newSite = static_cast<int_t>(newSite + 4 * this->L - 1 + this->nSites) % this->nSites;
 								break;
 							case 1:
 								newSite = static_cast<int_t>(newSite + 2 * this->L - 1 + this->nSites) % this->nSites;
 								break;
 							case 2:
-								newSite = static_cast<int_t>(newSite + 4 * this->L - 1 + this->nSites) % this->nSites;
+								newSite = static_cast<int_t>(newSite + 1 + this->nSites) % this->nSites;
 								break;
 						}
 					}
@@ -116,13 +120,13 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 						switch (direction)
 						{
 							case 0:
-								newSite = static_cast<int_t>(newSite + 1 + this->nSites) % this->nSites;
+								newSite = static_cast<int_t>(newSite + 2 * this->L - 1 + this->nSites) % this->nSites;
 								break;
 							case 1:
 								newSite = static_cast<int_t>(newSite - 1 + this->nSites) % this->nSites;
 								break;
 							case 2:
-								newSite = static_cast<int_t>(newSite + 2 * this->L - 1 + this->nSites) % this->nSites;
+								newSite = static_cast<int_t>(newSite + 1 + this->nSites) % this->nSites;
 								break;
 						}
 					}
@@ -131,14 +135,14 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 			return newSite;
 		}
 		
-		/*
+		
 		void BuildLookUpTable(RNG& rng)
 		{
 			for (int_t i = 0; i < this->nSites; ++i)
 				for (int_t j = 0; j < this->nSites; ++j)
 					this->distanceMap[i][j] = -1;
 			int_t cnt = 0;
-			
+
 			for (int_t i = 0; i < 2; ++i)
 			{
 				for (int_t j = 0; j < this->nSites; ++j)
@@ -166,13 +170,12 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 					this->distanceMap[u][v] = this->distanceMap[i][j];
 					this->distanceMap[v][u] = this->distanceMap[i][j];
 					cnt += 2;
-					std::cout << cnt << std::endl;
 				}
 			}
 			
 			for (int_t i = 0; i < this->nSites; ++i)
 			{
-				for (int_t j = 0; j < this->nSites; ++j)
+				for (int_t j = 0; j < i; ++j)
 				{
 					if (this->distanceMap[i][j] < 0)
 					{
@@ -182,25 +185,13 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 						std::cout << cnt << std::endl;
 					}
 				}
-			}
-		}
-		*/
-		
-		void BuildLookUpTable(RNG& rng)
-		{
-			#pragma omp parallel for
-			for (int_t i = 0; i < this->nSites; ++i)
-			{
-				for (int_t j = 0; j < i; ++j)
+				if (this->distanceMap[i][i] < 0)
 				{
-					this->distanceMap[i][j] = this->SimulateDistance(i, j, rng);
-					this->distanceMap[j][i] = this->distanceMap[i][j];
+					this->distanceMap[i][i] = 0;
+					++cnt;
 				}
-				this->distanceMap[i][i] = 0;
-				std::cout << i << std::endl;
 			}
 		}
-		
 
 		int_t SimulateDistance(int_t i, int_t j, RNG& rng)
 		{

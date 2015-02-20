@@ -60,7 +60,8 @@ mc::mc(const std::string& dir)
 	value_t T = param.value_or_default<value_t>("T", 1.);
 	L = param.value_or_default<uint_t>("L", 4);
 	
-	configSpace.fileIO = param.value_or_default<uint_t>("FILEIO", 0);
+	//configSpace.fileIO = param.value_or_default<uint_t>("FILEIO", 0);
+	configSpace.fileIO = false;
 	configSpace.nTimeBins = param.value_or_default<uint_t>("TIMEBINS", 50000);
 	configSpace.t = param.value_or_default<value_t>("t0", 1.0);
 	configSpace.V = param.value_or_default<value_t>("V", 1.4);
@@ -73,7 +74,7 @@ mc::mc(const std::string& dir)
 	else if (geometry == "rhom")
 	{
 		std::string geo_file = path + "geometry/rhom-L" + ToString(L);
-		configSpace.lattice = new Rhom_t(geo_file, configSpace.fileIO);
+		configSpace.lattice = new Rhom_t(geo_file, true);
 	}
 	//Set up geometry
 	configSpace.ResizeGeometry(L);

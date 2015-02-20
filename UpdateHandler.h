@@ -260,8 +260,8 @@ class UpdateHandler
 				preFactorAdd = 1.0 / preFactorRem;
 			}
 
-			//value_t acceptRatio = detShiftedInvS / detInvS * vertexHandler.WormShiftParity();
-			value_t acceptRatio = std::min({std::abs(preFactorRem * detShiftedInvS), 1.0}) * std::min({std::abs(preFactorAdd / detInvS), 1.0});
+			value_t acceptRatio = detShiftedInvS / detInvS * vertexHandler.WormShiftParity();
+			//value_t acceptRatio = std::min({std::abs(preFactorRem * detShiftedInvS), 1.0}) * std::min({std::abs(preFactorAdd / detInvS), 1.0});
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
