@@ -326,7 +326,10 @@ void mc::PrintAcceptanceMatrix(std::ostream& out)
 void mc::do_update()
 {
 	if (sweep == 0 && nZetaOptimization == 0)
+	{
 		std::cout << "Thermalization" << std::endl;
+		std::cout << "Derp" << std::endl;
+	}
 
 	for (uint_t i = 0; i < nThermStep; ++i)
 	{
