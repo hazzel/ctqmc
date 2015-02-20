@@ -209,6 +209,7 @@ class UpdateHandler
 				return true;
 			}
 		}
+		
 		/*
 		template<int_t W>
 		bool ShiftWorm()
@@ -230,10 +231,6 @@ class UpdateHandler
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> M = invG.topLeftCorner(k, k);
 			M.noalias() -= invG.topRightCorner(k, l) * invG.template bottomRightCorner<l, l>().inverse() * invG.bottomLeftCorner(l, k);
 
-			//value_t condm = MatrixCondition(M);
-			//if (condm > 10000.0)
-			//	std::cout << condm << std::endl;
-
 			matrix_t<l, l> invS = wormA;
 			invS.noalias() -= wormV * M * wormU;
 			value_t detInvS = invS.determinant();
@@ -242,7 +239,21 @@ class UpdateHandler
 			shiftedInvS.noalias() -= shiftedWormV * M * shiftedWormU;
 			value_t detShiftedInvS = shiftedInvS.determinant();
 
-			value_t acceptRatio = detShiftedInvS / detInvS * vertexHandler.WormShiftParity();
+			value_t preFactorRem, preFactorAdd;
+			value_t m = configSpace.lattice->Sites();
+			if (W == 1)
+			{
+				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
+				preFactorAdd = 1.0 / preFactorRem;
+			}
+			else if (W == 2)
+			{
+				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
+				preFactorAdd = 1.0 / preFactorRem;
+			}
+
+			//value_t acceptRatio = detShiftedInvS / detInvS * vertexHandler.WormShiftParity();
+			value_t acceptRatio = std::min({std::abs(preFactorRem * detShiftedInvS), 1.0}) * std::min({std::abs(preFactorAdd / detInvS), 1.0});
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
