@@ -198,6 +198,10 @@ class UpdateHandler
 					return true;
 				}
 			}
+			else
+			{
+				return false;
+			}
 		}
 
 		bool CloseUpdate(value_t preFactor)
@@ -207,6 +211,10 @@ class UpdateHandler
 			{
 				vertexHandler.CloseUpdate();
 				return true;
+			}
+			else
+			{
+				return false;
 			}
 		}
 		

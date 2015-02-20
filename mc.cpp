@@ -380,7 +380,8 @@ void mc::do_update()
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2;
-			if (configSpace.AddRandomVertices<1>(preFactor, true))
+			//if (configSpace.AddRandomVertices<1>(preFactor, true))
+			if (configSpace.OpenUpdate<1>())
 			{
 				acceptedUpdates(UpdateType::ZtoW2, state) += 1.0;
 				configSpace.state = StateType::W2;
@@ -392,7 +393,8 @@ void mc::do_update()
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
-			if (configSpace.RemoveRandomVertices<1>(preFactor, true))
+			//if (configSpace.RemoveRandomVertices<1>(preFactor, true))
+			if (configSpace.CloseUpdate<1>())
 			{
 				acceptedUpdates(UpdateType::W2toZ, state) += 1.0;
 				configSpace.state = StateType::Z;
