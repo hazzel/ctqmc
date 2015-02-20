@@ -73,7 +73,7 @@ mc::mc(const std::string& dir)
 	else if (geometry == "rhom")
 	{
 		std::string geo_file = path + "geometry/rhom-L" + ToString(L);
-		configSpace.lattice = new Rhom_t(geo_file);
+		configSpace.lattice = new Rhom_t(geo_file, configSpace.fileIO);
 	}
 	//Set up geometry
 	configSpace.ResizeGeometry(L);

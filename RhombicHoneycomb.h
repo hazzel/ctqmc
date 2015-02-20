@@ -15,9 +15,11 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 		typedef Int_t int_t;
 		typedef typename GeometryBase<RNG, Int_t>::SublatticeType SublatticeType;
 		
-		RhombicHoneycomb(const std::string& filename)
+		RhombicHoneycomb(const std::string& filename, bool fileIO)
 			: filename(filename)
-		{}
+		{
+			this->fileIO = fileIO;
+		}
 		~RhombicHoneycomb() {}
 
 		void Resize(int_t l, RNG& rng)
