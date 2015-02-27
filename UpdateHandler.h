@@ -413,7 +413,7 @@ class UpdateHandler
 		void Serialize(idump& d)
 		{
 			vertexHandler.Serialize(d);
-			invG.resize(2 * vertexHandler.Vertices(), 2 * vertexHandler.Vertices());
+			invG.resize(2 * (vertexHandler.Vertices() + vertexHandler.Worms()), 2 * (vertexHandler.Vertices() + vertexHandler.Worms()));
 			StabilizeInvG();
 		}
 		

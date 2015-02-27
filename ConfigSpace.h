@@ -419,8 +419,6 @@ class ConfigSpace
 		matrix_t hopEV;
 		matrix_t hopEVT;
 		Eigen::SelfAdjointEigenSolver<matrix_t> evSolver;
-		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
-		Eigen::FullPivLU<matrix_t> invSolver;
 		uint_t nhoodDist;
 		bool fileIO;
 };
