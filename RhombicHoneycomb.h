@@ -152,7 +152,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 					cnt += 2;
 				}
 			}
-			for (int_t k = 0; k < 10000; ++k)
+			for (int_t k = 0; k < 1000000; ++k)
 			{
 				int_t dir = this->RandomDirection(rng);
 				int_t dist = 1;

@@ -9,7 +9,6 @@
 #include <numeric>
 #include <cstdint>
 #include "LookUpTable.h"
-//#define EIGEN_USE_MKL_ALL
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
 #include "Eigen/SVD"
@@ -330,7 +329,7 @@ class UpdateHandler
 			invG.resize(0, 0);
 			vertexHandler.Clear();
 		}
-
+		
 		template<typename Matrix>
 		value_t MatrixCondition(Matrix& M)
 		{
