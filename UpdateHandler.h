@@ -217,7 +217,7 @@ class UpdateHandler
 			}
 		}
 		
-		/*
+	/*	
 		template<int_t W>
 		bool ShiftWorm()
 		{
@@ -323,6 +323,7 @@ class UpdateHandler
 			}
 			return false;
 		}
+		
 
 		void Clear()
 		{

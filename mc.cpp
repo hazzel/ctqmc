@@ -230,10 +230,13 @@ bool mc::is_thermalized()
 
 void mc::BuildUpdateWeightMatrix()
 {
+	
 	//ALL TRANSITIONS
-	updateWeightMatrix <<	2.0 / 10.0	,	2.5 / 10.0	,	2.5 / 10.0,
-												4.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
-												6.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
+	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
+												4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
+												5.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
+												6.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
+												7.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
 												8.0 / 10.0	,	7.0 / 10.0	,	7.0 / 10.0,
 												9.0 / 10.0	,	0.0					,	0.0,
 												0.0					,	8.0 / 10.0	,	0.0, 
@@ -242,6 +245,23 @@ void mc::BuildUpdateWeightMatrix()
 												0.0					,	9.0 / 10.0	,	0.0,
 												0.0					,	0.0					,	9.0 / 10.0,
 												0.0					,	10.0 / 10.0	,	10.0 / 10.0;
+	
+	/*
+	//ALL TRANSITIONS
+	updateWeightMatrix <<	2.0 / 10.0	,	2.5 / 10.0	,	2.5 / 10.0,
+												4.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
+												6.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
+												8.0 / 10.0	,	7.0 / 10.0	,	7.0 / 10.0,
+												0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												9.0 / 10.0	,	0.0					,	0.0,
+												0.0					,	8.0 / 10.0	,	0.0, 
+												10.0 / 10.0	,	0.0					,	0.0,
+												0.0					,	0.0					,	8.0 / 10.0,
+												0.0					,	9.0 / 10.0	,	0.0,
+												0.0					,	0.0					,	9.0 / 10.0,
+												0.0					,	10.0 / 10.0	,	10.0 / 10.0;
+	*/
 /*
 	//ALL TRANSITIONS
 	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
@@ -389,6 +409,28 @@ void mc::do_update()
 				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::RemoveTwoVertices, state) += 1.0;
+		}
+		else if (r < updateWeightMatrix(UpdateType::AddNVertices, state))
+		{
+			const int_t N = 3;
+			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
+			if (configSpace.AddRandomVertices<N>(preFactor, false))
+			{
+				acceptedUpdates(UpdateType::AddNVertices, state) += 1.0;
+				++rebuildCnt;
+			}
+			proposedUpdates(UpdateType::AddNVertices, state) += 1.0;
+		}
+		else if (r < updateWeightMatrix(UpdateType::RemoveNVertices, state))
+		{
+			const int_t N = 3;
+			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
+			if (configSpace.RemoveRandomVertices<N>(preFactor, false))
+			{
+				acceptedUpdates(UpdateType::RemoveNVertices, state) += 1.0;
+				++rebuildCnt;
+			}
+			proposedUpdates(UpdateType::RemoveNVertices, state) += 1.0;
 		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW2, state))
 		{

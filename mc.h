@@ -139,7 +139,7 @@ class mc
 		uint_t nRebuild;
 		uint_t nThermStep;
 		uint_t nPrebins;
-		int nUpdateType = 11;
+		int nUpdateType = 13;
 		int nStateType = 3;
 		matrix_t updateWeightMatrix = matrix_t(nUpdateType, nStateType);
 		matrix_t acceptedUpdates = matrix_t(nUpdateType, nStateType);
