@@ -7,9 +7,9 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
+#include <fstream>
 #include "LookUpTable.h"
 #include <sys/stat.h>
-#include <mpi.h>
 
 inline bool FileExists(const std::string& name)
 {
@@ -168,30 +168,6 @@ class GeometryBase
 					is.close();
 				}
 			}
-		}
-
-		void SyncMPI(const std::string& filename, const std::string& type)
-		{
-			int file_free = 0;
-			int np;
-			int proc_id;
-			MPI_Comm_size(MPI_COMM_WORLD, &np);
-			MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
-			MPI_Status status;
-
-			if (proc_id == 1)
-				file_free = 1;
-			else
-				MPI_Recv(&file_free, 1, MPI_INT, proc_id-1, 1, MPI_COMM_WORLD, &status);
-			if (file_free == 1)
-			{
-				if (type == "save")
-					SaveToFile(filename);
-				else if (type == "read")
-					ReadFromFile(filename);
-			}
-			if (proc_id != np-1)
-				MPI_Send(&file_free, 1, MPI_INT, proc_id+1, 1, MPI_COMM_WORLD);
 		}
 	protected:
 		void AllocateNeighborList()
