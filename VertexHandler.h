@@ -49,7 +49,7 @@ class VertexHandler
 		VertexHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace)
 		{
-			std::size_t maxBufferSize = 8;
+			std::size_t maxBufferSize = 100;
 			nodeBuffer.resize(maxBufferSize);
 			nodeBufferEnd = nodeBuffer.end();
 			indexBuffer.resize(maxBufferSize);

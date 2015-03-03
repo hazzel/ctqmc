@@ -22,7 +22,7 @@
 #include "VertexHandler.h"
 #include "GeometryBase.h"
 
-enum UpdateType {AddVertex, RemoveVertex, AddTwoVertices, RemoveTwoVertices, AddNVertices, RemoveNVertices, ZtoW2, W2toZ, ZtoW4, W4toZ, W2toW4, W4toW2, shiftWorm};
+enum UpdateType {AddVertex, RemoveVertex, Add2Vertices, Remove2Vertices, Add5Vertices, Remove5Vertices, Add8Vertices, Remove8Vertices, ZtoW2, W2toZ, ZtoW4, W4toZ, W2toW4, W4toW2, shiftWorm};
 enum StateType {Z, W2, W4};
 
 template<typename T>

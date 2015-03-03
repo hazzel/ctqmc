@@ -232,19 +232,21 @@ void mc::BuildUpdateWeightMatrix()
 {
 	
 	//ALL TRANSITIONS
-	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
-												4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
-												5.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
-												6.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
-												7.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
+	updateWeightMatrix <<				1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+												2.0 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
+												3.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
+												4.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
+												5.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
+												6.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
+												7.0 / 10.0	,	6.5 / 10.0	,	6.5 / 10.0,
 												8.0 / 10.0	,	7.0 / 10.0	,	7.0 / 10.0,
-												9.0 / 10.0	,	0.0					,	0.0,
-												0.0					,	8.0 / 10.0	,	0.0, 
-												10.0 / 10.0	,	0.0					,	0.0,
-												0.0					,	0.0					,	8.0 / 10.0,
-												0.0					,	9.0 / 10.0	,	0.0,
-												0.0					,	0.0					,	9.0 / 10.0,
-												0.0					,	10.0 / 10.0	,	10.0 / 10.0;
+												9.0 / 10.0	,	0.0			,	0.0,
+												0.0			,	8.0 / 10.0	,	0.0, 
+												10.0 / 10.0	,	0.0			,	0.0,
+												0.0			,	0.0			,	8.0 / 10.0,
+												0.0			,	9.0 / 10.0	,	0.0,
+												0.0			,	0.0			,	9.0 / 10.0,
+												0.0			,	10.0 / 10.0	,	10.0 / 10.0;
 	
 	/*
 	//ALL TRANSITIONS
@@ -389,48 +391,70 @@ void mc::do_update()
 			}
 			proposedUpdates(UpdateType::RemoveVertex, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::AddTwoVertices, state))
+		else if (r < updateWeightMatrix(UpdateType::Add2Vertices, state))
 		{
 			const int_t N = 2;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
-				acceptedUpdates(UpdateType::AddTwoVertices, state) += 1.0;
+				acceptedUpdates(UpdateType::Add2Vertices, state) += 1.0;
 			}
-			proposedUpdates(UpdateType::AddTwoVertices, state) += 1.0;
+			proposedUpdates(UpdateType::Add2Vertices, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::RemoveTwoVertices, state))
+		else if (r < updateWeightMatrix(UpdateType::Remove2Vertices, state))
 		{
 			const int_t N = 2;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			if (configSpace.RemoveRandomVertices<N>(preFactor, false))
 			{
-				acceptedUpdates(UpdateType::RemoveTwoVertices, state) += 1.0;
+				acceptedUpdates(UpdateType::Remove2Vertices, state) += 1.0;
 				++rebuildCnt;
 			}
-			proposedUpdates(UpdateType::RemoveTwoVertices, state) += 1.0;
+			proposedUpdates(UpdateType::Remove2Vertices, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::AddNVertices, state))
+		else if (r < updateWeightMatrix(UpdateType::Add5Vertices, state))
 		{
-			const int_t N = 3;
+			const int_t N = 5;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
-				acceptedUpdates(UpdateType::AddNVertices, state) += 1.0;
+				acceptedUpdates(UpdateType::Add5Vertices, state) += 1.0;
 				++rebuildCnt;
 			}
-			proposedUpdates(UpdateType::AddNVertices, state) += 1.0;
+			proposedUpdates(UpdateType::Add5Vertices, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::RemoveNVertices, state))
+		else if (r < updateWeightMatrix(UpdateType::Remove5Vertices, state))
 		{
-			const int_t N = 3;
+			const int_t N = 5;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			if (configSpace.RemoveRandomVertices<N>(preFactor, false))
 			{
-				acceptedUpdates(UpdateType::RemoveNVertices, state) += 1.0;
+				acceptedUpdates(UpdateType::Remove5Vertices, state) += 1.0;
 				++rebuildCnt;
 			}
-			proposedUpdates(UpdateType::RemoveNVertices, state) += 1.0;
+			proposedUpdates(UpdateType::Remove5Vertices, state) += 1.0;
+		}
+		else if (r < updateWeightMatrix(UpdateType::Add8Vertices, state))
+		{
+			const int_t N = 8;
+			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
+			if (configSpace.AddRandomVertices<N>(preFactor, false))
+			{
+				acceptedUpdates(UpdateType::Add8Vertices, state) += 1.0;
+				++rebuildCnt;
+			}
+			proposedUpdates(UpdateType::Add8Vertices, state) += 1.0;
+		}
+		else if (r < updateWeightMatrix(UpdateType::Remove8Vertices, state))
+		{
+			const int_t N = 8;
+			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
+			if (configSpace.RemoveRandomVertices<N>(preFactor, false))
+			{
+				acceptedUpdates(UpdateType::Remove8Vertices, state) += 1.0;
+				++rebuildCnt;
+			}
+			proposedUpdates(UpdateType::Remove8Vertices, state) += 1.0;
 		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW2, state))
 		{
