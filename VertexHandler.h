@@ -435,7 +435,7 @@ class VertexHandler
 		template<typename P>
 		void PermutationMatrix(P& perm, bool isWorm)
 		{
-			uint_t cnt = 0;
+			uint_t cnt = 1;
 			if (isWorm)
 			{
 				std::vector<std::size_t> buf;

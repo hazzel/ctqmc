@@ -105,7 +105,10 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				matop.Inverse(S, pivS);
+				if (flag == UpdateFlag::ForceUpdate)
+					matop.Inverse(S);
+				else
+					matop.Inverse(S, pivS);
 				GeMatrix vinvG = v * invG;
 				GeMatrix R = -S * vinvG;
 				GeMatrix P = invG - invGu * R;
@@ -117,6 +120,7 @@ class UpdateHandler
 				invG(_(k + 1, k + n), _(1, k)) = R;
 				invG(_(k + 1, k + n), _(k + 1, k + n)) = S;
 				vertexHandler.AddBufferedVertices(isWorm);
+				return true;
 			}
 			return false;
 		}
@@ -172,7 +176,10 @@ class UpdateHandler
 				typename GeMatrix::View P = pInvGp(_(1, k - n), _(1, k - n));
 				typename GeMatrix::View Q = pInvGp(_(1, k - n), _(k - n + 1, k));
 				typename GeMatrix::View R = pInvGp(_(k - n + 1, k), _(1, k - n));
-				matop.Inverse(S, pivS);
+				if (flag == UpdateFlag::ForceUpdate)
+					matop.Inverse(S);
+				else
+					matop.Inverse(S, pivS);
 				invG.resize(k - n, k - n);
 				GeMatrix SR = S * R;
 				invG = P - Q * SR;
@@ -293,9 +300,6 @@ class UpdateHandler
 		template<int_t W>
 		bool ShiftWorm()
 		{
-			uint_t k = 2 * vertexHandler.Vertices();
-			const uint_t l = 2 * W;
-
 			vertexHandler.ShiftWormToBuffer();
 			value_t preFactorRem, preFactorAdd;
 			value_t m = configSpace.lattice->Sites();
