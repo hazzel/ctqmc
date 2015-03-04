@@ -112,7 +112,9 @@ class UpdateHandler
 			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t<n, n> S = invS.inverse();
-				matrix_t<n, Eigen::Dynamic> R = -S * v * invG;
+				matrix_t<n, Eigen::Dynamic> vinvG = v * invG;
+				matrix_t<n, Eigen::Dynamic> R;
+				R.noalias() = -S * vinvG;
 				
 				invG.conservativeResize(k + n, k + n);
 				invG.topLeftCorner(k, k).noalias() -= invGu * R;
@@ -171,7 +173,8 @@ class UpdateHandler
 			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t<n, n> invS = S.inverse();
-				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * invS * invG.bottomLeftCorner(n, k - n);
+				matrix_t<n, Eigen::Dynamic> t = invS * invG.bottomLeftCorner(n, k - n);
+				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * t;
 				invG.conservativeResize(k - n, k - n);
 
 				vertexHandler.RemoveBufferedVertices(isWorm);
