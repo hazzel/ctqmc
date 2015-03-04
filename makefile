@@ -35,32 +35,23 @@ endif
 
 MCLL  = $(HOME)/mc/load_leveller/trunk
 APPMCLL = $(HOME)/mc/ctqmc/
-USE_MKL = TRUE
 USE_HPC = FALSE
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
-	ifeq ($(USE_HPC), TRUE)
-		APPMCLL = $(HPCWORK)/ctqmc/
-	endif
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DNDEBUG $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-	LDFLAGS = 
+	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_MKLBLAS -DALWAYS_USE_CXXLAPACK
+	LDFLAGS = $(FLAGS_MATH_LINKER)
 	SUPERLP = 
-	ifeq ($(USE_MKL), TRUE)
-		CFLAGS += -DEIGEN_USE_MKL_ALL
-		INCLUDE += $(FLAGS_MATH_INCLUDE)
-		LDFLAGS += $(FLAGS_MATH_LINKER)
-	endif
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
-	CFLAGS  = -O3 -Wno-deprecated -std=c++11 $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
-	LDFLAGS =
-	SUPERLP =
+        CFLAGS  = -O3 -Wno-deprecated -ffast-math -std=c++11 $(DEFINES)
+        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/ -I$(HOME)/libs/FLENS -DWITH_ATLAS -DALWAYS_USE_CXXLAPACK
+        LDFLAGS = -L/usr/lib64/atlas/ -llapack -lcblas -latlas
+        SUPERLP =
 else
-	CFLAGS  = -O3 -Wno-deprecated -std=c++11 $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-	LDFLAGS = 
-	SUPERLP =
+        CFLAGS  = -O3 -Wno-deprecated -ffast-math -std=c++11 $(DEFINES)
+        INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/FLENS -DWITH_OPENBLAS -DALWAYS_USE_CXXLAPACK
+        LDFLAGS = -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -lopenblas 
+        SUPERLP =
 endif
 
 CCLN = g++

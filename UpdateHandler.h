@@ -9,15 +9,14 @@
 #include <numeric>
 #include <cstdint>
 #include "LookUpTable.h"
-#include "Eigen/Dense"
-#include "Eigen/Eigenvalues"
-#include "Eigen/SVD"
+#include <flens/flens.cxx>
 #include "measurements.h"
 #include "random.h"
 #include "parser.h"
 #include "types.h"
 #include "ConfigSpace.h"
 #include "VertexHandler.h"
+#include "MatrixOperation.h"
 
 enum UpdateFlag {NormalUpdate, NoUpdate, ForceUpdate};
 
@@ -35,18 +34,12 @@ class UpdateHandler
 		typedef typename ConfigSpace_t::int_t int_t;
 		typedef typename ConfigSpace_t::value_t value_t;
 		typedef VertexHandler<ConfigSpace_t> VertexHandler_t;
-		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M, Eigen::RowMajor>;
-		template<int_t N> using inv_solver_t = Eigen::FullPivLU< matrix_t<N, N> >;
 		
-		struct Matrices
-		{
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormU;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormV;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormA;
-			value_t detWormS;
-		};
-	
+		typedef flens::GeMatrix< flens::FullStorage<value_t, flens::ColMajor> > GeMatrix;
+		typedef typename GeMatrix::IndexType IndexType;
+		typedef flens::DenseVector< flens::Array<IndexType> > IndexVector;
+		typedef flens::DenseVector< flens::Array<value_t> > GeVector;
+		
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
 		{}
@@ -80,24 +73,25 @@ class UpdateHandler
 		{
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
-			matrix_t<Eigen::Dynamic, n> u(k, n);
-			matrix_t<n, Eigen::Dynamic> v(n, k);
-			matrix_t<n, n> a(n, n);
+			GeMatrix u(k, n);
+			GeMatrix v(n, k);
+			GeMatrix a(n, n);
 			vertexHandler.WoodburyAddVertices(u, v, a);
 
-			matrix_t<Eigen::Dynamic, n> invGu = invG * u;
-			matrix_t<n, n> invS = a;
-			invS.noalias() -= v * invGu;
+			GeMatrix invGu = invG * u;
+			GeMatrix S = a - v * invGu;
+			IndexVector pivS(n);
 
+			MatrixOperation<value_t, 2*N> matop;
 			value_t acceptRatio;
 			if (flag == UpdateFlag::NormalUpdate)
 			{
-				det = invS.determinant();
+				det = matop.Determinant(S, pivS);
 				acceptRatio = preFactor * det;
 			}
 			else if (flag == UpdateFlag::NoUpdate)
 			{
-				det = invS.determinant();
+				det = matop.Determinant(S, pivS);
 				acceptRatio = 0.0;
 			}
 			else if (flag == UpdateFlag::ForceUpdate)
@@ -111,19 +105,18 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				matrix_t<n, n> S = invS.inverse();
-				matrix_t<n, Eigen::Dynamic> vinvG = v * invG;
-				matrix_t<n, Eigen::Dynamic> R;
-				R.noalias() = -S * vinvG;
+				matop.Inverse(S, pivS);
+				GeMatrix vinvG = v * invG;
+				GeMatrix R = -S * vinvG;
+				GeMatrix P = invG - invGu * R;
 				
-				invG.conservativeResize(k + n, k + n);
-				invG.topLeftCorner(k, k).noalias() -= invGu * R;
-				invG.topRightCorner(k, n).noalias() = -invGu * S;
-				invG.bottomLeftCorner(n, k) = R;
-				invG.template bottomRightCorner<n, n>() = S;
-				
+				invG.resize(k + n, k + n);
+				const flens::Underscore<IndexType> _;
+				invG(_(1, k), _(1, k)) = P;
+				invG(_(1, k), _(k + 1, k + n)) = -invGu * S;
+				invG(_(k + 1, k + n), _(1, k)) = R;
+				invG(_(k + 1, k + n), _(k + 1, k + n)) = S;
 				vertexHandler.AddBufferedVertices(isWorm);
-				return true;
 			}
 			return false;
 		}
@@ -145,20 +138,24 @@ class UpdateHandler
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
 
-			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k);
-			vertexHandler.PermutationMatrix(perm.indices(), isWorm);
-			invG = perm.transpose() * invG * perm;
+			GeMatrix perm(k, k);
+			vertexHandler.PermutationMatrix(perm, isWorm);
+			GeMatrix invGp = invG * perm;
+			GeMatrix pInvGp = flens::transpose(perm) * invGp;
 			
-			matrix_t<n, n> S = invG.template bottomRightCorner<n, n>();
+			const flens::Underscore<IndexType> _;
+			typename GeMatrix::View S = pInvGp(_(k - n + 1, k), _(k - n + 1, k));
+			IndexVector pivS(n);
+			MatrixOperation<value_t, 2*N> matop;
 			value_t acceptRatio;
 			if (flag == UpdateFlag::NormalUpdate)
 			{
-				det = S.determinant();
+				det = matop.Determinant(S, pivS);
 				acceptRatio = preFactor * det;
 			}
 			else if (flag == UpdateFlag::NoUpdate)
 			{
-				det = S.determinant();
+				det = matop.Determinant(S, pivS);
 				acceptRatio = 0.0;
 			}
 			else if (flag == UpdateFlag::ForceUpdate)
@@ -172,17 +169,19 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				matrix_t<n, n> invS = S.inverse();
-				matrix_t<n, Eigen::Dynamic> t = invS * invG.bottomLeftCorner(n, k - n);
-				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * t;
-				invG.conservativeResize(k - n, k - n);
-
+				typename GeMatrix::View P = pInvGp(_(1, k - n), _(1, k - n));
+				typename GeMatrix::View Q = pInvGp(_(1, k - n), _(k - n + 1, k));
+				typename GeMatrix::View R = pInvGp(_(k - n + 1, k), _(1, k - n));
+				matop.Inverse(S, pivS);
+				invG.resize(k - n, k - n);
+				GeMatrix SR = S * R;
+				invG = P - Q * SR;
+				
 				vertexHandler.RemoveBufferedVertices(isWorm);
 				return true;
 			}
 			else
 			{
-				invG = perm * invG * perm.transpose();
 				return false;
 			}
 		}
@@ -350,40 +349,34 @@ class UpdateHandler
 
 		value_t StabilizeInvG()
 		{
-			if (invG.rows() == 0)
+			if (vertexHandler.Vertices() == 0)
 				return 0.0;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
-			vertexHandler.PropagatorMatrix(G);
-			inv_solver_t<Eigen::Dynamic> solver(G);
-			invG = solver.inverse();
+			GeMatrix stabInvG(invG.numRows(), invG.numCols());
+			vertexHandler.PropagatorMatrix(stabInvG);
+			MatrixOperation<value_t, 0> matop;
+			matop.Inverse(stabInvG);
+			invG = stabInvG;
 			return 0.0;
 		}
 		
 		value_t StabilizeInvG(value_t& avgError)
 		{
-			if (invG.rows() == 0)
+			if (vertexHandler.Vertices() == 0)
 				return 0.0;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
-			vertexHandler.PropagatorMatrix(G);
-			inv_solver_t<Eigen::Dynamic> solver(G);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = solver.inverse();
-
+			GeMatrix stabInvG(invG.numRows(), invG.numCols());
+			vertexHandler.PropagatorMatrix(stabInvG);
+			MatrixOperation<value_t, 0> matop;
+			matop.Inverse(stabInvG);
 			avgError = 0.0;
-			value_t N = stabInvG.rows() * stabInvG.rows();
-			for (uint_t i = 0; i < stabInvG.rows(); ++i)
+			value_t N = stabInvG.numRows() * stabInvG.numRows();
+			for (uint_t i = 1; i <= stabInvG.numRows(); ++i)
 			{
-				for (uint_t j = 0; j < stabInvG.cols(); ++j)
+				for (uint_t j = 1; j <= stabInvG.numCols(); ++j)
 				{
 					value_t err = std::abs(invG(i, j) - stabInvG(i, j));
 					avgError += err / N;
 				}
 			}
-
-			/*
-			Eigen::JacobiSVD< matrix_t<Eigen::Dynamic, Eigen::Dynamic> > svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
-			return sv(0) / sv(G.rows()-1);
-			*/
 			invG = stabInvG;
 			return 0.0;
 		}
@@ -423,7 +416,7 @@ class UpdateHandler
 	private:
 		ConfigSpace_t& configSpace;
 		VertexHandler_t vertexHandler;
-		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
+		GeMatrix invG;
 		uint_t maxWorms = 2;
 		bool print = true;
 };

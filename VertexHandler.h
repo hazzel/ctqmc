@@ -343,10 +343,10 @@ class VertexHandler
 			{
 				for (uint_t j = 0; j < i; ++j)
 				{
-					G(j, i) = configSpace.LookUpG0(nodes[j].Site, nodes[i].Site, nodes[j].Tau - nodes[i].Tau + configSpace.infinTau);
-					G(i, j) = configSpace.LookUpG0(nodes[i].Site, nodes[j].Site, nodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
+					G(j + 1, i + 1) = configSpace.LookUpG0(nodes[j].Site, nodes[i].Site, nodes[j].Tau - nodes[i].Tau + configSpace.infinTau);
+					G(i + 1, j + 1) = configSpace.LookUpG0(nodes[i].Site, nodes[j].Site, nodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
-				G(i, i) = 0.0;
+				G(i + 1, i + 1) = 0.0;
 			}
 		}
 		
@@ -354,23 +354,23 @@ class VertexHandler
 		void WoodburyAddVertices(U& u, V& v, A& a)
 		{
 			uint_t k = nodes.size();
-			uint_t n = a.cols();
+			uint_t n = a.numCols();
 			for (uint_t i = 0; i < n; ++i)
 			{
 				for (uint_t j = 0; j < k; ++j)
 				{
-					u(j, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-					v(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
+					u(j + 1, i + 1) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					v(i + 1, j + 1) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
 				for (uint_t j = 0; j < n; ++j)
 				{
 					if (i < j)
 					{
-						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+						a(i + 1, j + 1) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
+						a(j + 1, i + 1) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 					}
 				}
-				a(i, i) = 0.0;
+				a(i + 1, i + 1) = 0.0;
 			}
 		}
 
@@ -386,8 +386,8 @@ class VertexHandler
 				{
 					if (!nodes[j].Worm)
 					{
-						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau + configSpace.infinTau);
-						v(i, n) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[j].Site, nodes[wormNodes[i]].Tau - nodes[j].Tau - configSpace.infinTau);
+						u(n + 1, i + 1) = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau + configSpace.infinTau);
+						v(i + 1, n + 1) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[j].Site, nodes[wormNodes[i]].Tau - nodes[j].Tau - configSpace.infinTau);
 						++n;
 					}
 				}
@@ -395,11 +395,11 @@ class VertexHandler
 				{
 					if (i < j)
 					{
-						a(i, j) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Tau - nodes[wormNodes[j]].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Tau - nodes[wormNodes[i]].Tau - configSpace.infinTau);
+						a(i + 1, j + 1) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Tau - nodes[wormNodes[j]].Tau + configSpace.infinTau);
+						a(j + 1, i + 1) = configSpace.LookUpG0(nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Tau - nodes[wormNodes[i]].Tau - configSpace.infinTau);
 					}
 				}
-				a(i, i) = 0.0;
+				a(i + 1, i + 1) = 0.0;
 			}
 		}
 
@@ -415,8 +415,8 @@ class VertexHandler
 				{
 					if (!nodes[j].Worm)
 					{
-						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-						v(i, n) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
+						u(n + 1, i + 1) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+						v(i + 1, n + 1) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 						++n;
 					}
 				}
@@ -424,11 +424,11 @@ class VertexHandler
 				{
 					if (i < j)
 					{
-						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+						a(i + 1, j + 1) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
+						a(j + 1, i + 1) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 					}
 				}
-				a(i, i) = 0.0;
+				a(i + 1, i + 1) = 0.0;
 			}
 		}
 		
@@ -442,35 +442,35 @@ class VertexHandler
 				for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 					buf.push_back(wormNodes[*it]);
 
-				for (uint_t i = 0; i < perm.size(); ++i)
+				for (uint_t i = 0; i < perm.numRows(); ++i)
 				{
 					if (find(buf.begin(), buf.end(), i) == buf.end())
 					{
-						perm[cnt] = i;
+						perm(i + 1, cnt) = 1.0;
 						++cnt;
 					}
 				}
 				int i = 0;
 				for (auto it = buf.begin(); it != buf.end(); ++it)
 				{
-					perm[cnt + i] = *it;
+					perm(*it + 1, cnt + i) = 1.0;
 					++i;
 				}
 			}
 			else
 			{
-				for (uint_t i = 0; i < perm.size(); ++i)
+				for (uint_t i = 0; i < perm.numRows(); ++i)
 				{
 					if (find(indexBuffer.begin(), indexBufferEnd, i) == indexBufferEnd)
 					{
-						perm[cnt] = i;
+						perm(i + 1, cnt) = 1.0;
 						++cnt;
 					}
 				}
 				int i = 0;
 				for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 				{
-					perm[cnt + i] = *it;
+					perm(*it + 1, cnt + i) = 1.0;
 					++i;
 				}
 			}
