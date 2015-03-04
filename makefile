@@ -35,7 +35,7 @@ endif
 
 MCLL  = $(HOME)/mc/load_leveller/trunk
 APPMCLL = $(HOME)/mc/ctqmc/
-#USE_MKL = -DEIGEN_USE_MKL_ALL
+USE_MKL = TRUE
 USE_HPC = FALSE
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
@@ -46,6 +46,11 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
 	LDFLAGS = 
 	SUPERLP = 
+	ifeq ($(USE_MKL), TRUE)
+		CFLAGS += -DEIGEN_USE_MKL_ALL
+		INCLUDE += $(FLAGS_MATH_INCLUDE)
+		LDFLAGS += $(FLAGS_MATH_LINKER)
+	endif
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	CFLAGS  = -O3 -Wno-deprecated -std=c++11 $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
