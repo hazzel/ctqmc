@@ -152,7 +152,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 					cnt += 2;
 				}
 			}
-			for (int_t k = 0; k < 1000000; ++k)
+			for (int_t k = 0; k < 10000000; ++k)
 			{
 				int_t dir = this->RandomDirection(rng);
 				int_t dist = 1;
@@ -198,7 +198,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 			if (i == j)
 				return 0;
 			int_t shortestPath = this->nSites;
-			int_t nRuns = 10000 * this->nSites;
+			int_t nRuns = 20000 * this->nSites;
 			for (int_t n = 0; n < nRuns; ++n)
 			{
 				int_t path = 0;

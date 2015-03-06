@@ -113,13 +113,11 @@ class UpdateHandler
 			{
 				matrix_t<n, n> S = invS.inverse();
 				matrix_t<n, Eigen::Dynamic> vinvG = v * invG;
-				matrix_t<n, Eigen::Dynamic> R;
-				R.noalias() = -S * vinvG;
 				
 				invG.conservativeResize(k + n, k + n);
-				invG.topLeftCorner(k, k).noalias() -= invGu * R;
+				invG.bottomLeftCorner(n, k) = -S * vinvG;
+				invG.topLeftCorner(k, k).noalias() -= invGu * invG.bottomLeftCorner(n, k);
 				invG.topRightCorner(k, n).noalias() = -invGu * S;
-				invG.bottomLeftCorner(n, k) = R;
 				invG.template bottomRightCorner<n, n>() = S;
 				
 				vertexHandler.AddBufferedVertices(isWorm);
@@ -219,8 +217,7 @@ class UpdateHandler
 				return false;
 			}
 		}
-		
-	/*	
+		/*	
 		template<int_t W>
 		bool ShiftWorm()
 		{
@@ -294,9 +291,6 @@ class UpdateHandler
 		template<int_t W>
 		bool ShiftWorm()
 		{
-			uint_t k = 2 * vertexHandler.Vertices();
-			const uint_t l = 2 * W;
-
 			vertexHandler.ShiftWormToBuffer();
 			value_t preFactorRem, preFactorAdd;
 			value_t m = configSpace.lattice->Sites();

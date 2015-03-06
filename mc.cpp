@@ -230,40 +230,42 @@ bool mc::is_thermalized()
 
 void mc::BuildUpdateWeightMatrix()
 {
-	
-	//ALL TRANSITIONS
-	updateWeightMatrix <<				1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+/*
+	//ALL TRANSITIONS LEI WANG
+	updateWeightMatrix <<				0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
+												1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+												1.5 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
 												2.0 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
+												2.25 / 10.0	,	2.25 / 10.0	,	2.25 / 10.0,
+												2.5 / 10.0	,	2.5 / 10.0	,	2.5 / 10.0,
+												2.75 / 10.0	,	2.75 / 10.0	,	2.75 / 10.0,
 												3.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
 												4.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
-												5.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
+												5.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0, 
 												6.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
-												7.0 / 10.0	,	6.5 / 10.0	,	6.5 / 10.0,
-												8.0 / 10.0	,	7.0 / 10.0	,	7.0 / 10.0,
-												9.0 / 10.0	,	0.0			,	0.0,
-												0.0			,	8.0 / 10.0	,	0.0, 
+												7.0 / 10.0	,	7.0 / 10.0	,	7.0 / 10.0,
+												8.0 / 10.0	,	8.0 / 10.0	,	8.0 / 10.0,
+												9.0 / 10.0	,	9.0 / 10.0	,	9.0 / 10.0,
+												10.0 / 10.0	,	10.0 / 10.0	,	10.0 / 10.0;
+*/
+	
+	//ALL TRANSITIONS
+	updateWeightMatrix <<				2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
+												4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
+												4.5 / 10.0	,	3.5 / 10.0	,	3.5 / 10.0,
+												5.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
+												5.5 / 10.0	,	4.5 / 10.0	,	4.5 / 10.0,
+												6.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
+												6.5 / 10.0	,	5.5 / 10.0	,	5.5 / 10.0,
+												7.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
+												8.5 / 10.0	,	0.0			,	0.0,
+												0.0			,	7.5 / 10.0	,	0.0, 
 												10.0 / 10.0	,	0.0			,	0.0,
-												0.0			,	0.0			,	8.0 / 10.0,
+												0.0			,	0.0			,	7.5 / 10.0,
 												0.0			,	9.0 / 10.0	,	0.0,
 												0.0			,	0.0			,	9.0 / 10.0,
 												0.0			,	10.0 / 10.0	,	10.0 / 10.0;
 	
-	/*
-	//ALL TRANSITIONS
-	updateWeightMatrix <<	2.0 / 10.0	,	2.5 / 10.0	,	2.5 / 10.0,
-												4.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
-												6.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
-												8.0 / 10.0	,	7.0 / 10.0	,	7.0 / 10.0,
-												0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												9.0 / 10.0	,	0.0					,	0.0,
-												0.0					,	8.0 / 10.0	,	0.0, 
-												10.0 / 10.0	,	0.0					,	0.0,
-												0.0					,	0.0					,	8.0 / 10.0,
-												0.0					,	9.0 / 10.0	,	0.0,
-												0.0					,	0.0					,	9.0 / 10.0,
-												0.0					,	10.0 / 10.0	,	10.0 / 10.0;
-	*/
 /*
 	//ALL TRANSITIONS
 	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
@@ -393,7 +395,7 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::Add2Vertices, state))
 		{
-			const int_t N = 2;
+			const int_t N = 3;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
@@ -403,7 +405,7 @@ void mc::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::Remove2Vertices, state))
 		{
-			const int_t N = 2;
+			const int_t N = 3;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			if (configSpace.RemoveRandomVertices<N>(preFactor, false))
 			{
@@ -456,12 +458,16 @@ void mc::do_update()
 			}
 			proposedUpdates(UpdateType::Remove8Vertices, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::ZtoW2, state))
+		else if (r < updateWeightMatrix(UpdateType::ZtoW2, state) && state == StateType::Z)
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2;
-			//if (configSpace.AddRandomVertices<1>(preFactor, true))
-			if (configSpace.OpenUpdate<1>())
+			bool result;
+			if (configSpace.rng() < 0.25)
+				result = configSpace.AddRandomVertices<1>(preFactor, true);
+			else
+				result = configSpace.OpenUpdate<1>();
+			if (result)
 			{
 				acceptedUpdates(UpdateType::ZtoW2, state) += 1.0;
 				configSpace.state = StateType::W2;
@@ -469,12 +475,16 @@ void mc::do_update()
 			}
 			proposedUpdates(UpdateType::ZtoW2, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::W2toZ, state))
+		else if (r < updateWeightMatrix(UpdateType::W2toZ, state) && state == StateType::W2)
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
-			//if (configSpace.RemoveRandomVertices<1>(preFactor, true))
-			if (configSpace.CloseUpdate<1>())
+			bool result;
+			if (configSpace.rng() < 0.25)
+				result = configSpace.RemoveRandomVertices<1>(preFactor, true);
+			else
+				result = configSpace.CloseUpdate<1>();
+			if (result)
 			{
 				acceptedUpdates(UpdateType::W2toZ, state) += 1.0;
 				configSpace.state = StateType::Z;
@@ -482,7 +492,7 @@ void mc::do_update()
 			}
 			proposedUpdates(UpdateType::W2toZ, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::ZtoW4, state))
+		else if (r < updateWeightMatrix(UpdateType::ZtoW4, state) && state == StateType::Z)
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
@@ -494,7 +504,7 @@ void mc::do_update()
 			}
 			proposedUpdates(UpdateType::ZtoW4, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::W4toZ, state))
+		else if (r < updateWeightMatrix(UpdateType::W4toZ, state) && state == StateType::W4)
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
@@ -506,7 +516,7 @@ void mc::do_update()
 			}
 			proposedUpdates(UpdateType::W4toZ, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::W2toW4, state))
+		else if (r < updateWeightMatrix(UpdateType::W2toW4, state) && state == StateType::W2)
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = (configSpace.lattice->Sites() * m * configSpace.zeta4) / configSpace.zeta2;
@@ -518,7 +528,7 @@ void mc::do_update()
 			}
 			proposedUpdates(UpdateType::W2toW4, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::W4toW2, state))
+		else if (r < updateWeightMatrix(UpdateType::W4toW2, state) && state == StateType::W4)
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.zeta2 / (configSpace.lattice->Sites() * m * configSpace.zeta4);
@@ -530,7 +540,7 @@ void mc::do_update()
 			}
 			proposedUpdates(UpdateType::W4toW2, state) += 1.0;
 		}
-		else if (r < updateWeightMatrix(UpdateType::shiftWorm, state))
+		else if (r < updateWeightMatrix(UpdateType::shiftWorm, state) && state != StateType::Z)
 		{
 			bool result;
 			if (state == StateType::W2)
@@ -567,7 +577,6 @@ void mc::do_update()
 		if (sweep == nThermalize)
 			std::cout << "Done" << std::endl;
 	}
-
 }
 
 void mc::OptimizeZeta()
