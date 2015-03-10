@@ -61,6 +61,7 @@ mc::mc(const std::string& dir)
 	value_t T = param.value_or_default<value_t>("T", 1.);
 	L = param.value_or_default<uint_t>("L", 4);
 	
+	configSpace.fileIO = false;
 	configSpace.nTimeBins = param.value_or_default<uint_t>("TIMEBINS", 50000);
 	configSpace.t = param.value_or_default<value_t>("t0", 1.0);
 	configSpace.V = param.value_or_default<value_t>("V", 1.4);
@@ -484,7 +485,7 @@ void mc::do_update()
 			//double cond = configSpace.updateHandler.StabilizeInvG(avgError, relError);
 			double cond = configSpace.updateHandler.StabilizeInvG();
 			measure.add("avgInvGError", avgError);
-			measure.add("fullCondition", configSpace.updateHandler.PropagatorMatrixCondition());
+			//measure.add("fullCondition", configSpace.updateHandler.PropagatorMatrixCondition());
 			measure.add("condition", cond);
 			rebuildCnt = 0;
 		}

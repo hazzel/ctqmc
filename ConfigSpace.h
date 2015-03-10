@@ -167,11 +167,11 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable(const std::string& filename)
 		{
-			if (FileExists(filename))
+			if (fileIO && FileExists(filename))
 			{
 				std::cout << "...";
 				std::cout.flush();
-				SyncMPI(filename, "read");
+				ReadFromFile(filename);
 			}
 			else
 			{
@@ -194,17 +194,19 @@ class ConfigSpace
 					EvaluateG0(dtau * t, G0);
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableG0[r][t] = G0(i, sites[r]);
-					if (t % (nTimeBins / 3) == 0)
+					if (t % (nTimeBins / 10) == 0)
 					{
 						std::cout << ".";
 						std::cout.flush();
 					}
+					//std::cout << t << std::endl;
 				}
 
 				for (uint_t t = 0; t < nTimeBins; ++t)
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
-				SyncMPI(filename, "save");
+				if (fileIO)
+					SaveToFile(filename);
 			}
 		}
 
@@ -239,7 +241,7 @@ class ConfigSpace
 		{
 			beta = 1.0 / T;
 			dtau = beta / static_cast<value_t>(nTimeBins);
-			infinTau = dtau / 10.0;
+			infinTau = dtau / 1000.0;
 		}
 		
 		void Serialize(odump& d)
@@ -276,27 +278,31 @@ class ConfigSpace
 
 		void SaveToFile(const std::string& filename)
 		{
-			if (FileExists(filename))
-				return;
 			std::ofstream os(filename, std::ofstream::binary);
-			if (os.is_open())
-			{
-				for (uint_t i = 0; i <= lattice->MaxDistance(); ++i)
-				{
-					for(uint_t j = 0; j <= nTimeBins; ++j)
-					{
-						os.write((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-						if (j < nTimeBins)
-							os.write((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
-					}
-				}
-				os.close();
-				std::cout << "File " << filename << " written: " << FileExists(filename) << std::endl;
-			}
-			else
+			if (!os.is_open())
 			{
 				std::cout << "Error opening file: " << filename << std::endl;
 			}
+			for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
+			{
+				//std::ofstream os_txt(filename + "-R" + std::to_string(i) + ".txt");
+				//os_txt.precision(16);
+				for (uint_t j = 0; j < nTimeBins + 1; ++j)
+				{
+					os.write((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
+					//os_txt << lookUpTableG0[i][j] << "\t";
+					if (j < nTimeBins)
+					{
+						os.write((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
+						//os_txt << lookUpTableDtG0[i][j] << std::endl;
+					}
+					//else
+						//os_txt << 0.0 << std::endl;
+				}
+				//os_txt.close();
+			}
+			os.close();
+			std::cout << "File " << filename << " written: " << FileExists(filename) << std::endl;
 		}
 
 		void ReadFromFile(const std::string& filename)
@@ -307,9 +313,9 @@ class ConfigSpace
 			{
 				while(is.good())
 				{
-					for (uint_t i = 0; i <= lattice->MaxDistance(); ++i)
+					for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
 					{
-						for(uint_t j = 0; j <= nTimeBins; ++j)
+						for (uint_t j = 0; j < nTimeBins + 1; ++j)
 						{
 							is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
 							if (j < nTimeBins)
@@ -368,7 +374,6 @@ class ConfigSpace
 		matrix_t hopEV;
 		matrix_t hopEVT;
 		Eigen::SelfAdjointEigenSolver<matrix_t> evSolver;
-		//Eigen::FullPivHouseholderQR<matrix_t> invSolver;
-		Eigen::FullPivLU<matrix_t> invSolver;
 		uint_t nhoodDist;
+		bool fileIO;
 };
