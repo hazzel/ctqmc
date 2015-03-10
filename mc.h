@@ -92,7 +92,7 @@ private:
 class mc
 {
 	public:
-		using uint_t = std::uint_fast32_t;
+		using uint_t = std::int_fast32_t;
 		using int_t = std::int_fast32_t;
 		using value_t = double;
 		using matrix_t = Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic>;
@@ -127,7 +127,7 @@ class mc
 		{
 			auto it = map.find( key );
 			if (it == map.end())
-				map[key] = 0;
+				map[key] = defval;
 			return map[key];
 		}
 		
@@ -150,6 +150,7 @@ class mc
 		std::vector< value_t > corrVector;
 		std::map<uint_t, uint_t> exporderHistZ;
 		std::map<uint_t, uint_t> exporderHistW2;
+		std::map<uint_t, uint_t> exporderHistW4;
 		double* evalableParameters;
 		uint_t L;
 		bool isInitialized = false;

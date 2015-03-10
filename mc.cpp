@@ -170,14 +170,22 @@ void mc::write(const std::string& dir)
 	std::ofstream f; f.open((dir + "bins").c_str());
 	f << ( sweep > nThermalize ? sweep-nThermalize : 0 ) << std::endl;
 	f.close();
-	/*
+
+	std::ofstream ostream;
 	std::string ofile(dir+"exporderhist.txt");
 	ostream.open(ofile.c_str());
 	for (uint_t i = 0; i < std::max(exporderHistZ.size(), exporderHistW2.size()); ++i)
 		ostream << i << " " << GetWithDef(exporderHistZ, i, 0) << " " << GetWithDef(exporderHistW2, i, 0) << std::endl;
 	ostream.close();
-	*/
-	std::ofstream ostream;
+	
+	ostream.open(dir+"wlsampling.txt");
+	configSpace.updateHandler.WriteWLSampling(ostream);
+	ostream.close();
+	
+	ostream.open(dir+"resampled_hist.txt");
+	configSpace.updateHandler.WriteResampled(ostream, exporderHistZ, exporderHistW2, exporderHistW4);
+	ostream.close();
+	
 	ostream.open(dir+"probabilities.txt");
 	PrintAcceptanceMatrix(ostream);
 	ostream.close();
@@ -230,25 +238,7 @@ bool mc::is_thermalized()
 
 void mc::BuildUpdateWeightMatrix()
 {
-/*
-	//ALL TRANSITIONS LEI WANG
-	updateWeightMatrix <<				0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-												1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
-												1.5 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
-												2.0 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
-												2.25 / 10.0	,	2.25 / 10.0	,	2.25 / 10.0,
-												2.5 / 10.0	,	2.5 / 10.0	,	2.5 / 10.0,
-												2.75 / 10.0	,	2.75 / 10.0	,	2.75 / 10.0,
-												3.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
-												4.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
-												5.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0, 
-												6.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
-												7.0 / 10.0	,	7.0 / 10.0	,	7.0 / 10.0,
-												8.0 / 10.0	,	8.0 / 10.0	,	8.0 / 10.0,
-												9.0 / 10.0	,	9.0 / 10.0	,	9.0 / 10.0,
-												10.0 / 10.0	,	10.0 / 10.0	,	10.0 / 10.0;
-*/
-	
+	/*
 	//ALL TRANSITIONS
 	updateWeightMatrix <<				2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
 												4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
@@ -265,7 +255,7 @@ void mc::BuildUpdateWeightMatrix()
 												0.0			,	9.0 / 10.0	,	0.0,
 												0.0			,	0.0			,	9.0 / 10.0,
 												0.0			,	10.0 / 10.0	,	10.0 / 10.0;
-	
+	*/
 /*
 	//ALL TRANSITIONS
 	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
@@ -322,20 +312,24 @@ void mc::BuildUpdateWeightMatrix()
 												0.0					,	0.0					,	0.0,
 												0.0					,	10.0 / 10.0	,	0.0;
 */
-/*
+
 	//ONLY Z
-	updateWeightMatrix <<	1.0 / 4.0	,	0.0		,	0.0,
-												2.0 / 4.0	,	0.0		,	0.0,
-												3.0 / 4.0	,	0.0		,	0.0,
-												4.0 / 4.0	,	0.0		,	0.0,
-												0.0				,	0.0		,	0.0,
-												0.0				,	0.0		,	0.0, 
-												0.0				,	0.0		,	0.0,
-												0.0				,	0.0		,	0.0,
-												0.0				,	0.0		,	0.0,
-												0.0				,	0.0		,	0.0,
-												0.0				,	0.0		,	0.0;
-*/
+	updateWeightMatrix <<				2.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												4.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												5.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												6.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												7.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												8.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												9.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												10.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												0.0 / 10.0	,	0.0			,	0.0,
+												0.0			,	0.0 / 10.0	,	0.0, 
+												0.0 / 10.0	,	0.0			,	0.0,
+												0.0			,	0.0			,	0.0 / 10.0,
+												0.0			,	0.0 / 10.0	,	0.0,
+												0.0			,	0.0			,	0.0 / 10.0,
+												0.0			,	0.0 / 10.0	,	0.0 / 10.0;
+
 	acceptedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 	proposedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 }
@@ -463,7 +457,7 @@ void mc::do_update()
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2;
 			bool result;
-			if (configSpace.rng() < 0.25)
+			if (configSpace.rng() < 1.0)
 				result = configSpace.AddRandomVertices<1>(preFactor, true);
 			else
 				result = configSpace.OpenUpdate<1>();
@@ -480,7 +474,7 @@ void mc::do_update()
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
 			bool result;
-			if (configSpace.rng() < 0.25)
+			if (configSpace.rng() < 1.0)
 				result = configSpace.RemoveRandomVertices<1>(preFactor, true);
 			else
 				result = configSpace.CloseUpdate<1>();
@@ -565,6 +559,19 @@ void mc::do_update()
 			//measure.add("condition", cond);
 			rebuildCnt = 0;
 		}
+		
+		switch (configSpace.State())
+		{
+			case StateType::Z:
+				GetWithDef(exporderHistZ, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
+				break;
+			case StateType::W2:
+				GetWithDef(exporderHistW2, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
+				break;
+			case StateType::W4:
+				GetWithDef(exporderHistW4, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
+				break;
+		}
 	}
 	++sweep;
 
@@ -575,8 +582,12 @@ void mc::do_update()
 	else
 	{
 		if (sweep == nThermalize)
+		{
 			std::cout << "Done" << std::endl;
+		}
 	}
+	//if (is_thermalized() && (sweep % (nMeasurements / 1000) == 0))
+	//	configSpace.updateHandler.BuildWLSampling(exporderHistZ, exporderHistW2, exporderHistW4);
 }
 
 void mc::OptimizeZeta()
@@ -644,7 +655,6 @@ void mc::do_measurement()
 			measure.add("deltaW2", 0.0);
 			measure.add("deltaW4", 0.0);
 			measure.add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
-			GetWithDef(exporderHistZ, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
 			break;
 
 		case StateType::W2:
@@ -652,7 +662,6 @@ void mc::do_measurement()
 			measure.add("deltaW2", 1.0);
 			measure.add("deltaW4", 0.0);
 			measure.add("k", 0.0);
-			GetWithDef(exporderHistW2, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
 
 			R = configSpace.updateHandler.GetVertexHandler().WormDistance();
 			sign = configSpace.updateHandler.GetVertexHandler().WormParity();

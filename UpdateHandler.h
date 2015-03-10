@@ -94,6 +94,16 @@ class UpdateHandler
 			{
 				det = invS.determinant();
 				acceptRatio = preFactor * det;
+
+				/*
+				if (maxWL > 0)
+				{
+					if (isWorm)
+						acceptRatio *= WLSampling[vertexHandler.Worms() + N][vertexHandler.Vertices()] / WLSampling[vertexHandler.Worms()][vertexHandler.Vertices()];
+					else
+						acceptRatio *= WLSampling[vertexHandler.Worms()][vertexHandler.Vertices() + N] / WLSampling[vertexHandler.Worms()][vertexHandler.Vertices()];
+				}
+				*/
 			}
 			else if (flag == UpdateFlag::NoUpdate)
 			{
@@ -153,6 +163,17 @@ class UpdateHandler
 			{
 				det = S.determinant();
 				acceptRatio = preFactor * det;
+
+				/*
+				if (maxWL > 0)
+				{
+					if (isWorm)
+						acceptRatio *= WLSampling[vertexHandler.Worms() - N][vertexHandler.Vertices()] / WLSampling[vertexHandler.Worms()][vertexHandler.Vertices()];
+					else
+						acceptRatio *= WLSampling[vertexHandler.Worms()][vertexHandler.Vertices() - N] / WLSampling[vertexHandler.Worms()][vertexHandler.Vertices()];
+				}
+				*/
+
 			}
 			else if (flag == UpdateFlag::NoUpdate)
 			{
@@ -397,6 +418,57 @@ class UpdateHandler
 			}
 		}
 		
+		template<typename Map>
+		void BuildWLSampling(Map& histZ, Map& histW2, Map& histW4)
+		{
+			maxWL = std::max({histZ.size(), histW2.size(), histW4.size()});
+			uint_t kmax = maxWL / 3;
+			WLSampling.DeallocateTable();
+			WLSampling.AllocateTable(3, maxWL + 1);
+			value_t total[3] = {0.0, 0.0, 0.0};
+			for (uint_t k = 0; k <= maxWL; ++k)
+			{
+				total[0] += static_cast<value_t>(GetWithDef(histZ, k, 0));
+				total[1] += static_cast<value_t>(GetWithDef(histW2, k, 0));
+				total[2] += static_cast<value_t>(GetWithDef(histW4, k, 0));
+			}
+			for (uint_t k = 0; k < kmax; ++k)
+			{
+				uint_t p = GetWithDef(histZ, k, 1);
+				if (p == 0)
+					p = 1;
+				WLSampling[0][k] = static_cast<value_t>(histZ[kmax]) / static_cast<value_t>(p);
+				
+				p = GetWithDef(histW2, k, 1);
+				if (p == 0)
+					p = 1;
+				WLSampling[1][k] = static_cast<value_t>(histW2[kmax]) / static_cast<value_t>(p);
+				p = GetWithDef(histW4, k, 1);
+				if (p == 0)
+					p = 1;
+				WLSampling[2][k] = static_cast<value_t>(histW4[kmax]) / static_cast<value_t>(p);
+			}
+			for (uint_t k = kmax; k <= maxWL; ++k)
+			{
+				WLSampling[0][k] = 1.0;
+				WLSampling[1][k] = 1.0;
+				WLSampling[2][k] = 1.0;
+			}
+		}
+		
+		void WriteWLSampling(std::ostream& out)
+		{
+			for (uint_t k = 0; k <= maxWL; ++k)
+				out << k << " " << WLSampling[0][k] << " " << WLSampling[1][k] << " " << WLSampling[2][k] << std::endl;
+		}
+		
+		template<typename Map>
+		void WriteResampled(std::ostream& out, Map& histZ, Map& histW2, Map& histW4)
+		{
+			for (uint_t k = 0; k <= maxWL; ++k)
+				out << k << " " << histZ[k] * WLSampling[0][k] << " " << histW2[k] * WLSampling[1][k] << " " << histW4[k] * WLSampling[2][k] << std::endl;
+		}
+		
 		VertexHandler_t& GetVertexHandler()
 		{
 			return vertexHandler;
@@ -414,10 +486,21 @@ class UpdateHandler
 			StabilizeInvG();
 		}
 		
+		template<typename Map>
+		uint_t& GetWithDef(Map& map, uint_t key, uint_t defval)
+		{
+			auto it = map.find( key );
+			if (it == map.end())
+				map[key] = defval;
+			return map[key];
+		}
+		
 	private:
 		ConfigSpace_t& configSpace;
 		VertexHandler_t vertexHandler;
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
+		LookUpTable<value_t, uint_t, 2> WLSampling;
+		uint_t maxWL = -1;
 		uint_t maxWorms = 2;
 		bool print = true;
 };
