@@ -41,7 +41,7 @@ endif
 
 MCLL  = $(HOME)/mc/load_leveller/trunk
 APPMCLL = $(HOME)/mc/ctqmc/
-USE_MKL = TRUE
+USE_MKL = FALSE
 USE_HPC = FALSE
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
