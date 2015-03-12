@@ -82,9 +82,25 @@ class CLASSNAME
 		void init();
 		void write(const std::string& dir);
 		bool read(const std::string& dir);
-		void write_output(const std::string& dir);
+		#ifdef MCL_PT
+			void write_output(const std::string& dir, int para);
+		#else
+			void write_output(const std::string& dir);
+		#endif
 		bool is_thermalized();
-		measurements measure;
+		#ifdef MCL_PT
+			vector<measurements> measure;
+		#else
+			measurements measure;
+		#endif
+		
+		#ifdef MCL_PT
+			bool request_global_update();
+			void change_parameter(int);
+			void change_to(int);
+			double get_weight(int);
+			int get_label();
+		#endif
 		
 	public:
 		void do_update();
@@ -128,6 +144,10 @@ class CLASSNAME
 		parser param;
 		uint_t sweep = 0;
 		uint_t rebuildCnt = 0;
+		int myrep;
+		uint_t pt_spacing;
+		int label;
+		std::vector< value_t > pt_var;
 		std::vector< value_t > corrVector;
 		std::map<uint_t, uint_t> exporderHistZ;
 		std::map<uint_t, uint_t> exporderHistW2;
@@ -141,7 +161,7 @@ class CLASSNAME
 		uint_t nZetaOptimization = 0;
 		uint_t nOptimizationSteps;
 		uint_t nOptimizationTherm;
-		bool annealing = true;
+		bool annealing = false;
 		value_t startT = 2.5;
 		value_t finalT;
 };

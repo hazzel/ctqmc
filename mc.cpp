@@ -50,7 +50,7 @@ void CorrFunction(std::valarray<double>& out, std::vector< std::valarray<double>
 		out[i] = (*corr)[i] / (p[0] * p[1] * z);
 }
 
-CLASSNAME::mc(const std::string& dir)
+CLASSNAME::CLASSNAME(const std::string& dir)
 	: rng(Random()), configSpace(rng)
 {
 	std::cout.precision(15);
@@ -59,12 +59,25 @@ CLASSNAME::mc(const std::string& dir)
 	param.read_file(dir);
 	value_t T = param.value_or_default<value_t>("T", 1.);
 	L = param.value_or_default<uint_t>("L", 4);
+	pt_spacing = param.value_or_default<uint_t>("GLOBAL_UPDATE_SPACING", 100);
+	label = 0;
+	
+	#ifdef MCL_PT
+		pt_var = param.return_vector<value_t>("@V");
+		for (uint_t i=0; i < pt_var.size(); ++i)
+		{
+			measurements newmeasure;
+			measure.push_back(newmeasure);
+		}
+	#endif
 	
 	//configSpace.fileIO = param.value_or_default<uint_t>("FILEIO", 0);
 	configSpace.fileIO = false;
 	configSpace.nTimeBins = param.value_or_default<uint_t>("TIMEBINS", 50000);
 	configSpace.t = param.value_or_default<value_t>("t0", 1.0);
-	configSpace.V = param.value_or_default<value_t>("V", 1.4);
+	#ifndef MCL_PT
+		configSpace.V = param.value_or_default<value_t>("V", 1.4);
+	#endif
 	finalT = T;
 	//startT = T;
 	if (annealing)
@@ -119,7 +132,7 @@ CLASSNAME::mc(const std::string& dir)
 	BuildUpdateWeightMatrix();
 }
 
-CLASSNAME::~mc()
+CLASSNAME::~CLASSNAME()
 {
 	delete[] evalableParameters;
 	//fpu_fix_end(&old_cw);
@@ -143,14 +156,28 @@ void CLASSNAME::random_read(idump& d)
 }
 void CLASSNAME::init()
 {
-	measure.add_observable("k", nPrebins);
-	measure.add_observable("<w>", nPrebins);
-	measure.add_observable("deltaZ", nPrebins);
-	measure.add_observable("deltaW2", nPrebins);
-	measure.add_observable("deltaW4", nPrebins);
-	measure.add_observable("avgInvGError", nPrebins);
-	measure.add_observable("condition", nPrebins);
-	measure.add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
+	#ifdef MCL_PT
+		for (uint_t i=0; i< pt_var.size(); ++i)
+		{
+			measure[i].add_observable("k", nPrebins);
+			measure[i].add_observable("<w>", nPrebins);
+			measure[i].add_observable("deltaZ", nPrebins);
+			measure[i].add_observable("deltaW2", nPrebins);
+			measure[i].add_observable("deltaW4", nPrebins);
+			measure[i].add_observable("avgInvGError", nPrebins);
+			measure[i].add_observable("condition", nPrebins);
+			measure[i].add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
+		}
+	#else
+		measure.add_observable("k", nPrebins);
+		measure.add_observable("<w>", nPrebins);
+		measure.add_observable("deltaZ", nPrebins);
+		measure.add_observable("deltaW2", nPrebins);
+		measure.add_observable("deltaW4", nPrebins);
+		measure.add_observable("avgInvGError", nPrebins);
+		measure.add_observable("condition", nPrebins);
+		measure.add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
+	#endif
 }
 void CLASSNAME::write(const std::string& dir)
 {
@@ -218,6 +245,23 @@ bool CLASSNAME::read(const std::string& dir)
 	}
 }
 
+#ifdef MCL_PT
+void CLASSNAME::write_output(const std::string& dir, int para)
+{
+	measure[para].add_evalable("M2","deltaZ","deltaW2","deltaW4", M2Function, evalableParameters);
+	measure[para].add_evalable("M4","deltaZ","deltaW2","deltaW4", M4Function, evalableParameters);
+	measure[para].add_evalable("BinderRatio","deltaZ","deltaW2","deltaW4", BinderRatioFunction, evalableParameters);
+	measure[para].add_evalable("AvgExpOrder","k","deltaZ", AvgExporderFunction);
+	measure[para].add_vectorevalable("Correlations","Corr","deltaZ", CorrFunction, evalableParameters);
+	std::ofstream f;
+	//f.precision(8);
+	//f << std::fixed;
+	f.open(dir.c_str());
+	f << "PARAMETERS" << endl;
+	param.get_all_with_one_from_specified_array("@V", para, f);
+	measure[para].get_statistics(f);
+}
+#else
 void CLASSNAME::write_output(const std::string& dir)
 {
 	measure.add_evalable("M2","deltaZ","deltaW2","deltaW4", M2Function, evalableParameters);
@@ -233,6 +277,7 @@ void CLASSNAME::write_output(const std::string& dir)
 	param.get_all(f);
 	measure.get_statistics(f);
 }
+#endif
 
 bool CLASSNAME::is_thermalized()
 {
@@ -503,8 +548,11 @@ void CLASSNAME::do_update()
 		{
 			double cond = configSpace.updateHandler.StabilizeInvG(avgError);
 			//double cond = configSpace.updateHandler.StabilizeInvG();
-			measure.add("avgInvGError", avgError);
-			//measure.add("condition", cond);
+			#ifdef MCL_PT
+				measure[myrep].add("avgInvGError", avgError);
+			#else
+				measure.add("avgInvGError", avgError);
+			#endif
 			rebuildCnt = 0;
 		}
 		
@@ -599,35 +647,99 @@ void CLASSNAME::do_measurement()
 		std::cout << "Worms: " << configSpace.updateHandler.GetVertexHandler().Worms() << std::endl;
 	}
 	
-	measure.add("<w>", configSpace.updateHandler.GetVertexHandler().Worms());
+	#ifdef MCL_PT
+		measure[myrep].add("<w>", configSpace.updateHandler.GetVertexHandler().Worms());
+	#else
+		measure.add("<w>", configSpace.updateHandler.GetVertexHandler().Worms());
+	#endif
 	uint_t R = 0;
 	value_t sign, c;
 	std::fill(corrVector.begin(), corrVector.end(), 0.0);
 	switch (configSpace.State())
 	{
 		case StateType::Z:
-			measure.add("deltaZ", 1.0);
-			measure.add("deltaW2", 0.0);
-			measure.add("deltaW4", 0.0);
-			measure.add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
+			#ifdef MCL_PT
+				measure[myrep].add("deltaZ", 1.0);
+				measure[myrep].add("deltaW2", 0.0);
+				measure[myrep].add("deltaW4", 0.0);
+				measure[myrep].add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
+			#else
+				measure.add("deltaZ", 1.0);
+				measure.add("deltaW2", 0.0);
+				measure.add("deltaW4", 0.0);
+				measure.add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
+			#endif
 			break;
 
 		case StateType::W2:
-			measure.add("deltaZ", 0.0);
-			measure.add("deltaW2", 1.0);
-			measure.add("deltaW4", 0.0);
-			measure.add("k", 0.0);
+			#ifdef MCL_PT
+				measure[myrep].add("deltaZ", 0.0);
+				measure[myrep].add("deltaW2", 1.0);
+				measure[myrep].add("deltaW4", 0.0);
+				measure[myrep].add("k", 0.0);
+			#else
+				measure.add("deltaZ", 0.0);
+				measure.add("deltaW2", 1.0);
+				measure.add("deltaW4", 0.0);
+				measure.add("k", 0.0);
+			#endif
 
 			R = configSpace.updateHandler.GetVertexHandler().WormDistance();
 			sign = configSpace.updateHandler.GetVertexHandler().WormParity();
 			corrVector[R] = sign / configSpace.lattice->DistanceHistogram(R);
 			break;
 		case StateType::W4:
-			measure.add("deltaZ", 0.0);
-			measure.add("deltaW2", 0.0);
-			measure.add("deltaW4", 1.0);
-			measure.add("k", 0.0);
+			#ifdef MCL_PT
+				measure[myrep].add("deltaZ", 0.0);
+				measure[myrep].add("deltaW2", 0.0);
+				measure[myrep].add("deltaW4", 1.0);
+				measure[myrep].add("k", 0.0);
+			#else
+				measure.add("deltaZ", 0.0);
+				measure.add("deltaW2", 0.0);
+				measure.add("deltaW4", 1.0);
+				measure.add("k", 0.0);
+			#endif
 			break;
 	}
-	measure.add("Corr", corrVector);
+	#ifdef MCL_PT
+		measure[myrep].add("Corr", corrVector);
+	#else
+		measure.add("Corr", corrVector);
+	#endif
 }
+
+#ifdef MCL_PT
+void CLASSNAME::change_to (int i)
+{
+	change_parameter(i);
+}
+
+void CLASSNAME::change_parameter(int i)
+{
+	myrep=i;
+	configSpace.V = pt_var[myrep];
+	if (myrep == 0)
+		label = 1;
+	else if (myrep == (int) (pt_var.size() - 1))
+		label = -1;
+}
+
+bool CLASSNAME::request_global_update()
+{
+	bool result = (sweep && (sweep%pt_spacing==0)) ? true : false;
+	return result;
+}
+
+double CLASSNAME::get_weight(int f)
+{
+	uint_t k = configSpace.updateHandler.GetVertexHandler().Vertices();
+	return k * std::log(pt_var[f] / configSpace.V);
+}
+
+
+int CLASSNAME::get_label()
+{
+	return label;
+}
+#endif

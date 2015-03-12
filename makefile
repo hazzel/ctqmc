@@ -2,9 +2,9 @@ DEFINES+= -DMCL_DUMP_BUFFER=0
 DEFINES+= -DMCL_MEASUREMENTS_APPEND
 DEFINES+= -DMCL_MCL_RNG_MT
 
-MODE=MPI
+#MODE=MPI
 #MODE=SINGLE
-#MODE=PT
+MODE=PT
 
 OBJS = dump.o parser.o measurements.o evalable.o observable.o random.o mc.o main.o
 OBJSLN = dump.LN.o parser.LN.o measurements.LN.o evalable.LN.o observable.LN.o random.LN.o mc.LN.o ConfigSpace.LN.o runner_single.LN.o merge.LN.o
@@ -29,8 +29,14 @@ ifeq ($(MODE),SINGLE)
 endif
 
 ifeq ($(MODE),PT)
-	OBJS+=runner.o
+	OBJS+=runner_pt.o
 	DEFINES+= -DMCL_PT
+	ifeq ($(MPICC),)
+		MPICC = /usr/lib64/mpi/gcc/openmpi/bin/mpiCC
+		#MPICC = /usr/lib64/openmpi/bin/mpiCC
+	endif
+	CC=$(MPICC)
+	LD=$(MPICC)
 endif
 
 MCLL  = $(HOME)/mc/load_leveller/trunk
@@ -57,7 +63,7 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	LDFLAGS =
 	SUPERLP =
 else
-	CFLAGS  = -O3 -Wno-deprecated -std=c++11 $(DEFINES)
+	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -g $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
 	LDFLAGS = 
 	SUPERLP =
