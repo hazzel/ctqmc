@@ -212,6 +212,8 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable(const std::string& filename)
 		{
+			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
+			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
 			if (fileIO && FileExists(filename))
 			{
 				std::cout << "...";
@@ -278,8 +280,6 @@ class ConfigSpace
 			L = l;
 			lattice->Resize(l, rng);
 			hoppingMatrix.resize(lattice->Sites(), lattice->Sites());
-			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
-			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
 		}
 		
 		void SetTemperature(value_t T)

@@ -17,6 +17,7 @@ for l in range(len(L)):
 		continue
 	filelist.sort()
 	z = 0
+	beta = 0.125
 	eta = 0.3
 	nu = 1.
 	V = 2.0
@@ -32,10 +33,10 @@ for l in range(len(L)):
 		plist = ParseParameters(filelist[i])
 		elist = ParseEvalables(filelist[i])
 		x.append(float(plist["T"]))
-		yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**(z+eta) )
-		yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**(z+eta) )
-		yM4.append( ArrangePlot(elist, "M4")[0][0] * float(L[l])**(2.0*(z+eta)) )
-		yM4err.append( ArrangePlot(elist, "M4")[1][0] * float(L[l])**(2.0*(z+eta)) )
+		yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**(0.44) )
+		yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**(beta/nu) )
+		yM4.append( ArrangePlot(elist, "M4")[0][0] * float(L[l])**(0.88) )
+		yM4err.append( ArrangePlot(elist, "M4")[1][0] * float(L[l])**(2.0*(beta/nu)) )
 	
 	plt.figure(1)
 	m = re.search("V" + fpn, filelist[0])

@@ -20,6 +20,12 @@
 #include "parser.h"
 #include "types.h"
 
+#ifdef MCL_PT
+	#define CLASSNAME mc_pt
+#else
+	#define CLASSNAME mc
+#endif
+
 class make_string
 {
 public:
@@ -56,40 +62,7 @@ struct Measure
 	}
 };
 
-template<typename RNG>
-class Zeta
-{
-public:
-	Zeta(RNG& rng)
-		: rng(rng)
-	{
-		NextConfig();
-	}
-
-	double Zeta2()
-	{
-		return zeta2;
-	}
-	double Zeta4()
-	{
-		return zeta4;
-	}
-	void NextConfig()
-	{
-		zeta2 = zeta2Min + (zeta2Max - zeta2Min) * rng();
-		zeta4 = zeta4Min + (zeta4Max - zeta4Min) * rng();
-	}
-private:
-	RNG& rng;
-	double zeta2Min = 0.0;
-	double zeta2Max = 10.0;
-	double zeta4Min = 0.0;
-	double zeta4Max = 10.0;
-	double zeta2;
-	double zeta4;
-};
-
-class mc
+class CLASSNAME
 {
 	public:
 		using uint_t = std::int_fast32_t;
@@ -100,8 +73,8 @@ class mc
 		using Rhom_t = RhombicHoneycomb<Random, int_t>;
 		using ConfigSpace_t = ConfigSpace<GeometryBase<Random, int_t>, Random, value_t, matrix_t>;
 
-		mc(const std::string& dir);
-		~mc();
+		CLASSNAME(const std::string& dir);
+		~CLASSNAME();
 
 		void random_write(odump& d);
 		void seed_write(const std::string& fn);
@@ -131,6 +104,14 @@ class mc
 			return map[key];
 		}
 		
+		value_t ThermalizationTemp()
+		{
+			value_t T = finalT + (nThermalize - sweep) / nThermalize * (startT - finalT);
+			configSpace.SetTemperature(T);
+			evalableParameters[0] = configSpace.beta;
+			configSpace.BuildG0LookUpTable("");
+		}
+		
 	private:
 		Random rng;
 		ConfigSpace_t configSpace;
@@ -155,11 +136,12 @@ class mc
 		uint_t L;
 		bool isInitialized = false;
 		std::string path;
-		unsigned int old_cw;
 		Measure therm;
-		Zeta<Random> zeta;
 		std::map< value_t, std::pair<value_t, value_t> > zetaOptimization;
 		uint_t nZetaOptimization = 0;
 		uint_t nOptimizationSteps;
 		uint_t nOptimizationTherm;
+		bool annealing = true;
+		value_t startT = 2.5;
+		value_t finalT;
 };

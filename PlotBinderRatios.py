@@ -14,8 +14,8 @@ for l in range(len(L)):
 	#filelist = glob.glob("plot_T0.46/job-*-L" + L[l] + "-T0.46-hex*.task*.out")
 	#filelist = glob.glob("plot/job-*-L" + L[l] + "-V2.0-hex.task*.out")
 	#filelist = glob.glob("plot_rhom_V2.0/job-*L" + L[l] + "*.out")
-	#filelist = glob.glob("plot_rhom_V2.0_new/*L" + L[l] + "*.out")
-	filelist = glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out")
+	filelist = glob.glob("plot_rhom_V2.0_new/*L" + L[l] + "*.out")
+	#filelist = glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out")
 	if len(filelist) == 0:
 		continue
 	filelist.sort()

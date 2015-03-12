@@ -59,6 +59,11 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 		{
 			return ((site % 2) == 0 ? SublatticeType::A : SublatticeType::B);
 		}
+		
+		double Parity(int_t site)
+		{
+			return ((site % 2) == 0 ? 1.0 : -1.0);
+		}
 	private:
 		int_t ShiftSiteHardCode(int_t site, int_t direction, int_t distance = 1)
 		{

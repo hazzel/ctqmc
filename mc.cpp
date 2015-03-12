@@ -50,8 +50,8 @@ void CorrFunction(std::valarray<double>& out, std::vector< std::valarray<double>
 		out[i] = (*corr)[i] / (p[0] * p[1] * z);
 }
 
-mc::mc(const std::string& dir)
-	: rng(Random()), configSpace(rng), zeta(rng)
+CLASSNAME::mc(const std::string& dir)
+	: rng(Random()), configSpace(rng)
 {
 	std::cout.precision(15);
 	std::cout << std::fixed;
@@ -65,7 +65,12 @@ mc::mc(const std::string& dir)
 	configSpace.nTimeBins = param.value_or_default<uint_t>("TIMEBINS", 50000);
 	configSpace.t = param.value_or_default<value_t>("t0", 1.0);
 	configSpace.V = param.value_or_default<value_t>("V", 1.4);
-	configSpace.SetTemperature(T);
+	finalT = T;
+	//startT = T;
+	if (annealing)
+		configSpace.SetTemperature(startT);
+	else
+		configSpace.SetTemperature(T);
 	std::string geometry = param.value_or_default<std::string>("GEOMETRY", "hex");
 	path = dir.substr(0, dir.substr(0, dir.rfind('/')).rfind('/') + 1);
 	
@@ -88,11 +93,9 @@ mc::mc(const std::string& dir)
 	int_t nhd = param.value_or_default<int_t>("NHOODDIST", 1);
 	configSpace.nhoodDist = std::min({nhd, configSpace.lattice->MaxDistance()});
 	configSpace.zeta2 = param.value_or_default<value_t>("zeta2", 1.0);
-	//configSpace.zeta2 = zeta.Zeta2();
 	value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 	configSpace.zeta2 /= m / T;
 	configSpace.zeta4 = param.value_or_default<value_t>("zeta4", 1.0);
-	//configSpace.zeta4 = zeta.Zeta4();
 	configSpace.zeta4 /= m * m * m / T;
 
 	nOptimizationSteps = param.value_or_default<value_t>("ZETA_OPTIMIZATION", 25.0);
@@ -116,29 +119,29 @@ mc::mc(const std::string& dir)
 	BuildUpdateWeightMatrix();
 }
 
-mc::~mc()
+CLASSNAME::~mc()
 {
 	delete[] evalableParameters;
 	//fpu_fix_end(&old_cw);
 }
 
-void mc::random_write(odump& d)
+void CLASSNAME::random_write(odump& d)
 {
 	rng.RngHandle()->write(d);
 }
-void mc::seed_write(const std::string& fn)
+void CLASSNAME::seed_write(const std::string& fn)
 {
 	std::ofstream s;
 	s.open(fn.c_str());
 	s << rng.Seed() << std::endl;
 	s.close();
 }
-void mc::random_read(idump& d)
+void CLASSNAME::random_read(idump& d)
 {
 	rng.NewRng();
 	rng.RngHandle()->read(d);
 }
-void mc::init()
+void CLASSNAME::init()
 {
 	measure.add_observable("k", nPrebins);
 	measure.add_observable("<w>", nPrebins);
@@ -149,7 +152,7 @@ void mc::init()
 	measure.add_observable("condition", nPrebins);
 	measure.add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
 }
-void mc::write(const std::string& dir)
+void CLASSNAME::write(const std::string& dir)
 {
 	odump d(dir+"dump");
 	random_write(d);
@@ -190,7 +193,7 @@ void mc::write(const std::string& dir)
 	PrintAcceptanceMatrix(ostream);
 	ostream.close();
 }
-bool mc::read(const std::string& dir)
+bool CLASSNAME::read(const std::string& dir)
 {
 	idump d(dir+"dump");
 	if (!d) 
@@ -215,7 +218,7 @@ bool mc::read(const std::string& dir)
 	}
 }
 
-void mc::write_output(const std::string& dir)
+void CLASSNAME::write_output(const std::string& dir)
 {
 	measure.add_evalable("M2","deltaZ","deltaW2","deltaW4", M2Function, evalableParameters);
 	measure.add_evalable("M4","deltaZ","deltaW2","deltaW4", M4Function, evalableParameters);
@@ -231,14 +234,14 @@ void mc::write_output(const std::string& dir)
 	measure.get_statistics(f);
 }
 
-bool mc::is_thermalized()
+bool CLASSNAME::is_thermalized()
 {
 	return (nZetaOptimization >= nOptimizationSteps) && (sweep >= nThermalize);
 }
 
-void mc::BuildUpdateWeightMatrix()
+void CLASSNAME::BuildUpdateWeightMatrix()
 {
-	/*
+	
 	//ALL TRANSITIONS
 	updateWeightMatrix <<				2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
 												4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
@@ -255,64 +258,8 @@ void mc::BuildUpdateWeightMatrix()
 												0.0			,	9.0 / 10.0	,	0.0,
 												0.0			,	0.0			,	9.0 / 10.0,
 												0.0			,	10.0 / 10.0	,	10.0 / 10.0;
-	*/
-/*
-	//ALL TRANSITIONS
-	updateWeightMatrix <<	2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
-												4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
-												5.0 / 10.0	,	3.5 / 10.0	,	3.5 / 10.0,
-												6.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
-												8.0 / 10.0	,	0.0					,	0.0,
-												0.0					,	6.0 / 10.0	,	0.0, 
-												10.0 / 10.0	,	0.0					,	0.0,
-												0.0					,	0.0					,	6.0 / 10.0,
-												0.0					,	8.0 / 10.0	,	0.0,
-												0.0					,	0.0					,	8.0 / 10.0,
-												0.0					,	10.0 / 10.0	,	10.0 / 10.0;
-*/
-/*
-	//ONLY Z<->W2<->W4
-	updateWeightMatrix <<	2.5 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
-												5.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
-												6.5 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
-												8.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
-												10.0 / 10.0	,	0.0					,	0.0,
-												0.0					,	8.0 / 10.0	,	0.0,
-												0.0					,	0.0					,	0.0,
-												0.0					,	0.0					,	0.0,
-												0.0					,	10.0 / 10.0	,	0.0,
-												0.0					,	0.0					,	8.0 / 10.0,
-												0.0					,	0.0					,	10.0 / 10.0;
-*/
-/*
-	//ONLY W2<->Z<->W4
-	updateWeightMatrix <<	2.0 / 10.0	,	2.5 / 10.0	,	2.0 / 10.0,
-												4.0 / 10.0	,	5.0 / 10.0	,	4.0 / 10.0,
-												5.0 / 10.0	,	6.5 / 10.0	,	5.0 / 10.0,
-												6.0 / 10.0	,	8.0 / 10.0	,	6.0 / 10.0,
-												8.0 / 10.0	,	0.0					,	0.0,
-												0.0					,	10.0 / 10.0	,	0.0,
-												10.0 / 10.0	,	0.0					,	0.0,
-												0.0					,	0.0					,	8.0 / 10.0,
-												0.0					,	0.0					,	0.0,
-												0.0					,	0.0					,	0.0,
-												0.0					,	0.0					,	10.0 / 10.0;
-*/
-/*
-	//ONLY Z<->W2
-	updateWeightMatrix <<	2.5 / 10.0	,	2.0 / 10.0	,	0.0,
-												5.0 / 10.0	,	4.0 / 10.0	,	0.0,
-												6.5 / 10.0	,	5.0 / 10.0	,	0.0,
-												8.0 / 10.0	,	6.0 / 10.0	,	0.0,
-												10.0 / 10.0	,	0.0					,	0.0,
-												0.0					,	8.0 / 10.0	,	0.0,
-												0.0					,	0.0					,	0.0,
-												0.0					,	0.0					,	0.0,
-												0.0					,	0.0					,	0.0,
-												0.0					,	0.0					,	0.0,
-												0.0					,	10.0 / 10.0	,	0.0;
-*/
 
+	/*
 	//ONLY Z
 	updateWeightMatrix <<				2.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												4.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
@@ -329,12 +276,13 @@ void mc::BuildUpdateWeightMatrix()
 												0.0			,	0.0 / 10.0	,	0.0,
 												0.0			,	0.0			,	0.0 / 10.0,
 												0.0			,	0.0 / 10.0	,	0.0 / 10.0;
+	*/
 
 	acceptedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 	proposedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 }
 
-void mc::PrintAcceptanceMatrix(std::ostream& out)
+void CLASSNAME::PrintAcceptanceMatrix(std::ostream& out)
 {
 	out << "Acceptance of updates:" << std::endl;
 	for (uint_t i = 0; i < nUpdateType; ++i)
@@ -354,7 +302,7 @@ void mc::PrintAcceptanceMatrix(std::ostream& out)
 	}
 }
 
-void mc::do_update()
+void CLASSNAME::do_update()
 {
 	if (sweep == 0 && nZetaOptimization == 0)
 	{
@@ -584,13 +532,20 @@ void mc::do_update()
 		if (sweep == nThermalize)
 		{
 			std::cout << "Done" << std::endl;
+			exporderHistZ.clear();
+			exporderHistW2.clear();
+			exporderHistW4.clear();
 		}
+	}
+	if (annealing && !is_thermalized() && (sweep % (nThermalize / 25)) == 0)
+	{
+		ThermalizationTemp();
 	}
 	//if (is_thermalized() && (sweep % (nMeasurements / 1000) == 0))
 	//	configSpace.updateHandler.BuildWLSampling(exporderHistZ, exporderHistW2, exporderHistW4);
 }
 
-void mc::OptimizeZeta()
+void CLASSNAME::OptimizeZeta()
 {
 	if (sweep < nOptimizationTherm)
 	{
@@ -636,7 +591,7 @@ void mc::OptimizeZeta()
 	}
 }
 
-void mc::do_measurement()
+void CLASSNAME::do_measurement()
 {
 	if ((sweep - nThermalize + 1) % (nMeasurements / 3) == 0)
 	{

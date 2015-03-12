@@ -49,6 +49,11 @@ class HexagonalHoneycomb : public GeometryBase<RNG, Int_t>
 			else
 				return SublatticeType::B;
 		}
+		
+		double Parity(int_t site)
+		{
+			return (Sublattice(site) == SublatticeType::A ? 1.0 : -1.0);
+		}
 	private:
 		void BuildIndexMap()
 		{
