@@ -68,6 +68,9 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 		{
 			measurements newmeasure;
 			measure.push_back(newmeasure);
+			exporderHistZ.push_back(std::map<uint_t, uint_t>());
+			exporderHistW2.push_back(std::map<uint_t, uint_t>());
+			exporderHistW4.push_back(std::map<uint_t, uint_t>());
 		}
 	#endif
 	
@@ -202,12 +205,20 @@ void CLASSNAME::write(const std::string& dir)
 	f.close();
 
 	std::ofstream ostream;
-	std::string ofile(dir+"exporderhist.txt");
-	ostream.open(ofile.c_str());
-	for (uint_t i = 0; i < std::max(exporderHistZ.size(), exporderHistW2.size()); ++i)
-		ostream << i << " " << GetWithDef(exporderHistZ, i, 0) << " " << GetWithDef(exporderHistW2, i, 0) << std::endl;
-	ostream.close();
+	#ifdef MCL_PT
+		ostream.open(dir+"exporderhist.para"+std::to_string(myrep+1)+".txt");
+		for (uint_t i = 0; i < std::max(exporderHistZ[myrep].size(), exporderHistW2[myrep].size()); ++i)
+			ostream << i << " " << GetWithDef(exporderHistZ[myrep], i, 0) << " " << GetWithDef(exporderHistW2[myrep], i, 0) << std::endl;
+		ostream.close();
+	#else
+		std::string ofile(dir+"exporderhist.txt");
+		ostream.open(ofile.c_str());
+		for (uint_t i = 0; i < std::max(exporderHistZ.size(), exporderHistW2.size()); ++i)
+			ostream << i << " " << GetWithDef(exporderHistZ, i, 0) << " " << GetWithDef(exporderHistW2, i, 0) << std::endl;
+		ostream.close();
+	#endif
 	
+	/*
 	ostream.open(dir+"wlsampling.txt");
 	configSpace.updateHandler.WriteWLSampling(ostream);
 	ostream.close();
@@ -215,6 +226,7 @@ void CLASSNAME::write(const std::string& dir)
 	ostream.open(dir+"resampled_hist.txt");
 	configSpace.updateHandler.WriteResampled(ostream, exporderHistZ, exporderHistW2, exporderHistW4);
 	ostream.close();
+	*/
 	
 	ostream.open(dir+"probabilities.txt");
 	PrintAcceptanceMatrix(ostream);
@@ -543,7 +555,6 @@ void CLASSNAME::do_update()
 		}
 
 		value_t avgError = 0.0;
-			
 		if (rebuildCnt == nRebuild)
 		{
 			double cond = configSpace.updateHandler.StabilizeInvG(avgError);
@@ -555,19 +566,7 @@ void CLASSNAME::do_update()
 			#endif
 			rebuildCnt = 0;
 		}
-		
-		switch (configSpace.State())
-		{
-			case StateType::Z:
-				GetWithDef(exporderHistZ, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
-				break;
-			case StateType::W2:
-				GetWithDef(exporderHistW2, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
-				break;
-			case StateType::W4:
-				GetWithDef(exporderHistW4, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
-				break;
-		}
+		MeasureExpOrder();
 	}
 	++sweep;
 
@@ -580,9 +579,7 @@ void CLASSNAME::do_update()
 		if (sweep == nThermalize)
 		{
 			std::cout << "Done" << std::endl;
-			exporderHistZ.clear();
-			exporderHistW2.clear();
-			exporderHistW4.clear();
+			ClearExpOrderHist();
 		}
 	}
 	if (annealing && !is_thermalized() && (sweep % (nThermalize / 25)) == 0)
@@ -591,6 +588,50 @@ void CLASSNAME::do_update()
 	}
 	//if (is_thermalized() && (sweep % (nMeasurements / 1000) == 0))
 	//	configSpace.updateHandler.BuildWLSampling(exporderHistZ, exporderHistW2, exporderHistW4);
+}
+
+void CLASSNAME::MeasureExpOrder()
+{
+	switch (configSpace.State())
+	{
+		case StateType::Z:
+			#ifdef MCL_PT
+				GetWithDef(exporderHistZ[myrep], configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
+			#else
+				GetWithDef(exporderHistZ, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
+			#endif
+			break;
+		case StateType::W2:
+			#ifdef MCL_PT
+				GetWithDef(exporderHistW2[myrep], configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
+			#else
+				GetWithDef(exporderHistW2, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
+			#endif
+			break;
+		case StateType::W4:
+			#ifdef MCL_PT
+				GetWithDef(exporderHistW4[myrep], configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
+			#else
+				GetWithDef(exporderHistW4, configSpace.updateHandler.GetVertexHandler().Vertices(), 0) += 1;
+			#endif
+			break;
+	}
+}
+
+void CLASSNAME::ClearExpOrderHist()
+{
+	#ifdef MCL_PT
+		for (uint_t i = 0; i < pt_var.size(); ++i)
+		{
+			exporderHistZ[i].clear();
+			exporderHistW2[i].clear();
+			exporderHistW4[i].clear();
+		}
+	#else
+		exporderHistZ.clear();
+		exporderHistW2.clear();
+		exporderHistW4.clear();
+	#endif
 }
 
 void CLASSNAME::OptimizeZeta()

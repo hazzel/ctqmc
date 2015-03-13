@@ -128,6 +128,9 @@ class CLASSNAME
 			configSpace.BuildG0LookUpTable("");
 		}
 		
+		void ClearExpOrderHist();
+		void MeasureExpOrder();
+		
 	private:
 		Random rng;
 		ConfigSpace_t configSpace;
@@ -149,9 +152,15 @@ class CLASSNAME
 		int label;
 		std::vector< value_t > pt_var;
 		std::vector< value_t > corrVector;
-		std::map<uint_t, uint_t> exporderHistZ;
-		std::map<uint_t, uint_t> exporderHistW2;
-		std::map<uint_t, uint_t> exporderHistW4;
+		#ifdef MCL_PT
+			std::vector< std::map<uint_t, uint_t> > exporderHistZ;
+			std::vector< std::map<uint_t, uint_t> > exporderHistW2;
+			std::vector< std::map<uint_t, uint_t> > exporderHistW4;
+		#else
+			std::map<uint_t, uint_t> exporderHistZ;
+			std::map<uint_t, uint_t> exporderHistW2;
+			std::map<uint_t, uint_t> exporderHistW4;
+		#endif
 		double* evalableParameters;
 		uint_t L;
 		bool isInitialized = false;
