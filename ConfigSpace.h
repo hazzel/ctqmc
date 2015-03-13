@@ -222,7 +222,8 @@ class ConfigSpace
 			}
 			else
 			{
-				uint_t i = lattice->RandomSite(rng);
+				//could use any site i here
+				uint_t i = 0;
 				std::vector<uint_t> sites;
 				for (uint_t r = 0; r <= lattice->MaxDistance(); ++r)
 				{
@@ -248,7 +249,7 @@ class ConfigSpace
 					}
 					//std::cout << t << std::endl;
 				}
-
+				
 				for (uint_t t = 0; t < nTimeBins; ++t)
 					for (uint_t r = 0; r < sites.size(); ++r)
 						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
