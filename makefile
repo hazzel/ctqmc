@@ -2,9 +2,9 @@ DEFINES+= -DMCL_DUMP_BUFFER=0
 DEFINES+= -DMCL_MEASUREMENTS_APPEND
 DEFINES+= -DMCL_MCL_RNG_MT
 
-#MODE=MPI
+MODE=MPI
 #MODE=SINGLE
-MODE=PT
+#MODE=PT
 
 OBJS = dump.o parser.o measurements.o evalable.o observable.o random.o mc.o main.o
 OBJSLN = dump.LN.o parser.LN.o measurements.LN.o evalable.LN.o observable.LN.o random.LN.o mc.LN.o ConfigSpace.LN.o runner_single.LN.o merge.LN.o

@@ -185,8 +185,7 @@ class ConfigSpace
 		{
 			uint_t i = static_cast<uint_t>(std::abs(tau) / dtau);
 			value_t tau_i = i * dtau;
-			uint_t dist = lattice->Distance(i1, i2);
-			value_t g = lookUpTableG0[dist][i] + (std::abs(tau) - tau_i) * lookUpTableDtG0[dist][i];
+			value_t g = lookUpTableG0[i1][i2][i] + (std::abs(tau) - tau_i) * lookUpTableDtG0[i1][i2][i];
 			if (tau >= 0.0)
 			{
 				return g;
@@ -212,8 +211,8 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable(const std::string& filename)
 		{
-			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
-			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
+			lookUpTableG0.AllocateTable(lattice->Sites(), lattice->Sites(), nTimeBins + 1);
+			lookUpTableDtG0.AllocateTable(lattice->Sites(), lattice->Sites(), nTimeBins + 1);
 			if (fileIO && FileExists(filename))
 			{
 				std::cout << "...";
@@ -222,26 +221,13 @@ class ConfigSpace
 			}
 			else
 			{
-				//could use any site i here
-				uint_t i = 0;
-				std::vector<uint_t> sites;
-				for (uint_t r = 0; r <= lattice->MaxDistance(); ++r)
-				{
-					for (int_t j = 0; j < lattice->Sites(); ++j)
-					{
-						if (lattice->Distance(i, j) == r)
-						{
-							sites.push_back(j);
-							break;
-						}
-					}
-				}
 				matrix_t G0(hopDiag.rows(), hopDiag.cols());
 				for (uint_t t = 0; t <= nTimeBins; ++t)
 				{
 					EvaluateG0(dtau * t, G0);
-					for (uint_t r = 0; r < sites.size(); ++r)
-						lookUpTableG0[r][t] = G0(i, sites[r]);
+					for (uint_t i = 0; i < lattice->Sites(); ++i)
+						for (uint_t j = 0; j < lattice->Sites(); ++j)
+							lookUpTableG0[i][j][t] = G0(i, j);
 					if (t % (nTimeBins / 10) == 0)
 					{
 						std::cout << ".";
@@ -251,8 +237,9 @@ class ConfigSpace
 				}
 				
 				for (uint_t t = 0; t < nTimeBins; ++t)
-					for (uint_t r = 0; r < sites.size(); ++r)
-						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
+					for (uint_t i = 0; i < lattice->Sites(); ++i)
+						for (uint_t j = 0; j < lattice->Sites(); ++j)
+							lookUpTableDtG0[i][j][t] = (lookUpTableG0[i][j][t + 1] - lookUpTableG0[i][j][t]) / dtau;
 				if (fileIO)
 					SaveToFile(filename);
 			}
@@ -411,8 +398,8 @@ class ConfigSpace
 		value_t zeta4;
 		uint_t nTimeBins;
 		uint_t maxWorms = 4;
-		LookUpTable<value_t, uint_t, 2> lookUpTableG0;
-		LookUpTable<value_t, uint_t, 2> lookUpTableDtG0;
+		LookUpTable<value_t, uint_t, 3> lookUpTableG0;
+		LookUpTable<value_t, uint_t, 3> lookUpTableDtG0;
 		value_t dtau;
 		StateType state = StateType::Z;
 		matrix_t hoppingMatrix;
