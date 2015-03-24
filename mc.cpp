@@ -218,16 +218,6 @@ void CLASSNAME::write(const std::string& dir)
 		ostream.close();
 	#endif
 	
-	ostream.open(dir+"wlsampling.txt");
-	configSpace.updateHandler.WriteWLSampling(ostream);
-	ostream.close();
-	
-	/*
-	ostream.open(dir+"resampled_hist.txt");
-	configSpace.updateHandler.WriteResampled(ostream, exporderHistZ, exporderHistW2, exporderHistW4);
-	ostream.close();
-	*/
-	
 	ostream.open(dir+"probabilities.txt");
 	PrintAcceptanceMatrix(ostream);
 	ostream.close();
@@ -298,7 +288,7 @@ bool CLASSNAME::is_thermalized()
 
 void CLASSNAME::BuildUpdateWeightMatrix()
 {
-	/*
+	
 	//ALL TRANSITIONS
 	updateWeightMatrix <<				2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
 												4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
@@ -315,13 +305,13 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 												0.0			,	9.0 / 10.0	,	0.0,
 												0.0			,	0.0			,	9.0 / 10.0,
 												0.0			,	10.0 / 10.0	,	10.0 / 10.0;
-	*/
 	
+	/*
 	//ONLY Z
-	updateWeightMatrix <<				0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+	updateWeightMatrix <<				2.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												4.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												5.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												10.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												6.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												7.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												8.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												9.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
@@ -333,7 +323,7 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 												0.0			,	0.0 / 10.0	,	0.0,
 												0.0			,	0.0			,	0.0 / 10.0,
 												0.0			,	0.0 / 10.0	,	0.0 / 10.0;
-	
+	*/
 
 	acceptedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 	proposedUpdates = matrix_t::Zero(nUpdateType, nStateType);
@@ -567,7 +557,6 @@ void CLASSNAME::do_update()
 			rebuildCnt = 0;
 		}
 		MeasureExpOrder();
-		//configSpace.updateHandler.WLSampling();
 	}
 	++sweep;
 

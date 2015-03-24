@@ -49,12 +49,12 @@ class VertexHandler
 		VertexHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace)
 		{
-			std::size_t maxBufferSize = 50;
+			std::size_t maxBufferSize = 100;
 			nodeBuffer.resize(maxBufferSize);
 			nodeBufferEnd = nodeBuffer.end();
 			indexBuffer.resize(maxBufferSize);
 			indexBufferEnd = indexBuffer.end();
-			nodes.resize(5000);
+			nodes.resize(500);
 		}
 		
 		void PrintVertices()
@@ -103,6 +103,8 @@ class VertexHandler
 		
 		void AddBufferedVertices(bool isWorm)
 		{
+			if (nodeNumber == nodes.size())
+				nodes.resize(nodeNumber + 500);
 			for (auto it = nodeBuffer.begin(); it != nodeBufferEnd; ++it)
 			{
 				it->Worm = isWorm;
@@ -233,7 +235,10 @@ class VertexHandler
 				if (nodes[nodeNumber - 1].Worm)
 				{
 					auto wit = std::find(wormNodes.begin(), wormNodes.end(), nodeNumber - 1);
-					*wit = *(it-1);
+					if (isWorm)
+						*wit = wormNodes[*(it-1)];
+					else
+						*wit = *(it-1);
 				}
 				--nodeNumber;
 			}
@@ -474,18 +479,21 @@ class VertexHandler
 		template<typename P>
 		void PermutationMatrix(P& perm, bool isWorm)
 		{
-			PrintIndexBuffer();
+			//PrintIndexBuffer();
 			if (isWorm)
 			{
 				for (uint_t i = 0; i < perm.size(); ++i)
-				{
 					perm[i] = i;
-				}
 				uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
-				for (uint_t i = 0; i < n; ++i)
+				for (uint_t i = 0; i < n; i+=2)
 				{
-					perm[wormNodes[indexBuffer[i]]] = perm.size() - n + i;
-					perm[perm.size() - n + i] = wormNodes[indexBuffer[i]];
+					//std::cout << indexBuffer[n - i - 2] << " <-> " << perm.size() - i - 2 << std::endl;
+					//std::cout << indexBuffer[n - i - 1] << " <-> " << perm.size() - i - 1 << std::endl;
+					perm[wormNodes[indexBuffer[n - i - 2]]] = perm[perm.size() - i - 2];
+					perm[perm.size() - i - 2] = wormNodes[indexBuffer[n - i - 2]];
+					
+					perm[wormNodes[indexBuffer[n - i - 1]]] = perm[perm.size() - i - 1];
+					perm[perm.size() - i - 1] = wormNodes[indexBuffer[n - i - 1]];
 				}
 			}
 			else
@@ -495,19 +503,20 @@ class VertexHandler
 				uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
 				for (uint_t i = 0; i < n; i+=2)
 				{
-					std::cout << indexBuffer[i] << " <-> " << perm.size() - i - 2 << std::endl;
-					std::cout << indexBuffer[i+1] << " <-> " << perm.size() - i - 1 << std::endl;
-					perm[indexBuffer[i]] = perm.size() - i - 2;
-					perm[perm.size() - i - 2] = indexBuffer[i];
+					//std::cout << indexBuffer[n - i - 2] << " <-> " << perm.size() - i - 2 << std::endl;
+					//std::cout << indexBuffer[n - i - 1] << " <-> " << perm.size() - i - 1 << std::endl;
+					perm[indexBuffer[n - i - 2]] = perm[perm.size() - i - 2];
+					perm[perm.size() - i - 2] = indexBuffer[n - i - 2];
 					
-					perm[indexBuffer[i+1]] = perm.size() - i - 1;
-					perm[perm.size() - i - 1] = indexBuffer[i+1];
+					perm[indexBuffer[n - i - 1]] = perm[perm.size() - i - 1];
+					perm[perm.size() - i - 1] = indexBuffer[n - i - 1];
 				}
 			}
-
+			/*
 			for (uint_t i = 0; i < perm.size(); ++i)
 				std::cout << perm[i] << std::endl;
 			std::cin.get();
+			*/
 		}
 		
 		/*
