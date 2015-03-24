@@ -227,7 +227,15 @@ class ConfigSpace
 					EvaluateG0(dtau * t, G0);
 					for (uint_t i = 0; i < lattice->Sites(); ++i)
 						for (uint_t j = 0; j < lattice->Sites(); ++j)
+						{
 							lookUpTableG0[i][j][t] = G0(i, j);
+							/*
+							if (t == 14020 && lattice->Distance(i, j) == lattice->MaxDistance())
+							{
+								std::cout << G0(i, j) << std::endl;
+							}
+							*/
+						}
 					if (t % (nTimeBins / 10) == 0)
 					{
 						std::cout << ".";
@@ -360,30 +368,6 @@ class ConfigSpace
 			}
 			else
 				std::cout << "Error reading g0 look up file." << std::endl;
-		}
-
-		void SyncMPI(const std::string& filename, const std::string& type)
-		{
-			int file_free = 0;
-			int np;
-			int proc_id;
-			MPI_Comm_size(MPI_COMM_WORLD, &np);
-			MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
-			MPI_Status status;
-
-			if (proc_id == 1)
-				file_free = 1;
-			else
-				MPI_Recv(&file_free, 1, MPI_INT, proc_id-1, 1, MPI_COMM_WORLD, &status);
-			if (file_free == 1)
-			{
-				if (type == "save")
-					SaveToFile(filename);
-				else if (type == "read")
-					ReadFromFile(filename);
-			}
-			if (proc_id != np-1)
-				MPI_Send(&file_free, 1, MPI_INT, proc_id+1, 1, MPI_COMM_WORLD);
 		}
 	public:
 		RNG& rng;

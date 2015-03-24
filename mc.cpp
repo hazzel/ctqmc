@@ -298,7 +298,7 @@ bool CLASSNAME::is_thermalized()
 
 void CLASSNAME::BuildUpdateWeightMatrix()
 {
-	
+	/*
 	//ALL TRANSITIONS
 	updateWeightMatrix <<				2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
 												4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
@@ -315,13 +315,13 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 												0.0			,	9.0 / 10.0	,	0.0,
 												0.0			,	0.0			,	9.0 / 10.0,
 												0.0			,	10.0 / 10.0	,	10.0 / 10.0;
-
-	/*
+	*/
+	
 	//ONLY Z
-	updateWeightMatrix <<				2.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												4.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+	updateWeightMatrix <<				0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												5.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												6.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												10.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												7.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												8.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												9.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
@@ -333,7 +333,7 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 												0.0			,	0.0 / 10.0	,	0.0,
 												0.0			,	0.0			,	0.0 / 10.0,
 												0.0			,	0.0 / 10.0	,	0.0 / 10.0;
-	*/
+	
 
 	acceptedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 	proposedUpdates = matrix_t::Zero(nUpdateType, nStateType);
@@ -394,7 +394,7 @@ void CLASSNAME::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::Add2Vertices, state))
 		{
-			const int_t N = 3;
+			const int_t N = 2;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
@@ -404,7 +404,7 @@ void CLASSNAME::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::Remove2Vertices, state))
 		{
-			const int_t N = 3;
+			const int_t N = 2;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			if (configSpace.RemoveRandomVertices<N>(preFactor, false))
 			{

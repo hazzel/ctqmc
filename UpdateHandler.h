@@ -73,6 +73,16 @@ class UpdateHandler
 			//std::cout << M.format(OctaveFmt) << std::endl;
 			//std::cout << M.format(HeavyFmt) << std::endl;
 		}
+		
+		void PrintInvG()
+		{
+			PrintMatrix(invG);
+		}
+		
+		void PrintG()
+		{
+			PrintMatrix(invG.inverse());
+		}
 
 		template<int_t N>
 		bool AddVertices(value_t preFactor, bool isWorm)
