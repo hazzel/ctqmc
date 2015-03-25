@@ -384,7 +384,7 @@ void CLASSNAME::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::Add2Vertices, state))
 		{
-			const int_t N = 2;
+			const int_t N = 3;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
@@ -394,7 +394,7 @@ void CLASSNAME::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::Remove2Vertices, state))
 		{
-			const int_t N = 2;
+			const int_t N = 3;
 			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			if (configSpace.RemoveRandomVertices<N>(preFactor, false))
 			{
