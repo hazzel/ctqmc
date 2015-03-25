@@ -218,16 +218,6 @@ void CLASSNAME::write(const std::string& dir)
 		ostream.close();
 	#endif
 	
-	ostream.open(dir+"wlsampling.txt");
-	configSpace.updateHandler.WriteWLSampling(ostream);
-	ostream.close();
-	
-	/*
-	ostream.open(dir+"resampled_hist.txt");
-	configSpace.updateHandler.WriteResampled(ostream, exporderHistZ, exporderHistW2, exporderHistW4);
-	ostream.close();
-	*/
-	
 	ostream.open(dir+"probabilities.txt");
 	PrintAcceptanceMatrix(ostream);
 	ostream.close();
@@ -567,7 +557,6 @@ void CLASSNAME::do_update()
 			rebuildCnt = 0;
 		}
 		MeasureExpOrder();
-		//configSpace.updateHandler.WLSampling();
 	}
 	++sweep;
 

@@ -49,13 +49,7 @@ class UpdateHandler
 	
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
-		{
-			for (uint_t i = 0; i < 3; ++i)
-			{
-				WLHist.push_back( std::map<uint_t, uint_t>() );
-				WLDos.push_back( std::map<uint_t, value_t>() );
-			}
-		}
+		{}
 		
 		void Init()
 		{}
@@ -100,16 +94,6 @@ class UpdateHandler
 			{
 				det = invS.determinant();
 				acceptRatio = preFactor * det;
-
-				/*
-				if (maxWL > 0)
-				{
-					if (isWorm)
-						acceptRatio *= WLSampling[vertexHandler.Worms() + N][vertexHandler.Vertices()] / WLSampling[vertexHandler.Worms()][vertexHandler.Vertices()];
-					else
-						acceptRatio *= WLSampling[vertexHandler.Worms()][vertexHandler.Vertices() + N] / WLSampling[vertexHandler.Worms()][vertexHandler.Vertices()];
-				}
-				*/
 			}
 			else if (flag == UpdateFlag::NoUpdate)
 			{
@@ -169,17 +153,6 @@ class UpdateHandler
 			{
 				det = S.determinant();
 				acceptRatio = preFactor * det;
-
-				/*
-				if (maxWL > 0)
-				{
-					if (isWorm)
-						acceptRatio *= WLSampling[vertexHandler.Worms() - N][vertexHandler.Vertices()] / WLSampling[vertexHandler.Worms()][vertexHandler.Vertices()];
-					else
-						acceptRatio *= WLSampling[vertexHandler.Worms()][vertexHandler.Vertices() - N] / WLSampling[vertexHandler.Worms()][vertexHandler.Vertices()];
-				}
-				*/
-
 			}
 			else if (flag == UpdateFlag::NoUpdate)
 			{
@@ -424,20 +397,6 @@ class UpdateHandler
 			}
 		}
 		
-		void WLSampling()
-		{
-			uint_t k = vertexHandler.Vertices();
-			uint_t w = vertexHandler.Worms();
-			GetWithDef(WLHist[w], k, 0) += 1;
-			GetWithDef(WLDos[w], k, WLf) *= WLf;
-		}
-		
-		void WriteWLSampling(std::ostream& out)
-		{
-			for (uint_t k = 0; k < WLmax; ++k)
-				out << k << " " << GetWithDef(WLDos[0], k, WLf) << " " << GetWithDef(WLDos[1], k, WLf) << " " << GetWithDef(WLDos[2], k, WLf) << std::endl;
-		}
-		
 		VertexHandler_t& GetVertexHandler()
 		{
 			return vertexHandler;
@@ -468,11 +427,6 @@ class UpdateHandler
 		ConfigSpace_t& configSpace;
 		VertexHandler_t vertexHandler;
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
-		std::vector< std::map<uint_t, uint_t> > WLHist;
-		std::vector< std::map<uint_t, value_t> > WLDos;
-		uint_t WLmax = 25;
-		value_t WLf = 2;
-		uint_t maxWL = -1;
 		uint_t maxWorms = 2;
 		bool print = true;
 };
