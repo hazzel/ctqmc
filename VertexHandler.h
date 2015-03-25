@@ -61,9 +61,9 @@ class VertexHandler
 		{
 			value_t minTauDiff = configSpace.beta;
 			value_t minWormTauDiff = configSpace.beta;
-			for (uint_t i = 0; i < nodes.size(); i+=2)
+			for (uint_t i = 0; i < nodeNumber; i+=2)
 			{
-				std::cout << "(" << nodes[i].Site << " , " << nodes[i+1].Site << ", " << nodes[i].Tau << ", " << nodes[i].Worm << ", dist: " << configSpace.lattice->Distance(nodes[i].Site, nodes[i+1].Site) << ") ";
+				std::cout << "(" << nodes[i].Site << " , " << nodes[i+1].Site << ", " << nodes[i].Tau << ", " << nodes[i].Worm << ") ";
 			}
 			std::cout << std::endl;
 			/*
@@ -116,15 +116,9 @@ class VertexHandler
 				uint_t n = std::distance(nodeBuffer.begin(), nodeBufferEnd);
 				for (uint_t i = 0; i < n; ++i)
 					wormNodes.push_back(nodeNumber - n + i);
+				std::sort(wormNodes.begin(), wormNodes.end());
+				PrintWormVertices();
 			}
-			/*
-			std::cout << "Add" << std::endl;
-			std::cout << "Vertices: " << Vertices() << std::endl;
-			std::cout << "Worms: " << Worms() << std::endl;
-			PrintVertices();
-			PrintWormVertices();
-			std::cin.get();
-			*/
 		}
 
 		void OpenUpdate()
@@ -248,41 +242,6 @@ class VertexHandler
 					wormNodes.erase(wormNodes.begin() + *(it-1));
 			}
 		}
-		
-		/*
-		void RemoveBufferedVertices(bool isWorm)
-		{
-			if (isWorm)
-			{
-				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
-				{
-					nodes.erase(nodes.begin() + wormNodes[*(it-1)]);
-				}
-				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
-				{
-					for (uint_t i = 0; i < wormNodes.size(); ++i)
-					{
-						if (wormNodes[i] > wormNodes[*(it-1)])
-							--wormNodes[i];
-					}
-				}
-				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
-					wormNodes.erase(wormNodes.begin() + *(it-1));
-			}
-			else
-			{
-				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
-				{
-					for (uint_t i = 0; i < wormNodes.size(); ++i)
-					{
-						if (wormNodes[i] > *(it-1))
-							--wormNodes[i];
-					}
-					nodes.erase(nodes.begin() + *(it-1));
-				}
-			}
-		}
-		*/
 		
 		template<int_t N>
 		void AddRandomIndicesToBuffer()
@@ -479,7 +438,6 @@ class VertexHandler
 		template<typename P>
 		void PermutationMatrix(P& perm, bool isWorm)
 		{
-			//PrintIndexBuffer();
 			if (isWorm)
 			{
 				for (uint_t i = 0; i < perm.size(); ++i)
@@ -487,8 +445,6 @@ class VertexHandler
 				uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
 				for (uint_t i = 0; i < n; i+=2)
 				{
-					//std::cout << indexBuffer[n - i - 2] << " <-> " << perm.size() - i - 2 << std::endl;
-					//std::cout << indexBuffer[n - i - 1] << " <-> " << perm.size() - i - 1 << std::endl;
 					perm[wormNodes[indexBuffer[n - i - 2]]] = perm[perm.size() - i - 2];
 					perm[perm.size() - i - 2] = wormNodes[indexBuffer[n - i - 2]];
 					
@@ -503,8 +459,6 @@ class VertexHandler
 				uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
 				for (uint_t i = 0; i < n; i+=2)
 				{
-					//std::cout << indexBuffer[n - i - 2] << " <-> " << perm.size() - i - 2 << std::endl;
-					//std::cout << indexBuffer[n - i - 1] << " <-> " << perm.size() - i - 1 << std::endl;
 					perm[indexBuffer[n - i - 2]] = perm[perm.size() - i - 2];
 					perm[perm.size() - i - 2] = indexBuffer[n - i - 2];
 					
@@ -512,11 +466,6 @@ class VertexHandler
 					perm[perm.size() - i - 1] = indexBuffer[n - i - 1];
 				}
 			}
-			/*
-			for (uint_t i = 0; i < perm.size(); ++i)
-				std::cout << perm[i] << std::endl;
-			std::cin.get();
-			*/
 		}
 		
 		/*
