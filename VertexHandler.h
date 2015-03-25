@@ -117,7 +117,6 @@ class VertexHandler
 				for (uint_t i = 0; i < n; ++i)
 					wormNodes.push_back(nodeNumber - n + i);
 				std::sort(wormNodes.begin(), wormNodes.end());
-				PrintWormVertices();
 			}
 		}
 
@@ -241,6 +240,7 @@ class VertexHandler
 				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
 					wormNodes.erase(wormNodes.begin() + *(it-1));
 			}
+			std::sort(wormNodes.begin(), wormNodes.end());
 		}
 		
 		template<int_t N>

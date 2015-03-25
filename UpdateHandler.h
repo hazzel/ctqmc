@@ -175,7 +175,6 @@ class UpdateHandler
 			}
 			if (print && acceptRatio < 0.0)
 			{
-				std::cin.get();
 				std::cout << "RemoveVertices(" << N << "): AcceptRatio" << acceptRatio << std::endl;
 				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
 			}
