@@ -365,7 +365,7 @@ class ConfigSpace
 		value_t zeta4;
 		uint_t nTimeBins;
 		uint_t maxWorms = 4;
-		LookUpTable<float, uint_t, 2> lookUpTableG0;
+		LookUpTable<value_t, uint_t, 2> lookUpTableG0;
 		value_t dtau;
 		StateType state = StateType::Z;
 		matrix_t hoppingMatrix;
