@@ -183,9 +183,12 @@ class ConfigSpace
 		
 		value_t LookUpG0(uint_t i1, uint_t i2, value_t tau)
 		{
-			uint_t i = static_cast<uint_t>(std::abs(tau) / dtau);
-			value_t tau_i = i * dtau;
-			value_t g = lookUpTableG0[i1][i2][i] + (std::abs(tau) - tau_i) * lookUpTableDtG0[i1][i2][i];
+			uint_t t = static_cast<uint_t>(std::abs(tau) / dtau);
+			value_t tau_t = t * dtau;
+			uint_t N = lattice->Sites();
+			uint_t i = std::min({i1, i2}), j = std::max({i1, i2});
+			uint_t x = i * N - (i + i*i) / 2 + j;
+			value_t g = lookUpTableG0[x][t] + (std::abs(tau) - tau_t) * (lookUpTableG0[x][t+1] - lookUpTableG0[x][t]) / dtau;
 			if (tau >= 0.0)
 			{
 				return g;
@@ -211,8 +214,8 @@ class ConfigSpace
 		
 		void BuildG0LookUpTable(const std::string& filename)
 		{
-			lookUpTableG0.AllocateTable(lattice->Sites(), lattice->Sites(), nTimeBins + 1);
-			lookUpTableDtG0.AllocateTable(lattice->Sites(), lattice->Sites(), nTimeBins + 1);
+			uint_t N = lattice->Sites();
+			lookUpTableG0.AllocateTable((N*N + N) / 2, nTimeBins + 1);
 			if (fileIO && FileExists(filename))
 			{
 				std::cout << "...";
@@ -226,20 +229,20 @@ class ConfigSpace
 				{
 					EvaluateG0(dtau * t, G0);
 					for (uint_t i = 0; i < lattice->Sites(); ++i)
-						for (uint_t j = 0; j < lattice->Sites(); ++j)
-							lookUpTableG0[i][j][t] = G0(i, j);
+					{
+						for (uint_t j = i; j < lattice->Sites(); ++j)
+						{
+							uint_t x = i * N - (i + i*i) / 2 + j;
+							lookUpTableG0[x][t] = G0(i, j);
+						}
+					}
 					if (t % (nTimeBins / 10) == 0)
 					{
 						std::cout << ".";
 						std::cout.flush();
 					}
-					//std::cout << t << std::endl;
 				}
 				
-				for (uint_t t = 0; t < nTimeBins; ++t)
-					for (uint_t i = 0; i < lattice->Sites(); ++i)
-						for (uint_t j = 0; j < lattice->Sites(); ++j)
-							lookUpTableDtG0[i][j][t] = (lookUpTableG0[i][j][t + 1] - lookUpTableG0[i][j][t]) / dtau;
 				if (fileIO)
 					SaveToFile(filename);
 			}
@@ -316,23 +319,13 @@ class ConfigSpace
 			{
 				std::cout << "Error opening file: " << filename << std::endl;
 			}
-			for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
+			uint_t N = lattice->Sites();
+			for (uint_t i = 0; i < (N*N + N) / 2; ++i)
 			{
-				//std::ofstream os_txt(filename + "-R" + std::to_string(i) + ".txt");
-				//os_txt.precision(16);
 				for (uint_t j = 0; j < nTimeBins + 1; ++j)
 				{
 					os.write((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-					//os_txt << lookUpTableG0[i][j] << "\t";
-					if (j < nTimeBins)
-					{
-						os.write((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
-						//os_txt << lookUpTableDtG0[i][j] << std::endl;
-					}
-					//else
-						//os_txt << 0.0 << std::endl;
 				}
-				//os_txt.close();
 			}
 			os.close();
 			std::cout << "File " << filename << " written: " << FileExists(filename) << std::endl;
@@ -341,18 +334,16 @@ class ConfigSpace
 		void ReadFromFile(const std::string& filename)
 		{
 			std::ifstream is(filename, std::ofstream::binary);
-			
+			uint_t N = lattice->Sites();
 			if (is.is_open())
 			{
 				while(is.good())
 				{
-					for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
+					for (uint_t i = 0; i < (N*N + N) / 2; ++i)
 					{
 						for (uint_t j = 0; j < nTimeBins + 1; ++j)
 						{
 							is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-							if (j < nTimeBins)
-								is.read((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
 						}
 					}
 				}
@@ -360,30 +351,6 @@ class ConfigSpace
 			}
 			else
 				std::cout << "Error reading g0 look up file." << std::endl;
-		}
-
-		void SyncMPI(const std::string& filename, const std::string& type)
-		{
-			int file_free = 0;
-			int np;
-			int proc_id;
-			MPI_Comm_size(MPI_COMM_WORLD, &np);
-			MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
-			MPI_Status status;
-
-			if (proc_id == 1)
-				file_free = 1;
-			else
-				MPI_Recv(&file_free, 1, MPI_INT, proc_id-1, 1, MPI_COMM_WORLD, &status);
-			if (file_free == 1)
-			{
-				if (type == "save")
-					SaveToFile(filename);
-				else if (type == "read")
-					ReadFromFile(filename);
-			}
-			if (proc_id != np-1)
-				MPI_Send(&file_free, 1, MPI_INT, proc_id+1, 1, MPI_COMM_WORLD);
 		}
 	public:
 		RNG& rng;
@@ -398,8 +365,7 @@ class ConfigSpace
 		value_t zeta4;
 		uint_t nTimeBins;
 		uint_t maxWorms = 4;
-		LookUpTable<value_t, uint_t, 3> lookUpTableG0;
-		LookUpTable<value_t, uint_t, 3> lookUpTableDtG0;
+		LookUpTable<value_t, uint_t, 2> lookUpTableG0;
 		value_t dtau;
 		StateType state = StateType::Z;
 		matrix_t hoppingMatrix;
