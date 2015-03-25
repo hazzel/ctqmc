@@ -289,6 +289,7 @@ bool CLASSNAME::is_thermalized()
 void CLASSNAME::BuildUpdateWeightMatrix()
 {
 	
+	/*
 	//ALL TRANSITIONS
 	updateWeightMatrix <<				2.0 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
 												4.0 / 10.0	,	3.0 / 10.0	,	3.0 / 10.0,
@@ -305,8 +306,8 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 												0.0			,	9.0 / 10.0	,	0.0,
 												0.0			,	0.0			,	9.0 / 10.0,
 												0.0			,	10.0 / 10.0	,	10.0 / 10.0;
+	*/
 	
-	/*
 	//ONLY Z
 	updateWeightMatrix <<				2.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												4.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
@@ -323,7 +324,7 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 												0.0			,	0.0 / 10.0	,	0.0,
 												0.0			,	0.0			,	0.0 / 10.0,
 												0.0			,	0.0 / 10.0	,	0.0 / 10.0;
-	*/
+	
 
 	acceptedUpdates = matrix_t::Zero(nUpdateType, nStateType);
 	proposedUpdates = matrix_t::Zero(nUpdateType, nStateType);
