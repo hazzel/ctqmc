@@ -564,7 +564,7 @@ void CLASSNAME::do_update()
 		MeasureExpOrder();
 	}
 	++sweep;
-
+	
 	if (nZetaOptimization < nOptimizationSteps)
 	{
 		OptimizeZeta();

@@ -1,5 +1,5 @@
 DEFINES+= -DMCL_DUMP_BUFFER=0
-DEFINES+= -DMCL_MEASUREMENTS_APPEND
+DEFINES+= -DMCL_MEASUREMENTS_APPEND=0
 DEFINES+= -DMCL_MCL_RNG_MT
 
 #MODE=MPI
@@ -58,7 +58,7 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 		LDFLAGS += $(FLAGS_MATH_LINKER)
 	endif
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
-	CFLAGS  = -O3 -Wno-deprecated -std=c++11 $(DEFINES)
+	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -g $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
 	LDFLAGS =
 	SUPERLP =

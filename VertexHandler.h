@@ -353,6 +353,7 @@ class VertexHandler
 			}
 		}
 		
+		//TODO: possible optimization regarding LookUpG0
 		template<typename U, typename V, typename A>
 		void WoodburyAddVertices(U& u, V& v, A& a)
 		{
