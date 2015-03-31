@@ -309,8 +309,8 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 	*/
 	
 	//ONLY Z
-	updateWeightMatrix <<				2.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												4.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+	updateWeightMatrix <<				5.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+												10.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												5.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												6.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 												7.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
@@ -370,6 +370,7 @@ void CLASSNAME::do_update()
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
 				acceptedUpdates(UpdateType::AddVertex, state) += 1.0;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::AddVertex, state) += 1.0;
 		}
@@ -380,6 +381,7 @@ void CLASSNAME::do_update()
 			if (configSpace.RemoveRandomVertices<N>(preFactor, false))
 			{
 				acceptedUpdates(UpdateType::RemoveVertex, state) += 1.0;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::RemoveVertex, state) += 1.0;
 		}
@@ -390,6 +392,7 @@ void CLASSNAME::do_update()
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
 				acceptedUpdates(UpdateType::Add2Vertices, state) += 1.0;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::Add2Vertices, state) += 1.0;
 		}
@@ -554,6 +557,7 @@ void CLASSNAME::do_update()
 				measure[myrep].add("avgInvGError", avgError);
 			#else
 				measure.add("avgInvGError", avgError);
+				measure.add("condition", cond);
 			#endif
 			rebuildCnt = 0;
 		}
