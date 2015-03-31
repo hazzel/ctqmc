@@ -14,30 +14,35 @@ for l in range(len(L)):
 	#filelist = glob.glob("plot_T0.46/job-*-L" + L[l] + "-T0.46-hex*.task*.out")
 	#filelist = glob.glob("plot/job-*-L" + L[l] + "-V2.0-hex.task*.out")
 	#filelist = glob.glob("plot_rhom_V2.0/job-*L" + L[l] + "*.out")
-	#filelist = glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out")
-	filelist = glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out")
-	if len(filelist) == 0:
-		continue
-	filelist.sort()
-	x = []
-	y = []
-	yerr = []
-	for i in range(len(filelist)):
-		if (not os.path.exists(filelist[i])):
+	filelist = []
+	filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
+	for f in range(len(filelist)):
+		if len(filelist[f]) == 0:
 			continue
-		plist = ParseParameters(filelist[i])
-		elist = ParseEvalables(filelist[i])
-		x.append(float(plist["T"]))
-		y.append( ArrangePlot(elist, "Binder")[0][0] )
-		yerr.append( ArrangePlot(elist, "Binder")[1][0] )
-		y = [i for j, i in sorted(zip(x, y))]
-		x.sort()
-	
-	plt.figure(1)
-	plt.title("Binder ratios")
-	plt.xlabel("T")
-	plt.ylabel("B")
-	plt.plot(np.array(x), np.array(y), "o", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
-	plt.errorbar(np.array(x), np.array(y), yerr=np.array(yerr), color=color_cycle[l])
-	plt.legend(loc=2)
+		filelist[f].sort()
+		x = []
+		y = []
+		yerr = []
+		for i in range(len(filelist[f])):
+			if (not os.path.exists(filelist[f][i])):
+				continue
+			plist = ParseParameters(filelist[f][i])
+			elist = ParseEvalables(filelist[f][i])
+			x.append(float(plist["T"]))
+			y.append( ArrangePlot(elist, "Binder")[0][0] )
+			yerr.append( ArrangePlot(elist, "Binder")[1][0] )
+			y = [i for j, i in sorted(zip(x, y))]
+			x.sort()
+		
+		plt.figure(f)
+		if f == 0:
+			plt.title("Binder ratios - rhombic")
+		elif f == 1:
+			plt.title("Binder ratios - hexagonal")
+		plt.xlabel("T")
+		plt.ylabel("B")
+		plt.plot(np.array(x), np.array(y), "o", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
+		plt.errorbar(np.array(x), np.array(y), yerr=np.array(yerr), color=color_cycle[l])
+		plt.legend(loc=2)
 plt.show()

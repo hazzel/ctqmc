@@ -337,11 +337,6 @@ class UpdateHandler
 			return svd.singularValues()(0) / svd.singularValues()(M.rows()-1);
 		}
 
-		void SymmetrizeInvG()
-		{
-			SymmetrizeMatrix(invG);
-		}
-
 		value_t StabilizeInvG()
 		{
 			if (invG.rows() == 0)
@@ -373,28 +368,8 @@ class UpdateHandler
 				}
 			}
 
-			/*
-			Eigen::JacobiSVD< matrix_t<Eigen::Dynamic, Eigen::Dynamic> > svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> sv = svd.singularValues();
-			return sv(0) / sv(G.rows()-1);
-			*/
 			invG = stabInvG;
 			return 0.0;
-		}
-		
-		template<typename Matrix>
-		void SymmetrizeMatrix(Matrix& M)
-		{	
-			for (uint_t i = 0; i < M.rows(); ++i)
-			{
-				for (uint_t j = 0; j < i; ++j)
-				{
-					value_t mean = (std::abs(M(i, j)) + std::abs(M(j, i))) / 2.0;
-					M(i, j) = sgn(M(i, j)) * mean;
-					M(j, i) = sgn(M(j, i)) * mean;
-				}
-				M(i, i) = 0.;
-			}
 		}
 		
 		VertexHandler_t& GetVertexHandler()

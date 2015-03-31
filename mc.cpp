@@ -452,7 +452,7 @@ void CLASSNAME::do_update()
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2;
 			bool result;
-			if (configSpace.rng() < 1.0)
+			if (configSpace.rng() < 0.1)
 				result = configSpace.AddRandomVertices<1>(preFactor, true);
 			else
 				result = configSpace.OpenUpdate<1>();
@@ -469,7 +469,7 @@ void CLASSNAME::do_update()
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
 			bool result;
-			if (configSpace.rng() < 1.0)
+			if (configSpace.rng() < 0.1)
 				result = configSpace.RemoveRandomVertices<1>(preFactor, true);
 			else
 				result = configSpace.CloseUpdate<1>();
@@ -556,8 +556,8 @@ void CLASSNAME::do_update()
 			#endif
 			rebuildCnt = 0;
 		}
-		MeasureExpOrder();
 	}
+	MeasureExpOrder();
 	++sweep;
 
 	if (nZetaOptimization < nOptimizationSteps)
@@ -649,13 +649,18 @@ void CLASSNAME::OptimizeZeta()
 	else if (sweep == nOptimizationTherm)
 	{
 		configSpace.zeta2 += (1./3. - therm.State[StateType::W2]) * configSpace.zeta2;
-		configSpace.zeta2 *= (2./3. + therm.State[StateType::Z]);
 		configSpace.zeta4 += (1./3. - therm.State[StateType::W4]) * configSpace.zeta4;
+		
+		configSpace.zeta2 *= (2./3. + therm.State[StateType::Z]);
+		configSpace.zeta2 *= (2./3. + therm.State[StateType::W4]) / (2./3. + therm.State[StateType::W2]);
+		
 		configSpace.zeta4 *= (2./3. + therm.State[StateType::Z]);
+		configSpace.zeta4 *= (2./3. + therm.State[StateType::W2]) / (2./3. + therm.State[StateType::W4]);
+		
 		evalableParameters[1] = configSpace.zeta2;
 		evalableParameters[2] = configSpace.zeta4;
 		value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-		therm.Reset();
+		//therm.Reset();
 		++nZetaOptimization;
 		sweep = 0;
 		std::cout << nZetaOptimization << std::endl;
