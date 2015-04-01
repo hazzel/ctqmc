@@ -64,8 +64,8 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	SUPERLP =
 else
 	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -g $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-	LDFLAGS = 
+	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-4.650.4/include
+	LDFLAGS = -L$(HOME)/OpenBLAS/lib/ -L$(HOME)/armadillo-4.650.4/lib -lopenblas -llapack
 	SUPERLP =
 endif
 
