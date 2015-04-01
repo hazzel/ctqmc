@@ -38,15 +38,6 @@ class UpdateHandler
 		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M, Eigen::RowMajor>;
 		template<int_t N> using inv_solver_t = Eigen::FullPivLU< matrix_t<N, N> >;
 		
-		struct Matrices
-		{
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormU;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormV;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> wormA;
-			value_t detWormS;
-		};
-	
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
 		{}
