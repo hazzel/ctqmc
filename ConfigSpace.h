@@ -189,11 +189,10 @@ class ConfigSpace
 			else
 				tau_p = std::abs(tau);
 			uint_t t = static_cast<uint_t>(std::abs(tau_p) / dtau);
-			value_t tau_t = t * dtau;
-			uint_t N = lattice->Sites();
-			uint_t i = std::min({i1, i2}), j = std::max({i1, i2});
+			uint_t N = lattice->Sites(), i = std::min({i1, i2}), j = std::max({i1, i2});
 			uint_t x = i * N - (i + i*i) / 2 + j;
-			value_t g = lookUpTableG0[x][t] + (tau_p - tau_t) * (lookUpTableG0[x][t+1] - lookUpTableG0[x][t]) / dtau;
+			value_t tau_t = t * dtau, G_t = lookUpTableG0[x][t], G_tt = lookUpTableG0[x][t+1];
+			value_t g = G_t + (tau_p - tau_t) * (G_tt - G_t) / dtau;
 			value_t sign = 1.0;
 			if (std::abs(tau) > beta/2.0 && lattice->Sublattice(i1) != lattice->Sublattice(i2))
 				sign *= -1.0;
@@ -314,7 +313,6 @@ class ConfigSpace
 
 		void SaveToFile(const std::string& filename)
 		{
-			/*
 			std::ofstream os(filename, std::ofstream::binary);
 			if (!os.is_open())
 			{
@@ -330,7 +328,6 @@ class ConfigSpace
 			}
 			os.close();
 			std::cout << "File " << filename << " written: " << FileExists(filename) << std::endl;
-			*/
 		}
 
 		void ReadFromFile(const std::string& filename)

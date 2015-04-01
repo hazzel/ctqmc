@@ -50,7 +50,7 @@ class GeometryBase
 			return distanceHistogram[distance];
 		}
 
-		bool IsNeighbor(int_t s1, int_t s2)
+		inline bool IsNeighbor(int_t s1, int_t s2)
 		{
 			return Distance(s1, s2) == 1;
 		}
@@ -70,7 +70,7 @@ class GeometryBase
 			return maxDistance;
 		}
 
-		int_t RandomDirection(RNG& rng)
+		inline int_t RandomDirection(RNG& rng)
 		{
 			return static_cast<int_t>(rng() * nDirections);
 		}
