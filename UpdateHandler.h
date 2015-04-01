@@ -133,11 +133,14 @@ class UpdateHandler
 				return false;
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
-
 			
 			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k);
 			vertexHandler.PermutationMatrix(perm.indices(), isWorm);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp = perm.transpose() * invG * perm;
+			//matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp = perm.transpose() * invG * perm;
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
+			for (uint_t i = 0; i < k; ++i)
+				for (uint_t j = 0; j < k; ++j)
+					invGp(i, j) = invG(perm.indices()[i], perm.indices()[j]);
 			
 			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
 			value_t acceptRatio;
