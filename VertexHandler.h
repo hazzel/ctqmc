@@ -356,7 +356,7 @@ class VertexHandler
 		void WoodburyAddVertices(U& u, V& v, A& a)
 		{
 			uint_t k = nodes.size();
-			uint_t n = a.cols();
+			uint_t n = a.n_cols();
 			for (uint_t i = 0; i < n; ++i)
 			{
 				for (uint_t j = 0; j < k; ++j)
@@ -448,35 +448,35 @@ class VertexHandler
 				for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 					buf.push_back(wormNodes[*it]);
 
-				for (uint_t i = 0; i < perm.size(); ++i)
+				for (uint_t i = 0; i < perm.n_elem(); ++i)
 				{
 					if (find(buf.begin(), buf.end(), i) == buf.end())
 					{
-						perm[cnt] = i;
+						perm(cnt) = i;
 						++cnt;
 					}
 				}
 				int i = 0;
 				for (auto it = buf.begin(); it != buf.end(); ++it)
 				{
-					perm[cnt + i] = *it;
+					perm(cnt + i) = *it;
 					++i;
 				}
 			}
 			else
 			{
-				for (uint_t i = 0; i < perm.size(); ++i)
+				for (uint_t i = 0; i < perm.n_elem(); ++i)
 				{
 					if (find(indexBuffer.begin(), indexBufferEnd, i) == indexBufferEnd)
 					{
-						perm[cnt] = i;
+						perm(cnt) = i;
 						++cnt;
 					}
 				}
 				int i = 0;
 				for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 				{
-					perm[cnt + i] = *it;
+					perm(cnt + i) = *it;
 					++i;
 				}
 			}

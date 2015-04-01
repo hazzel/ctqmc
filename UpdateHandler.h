@@ -9,9 +9,7 @@
 #include <numeric>
 #include <cstdint>
 #include "LookUpTable.h"
-#include "Eigen/Dense"
-#include "Eigen/Eigenvalues"
-#include "Eigen/SVD"
+#include <armadillo>
 #include "measurements.h"
 #include "random.h"
 #include "parser.h"
@@ -35,8 +33,7 @@ class UpdateHandler
 		typedef typename ConfigSpace_t::int_t int_t;
 		typedef typename ConfigSpace_t::value_t value_t;
 		typedef VertexHandler<ConfigSpace_t> VertexHandler_t;
-		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M, Eigen::RowMajor>;
-		template<int_t N> using inv_solver_t = Eigen::FullPivLU< matrix_t<N, N> >;
+		using matrix_t = arma::mat;
 		
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
@@ -71,24 +68,21 @@ class UpdateHandler
 		{
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
-			matrix_t<Eigen::Dynamic, n> u(k, n);
-			matrix_t<n, Eigen::Dynamic> v(n, k);
-			matrix_t<n, n> a(n, n);
+			matrix_t u(k, n), v(n, k), a(n, n);
 			vertexHandler.WoodburyAddVertices(u, v, a);
 
-			matrix_t<Eigen::Dynamic, n> invGu = invG * u;
-			matrix_t<n, n> invS = a;
-			invS.noalias() -= v * invGu;
+			matrix_t invGu = invG * u;
+			matrix_t invS = a - v * invGu;
 
 			value_t acceptRatio;
 			if (flag == UpdateFlag::NormalUpdate)
 			{
-				det = invS.determinant();
+				det = arma::det(invS);
 				acceptRatio = preFactor * det;
 			}
 			else if (flag == UpdateFlag::NoUpdate)
 			{
-				det = invS.determinant();
+				det = arma::det(invS);
 				acceptRatio = 0.0;
 			}
 			else if (flag == UpdateFlag::ForceUpdate)
@@ -102,14 +96,14 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				matrix_t<n, n> S = invS.inverse();
-				matrix_t<n, Eigen::Dynamic> vinvG = v * invG;
+				matrix_t S = arma::inv(invS);
+				matrix_t vinvG = v * invG;
 				
-				invG.conservativeResize(k + n, k + n);
-				invG.bottomLeftCorner(n, k) = -S * vinvG;
-				invG.topLeftCorner(k, k).noalias() -= invGu * invG.bottomLeftCorner(n, k);
-				invG.topRightCorner(k, n).noalias() = -invGu * S;
-				invG.template bottomRightCorner<n, n>() = S;
+				matrix_t newInvG(k + n, k + n);
+				newInvG.submat(k, 0, n + k, k) = -S * vinvG;
+				newInvG.submat(0, 0, k, k) = invG - invGu * newInvG.submat(k, 0, k + n, k);
+				newInvG.submat(0, k, k, k + n) = -invGu * S;
+				newInvG.submat(k, k, k + n, k + n) = S;
 				
 				vertexHandler.AddBufferedVertices(isWorm);
 				return true;
@@ -134,21 +128,23 @@ class UpdateHandler
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
 
+			arma::vec perm(k);
+			vertexHandler.PermutationMatrix(perm, isWorm);
+			matrix_t invGp(k, k);
+			for (uint_t i = 0; i < k; ++i)
+				for (uint_t j = 0; j < k; ++j)
+					invGp(perm(i), perm(j)) = invG(i, j);
 			
-			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k);
-			vertexHandler.PermutationMatrix(perm.indices(), isWorm);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp = perm.transpose() * invG * perm;
-			
-			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
+			matrix_t S = invGp.submat(k - n, k - n, k, k);
 			value_t acceptRatio;
 			if (flag == UpdateFlag::NormalUpdate)
 			{
-				det = S.determinant();
+				det = arma::det(S);
 				acceptRatio = preFactor * det;
 			}
 			else if (flag == UpdateFlag::NoUpdate)
 			{
-				det = S.determinant();
+				det = arma::det(S);
 				acceptRatio = 0.0;
 			}
 			else if (flag == UpdateFlag::ForceUpdate)
@@ -162,9 +158,8 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				matrix_t<n, Eigen::Dynamic> t = S.inverse() * invGp.bottomLeftCorner(n, k - n);
-				invG = invGp.topLeftCorner(k - n, k - n);
-				invG.noalias() -= invGp.topRightCorner(k - n, n) * t;
+				matrix_t t = arma::inv(S) * invGp.submat(k - n, 0, k, k - n);
+				invG = invGp.submat(0, 0, k - n, k - n) - invGp.submat(0, k - n, k - n, k) * t;
 
 				vertexHandler.RemoveBufferedVertices(isWorm);
 				return true;
