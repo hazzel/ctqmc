@@ -133,7 +133,7 @@ class UpdateHandler
 			matrix_t invGp(k, k);
 			for (uint_t i = 0; i < k; ++i)
 				for (uint_t j = 0; j < k; ++j)
-					invGp(perm(i), perm(j)) = invG(i, j);
+					invGp(i, j) = invG(perm(i), perm(j));
 			
 			matrix_t S = invGp.submat(k - n, k - n, k, k);
 			value_t acceptRatio;
@@ -316,20 +316,16 @@ class UpdateHandler
 		template<typename Matrix>
 		value_t MatrixCondition(Matrix& M)
 		{
-			if (M.rows() == 0)
-				return 0.0;
-			Eigen::JacobiSVD<Matrix> svd(M, Eigen::ComputeFullU | Eigen::ComputeFullV);
-			return svd.singularValues()(0) / svd.singularValues()(M.rows()-1);
+			return 0.0;
 		}
 
 		value_t StabilizeInvG()
 		{
 			if (invG.rows() == 0)
 				return 0.0;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
+			matrix_t G(invG.rows(), invG.cols());
 			vertexHandler.PropagatorMatrix(G);
-			inv_solver_t<Eigen::Dynamic> solver(G);
-			invG = solver.inverse();
+			invG = arma::inv(G);
 			return 0.0;
 		}
 		
@@ -337,16 +333,15 @@ class UpdateHandler
 		{
 			if (invG.rows() == 0)
 				return 0.0;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> G(invG.rows(), invG.cols());
+			matrix_t G(invG.rows(), invG.cols());
 			vertexHandler.PropagatorMatrix(G);
-			inv_solver_t<Eigen::Dynamic> solver(G);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = solver.inverse();
+			matrix_t stabInvG = arma::inv(G);
 
 			avgError = 0.0;
-			value_t N = stabInvG.rows() * stabInvG.rows();
-			for (uint_t i = 0; i < stabInvG.rows(); ++i)
+			value_t N = stabInvG.n_rows * stabInvG.n_rows;
+			for (uint_t i = 0; i < stabInvG.n_rows; ++i)
 			{
-				for (uint_t j = 0; j < stabInvG.cols(); ++j)
+				for (uint_t j = 0; j < stabInvG.n_cols; ++j)
 				{
 					value_t err = std::abs(invG(i, j) - stabInvG(i, j));
 					avgError += err / N;
