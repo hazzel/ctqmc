@@ -365,18 +365,18 @@ class VertexHandler
 				for (uint_t j = 0; j < k; ++j)
 				{
 					u(j, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-					//v(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
-					value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
-					v(i, j) = u(j, i) * sign;
+					v(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
+					//value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
+					//v(i, j) = u(j, i) * sign;
 				}
 				for (uint_t j = 0; j < n; ++j)
 				{
 					if (i < j)
 					{
 						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
-						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
-						a(j, i) = a(i, j) * sign;
-						//a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+						//value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
+						//a(j, i) = a(i, j) * sign;
+						a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 					}
 				}
 				a(i, i) = 0.0;
@@ -441,29 +441,48 @@ class VertexHandler
 			}
 		}
 		
+		template<typename M>
+		void PermuteProgagatorMatrix(M& m, bool isWorm)
+		{
+			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
+			for (uint_t i = 0; i < n; i+=2)
+			{
+				if (isWorm)
+				{
+					m.row(wormNodes[indexBuffer[n - i - 2]]).swap(m.row(m.rows() - i - 2));
+					m.col(wormNodes[indexBuffer[n - i - 2]]).swap(m.col(m.rows() - i - 2));
+					
+					m.row(wormNodes[indexBuffer[n - i - 1]]).swap(m.row(m.rows() - i - 1));
+					m.col(wormNodes[indexBuffer[n - i - 1]]).swap(m.col(m.rows() - i - 1));
+				}
+				else
+				{
+					m.row(indexBuffer[n - i - 2]).swap(m.row(m.rows() - i - 2));
+					m.col(indexBuffer[n - i - 2]).swap(m.col(m.rows() - i - 2));
+					
+					m.row(indexBuffer[n - i - 1]).swap(m.row(m.rows() - i - 1));
+					m.col(indexBuffer[n - i - 1]).swap(m.col(m.rows() - i - 1));
+				}
+			}
+		}
+		
 		template<typename P>
 		void PermutationMatrix(P& perm, bool isWorm)
 		{
-			if (isWorm)
+			for (uint_t i = 0; i < perm.size(); ++i)
+				perm[i] = i;
+			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
+			for (uint_t i = 0; i < n; i+=2)
 			{
-				for (uint_t i = 0; i < perm.size(); ++i)
-					perm[i] = i;
-				uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
-				for (uint_t i = 0; i < n; i+=2)
+				if (isWorm)
 				{
 					perm[wormNodes[indexBuffer[n - i - 2]]] = perm[perm.size() - i - 2];
 					perm[perm.size() - i - 2] = wormNodes[indexBuffer[n - i - 2]];
-					
+				
 					perm[wormNodes[indexBuffer[n - i - 1]]] = perm[perm.size() - i - 1];
 					perm[perm.size() - i - 1] = wormNodes[indexBuffer[n - i - 1]];
 				}
-			}
-			else
-			{
-				for (uint_t i = 0; i < perm.size(); ++i)
-					perm[i] = i;
-				uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
-				for (uint_t i = 0; i < n; i+=2)
+				else
 				{
 					perm[indexBuffer[n - i - 2]] = perm[perm.size() - i - 2];
 					perm[perm.size() - i - 2] = indexBuffer[n - i - 2];
@@ -473,52 +492,6 @@ class VertexHandler
 				}
 			}
 		}
-		
-		/*
-		template<typename P>
-		void PermutationMatrix(P& perm, bool isWorm)
-		{
-			uint_t cnt = 0;
-			if (isWorm)
-			{
-				std::vector<std::size_t> buf;
-				for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
-					buf.push_back(wormNodes[*it]);
-
-				for (uint_t i = 0; i < perm.size(); ++i)
-				{
-					if (find(buf.begin(), buf.end(), i) == buf.end())
-					{
-						perm[cnt] = i;
-						++cnt;
-					}
-				}
-				int i = 0;
-				for (auto it = buf.begin(); it != buf.end(); ++it)
-				{
-					perm[cnt + i] = *it;
-					++i;
-				}
-			}
-			else
-			{
-				for (uint_t i = 0; i < perm.size(); ++i)
-				{
-					if (find(indexBuffer.begin(), indexBufferEnd, i) == indexBufferEnd)
-					{
-						perm[cnt] = i;
-						++cnt;
-					}
-				}
-				int i = 0;
-				for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
-				{
-					perm[cnt + i] = *it;
-					++i;
-				}
-			}
-		}
-		*/
 			
 		void Serialize(odump& d)
 		{

@@ -378,7 +378,8 @@ class UpdateHandler
 			}
 
 			invG = stabInvG;
-			return MatrixCondition(invG);
+			return 0.0;
+			//return MatrixCondition(invG);
 		}
 		
 		VertexHandler_t& GetVertexHandler()

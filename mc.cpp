@@ -167,8 +167,8 @@ void CLASSNAME::init()
 			measure[i].add_observable("deltaZ", nPrebins);
 			measure[i].add_observable("deltaW2", nPrebins);
 			measure[i].add_observable("deltaW4", nPrebins);
-			measure[i].add_observable("avgInvGError", nPrebins);
-			measure[i].add_observable("condition", nPrebins);
+			measure[i].add_observable("avgInvGError");
+			measure[i].add_observable("condition");
 			measure[i].add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
 		}
 	#else
@@ -177,8 +177,8 @@ void CLASSNAME::init()
 		measure.add_observable("deltaZ", nPrebins);
 		measure.add_observable("deltaW2", nPrebins);
 		measure.add_observable("deltaW4", nPrebins);
-		measure.add_observable("avgInvGError", nPrebins);
-		measure.add_observable("condition", nPrebins);
+		measure.add_observable("avgInvGError");
+		measure.add_observable("condition");
 		measure.add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
 	#endif
 }
@@ -456,7 +456,7 @@ void CLASSNAME::do_update()
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2;
 			bool result;
-			if (configSpace.rng() < 1.0)
+			if (configSpace.rng() < 0.1)
 				result = configSpace.AddRandomVertices<1>(preFactor, true);
 			else
 				result = configSpace.OpenUpdate<1>();
@@ -473,7 +473,7 @@ void CLASSNAME::do_update()
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
 			bool result;
-			if (configSpace.rng() < 1.0)
+			if (configSpace.rng() < 0.1)
 				result = configSpace.RemoveRandomVertices<1>(preFactor, true);
 			else
 				result = configSpace.CloseUpdate<1>();
