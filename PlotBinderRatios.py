@@ -9,7 +9,7 @@ from ParseDataOutput import *
 
 color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-L = ["3", "4", "5", "6", "9", "12", "15"]
+L = ["2", "3", "4", "5", "6", "9", "12", "15"]
 for l in range(len(L)):
 	#filelist = glob.glob("plot_T0.46/job-*-L" + L[l] + "-T0.46-hex*.task*.out")
 	#filelist = glob.glob("plot/job-*-L" + L[l] + "-V2.0-hex.task*.out")
