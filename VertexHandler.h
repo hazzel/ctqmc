@@ -100,6 +100,20 @@ class VertexHandler
 				std::cout << index << " ";
 			std::cout << std::endl;
 		}
+
+		template<typename Matrix_t>
+		void PrintMatrix(const Matrix_t& M)
+		{
+			using namespace Eigen;
+			IOFormat CommaInitFmt(StreamPrecision, DontAlignCols, ", ", ", ", "", "", " << ", ";");
+			IOFormat CleanFmt(FullPrecision, 0, ", ", "\n", "[", "]");
+			IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
+			IOFormat HeavyFmt(FullPrecision, 0, ", ", ",\n", "{", "}", "{", "}");
+			//std::cout << M.format(CommaInitFmt) << std::endl;
+			std::cout << M.format(CleanFmt) << std::endl;
+			//std::cout << M.format(OctaveFmt) << std::endl;
+			//std::cout << M.format(HeavyFmt) << std::endl;
+		}
 		
 		void AddBufferedVertices(bool isWorm)
 		{
@@ -349,7 +363,6 @@ class VertexHandler
 					G(j, i) = configSpace.LookUpG0(nodes[j].Site, nodes[i].Site, nodes[j].Tau - nodes[i].Tau + configSpace.infinTau);
 					value_t sign = (configSpace.lattice->Sublattice(nodes[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
 					G(i, j) = G(j, i) * sign;
-					//G(i, j) = configSpace.LookUpG0(nodes[i].Site, nodes[j].Site, nodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
 				}
 				G(i, i) = 0.0;
 			}
@@ -365,7 +378,6 @@ class VertexHandler
 				for (uint_t j = 0; j < k; ++j)
 				{
 					u(j, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-					//v(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 					value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
 					v(i, j) = u(j, i) * sign;
 				}
@@ -376,7 +388,6 @@ class VertexHandler
 						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
 						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
 						a(j, i) = a(i, j) * sign;
-						//a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 					}
 				}
 				a(i, i) = 0.0;
