@@ -154,12 +154,19 @@ class UpdateHandler
 			const uint_t n = 2 * N;
 
 			
+			
 			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k);
 			vertexHandler.PermutationMatrix(perm.indices(), isWorm);
-			//matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp = perm.transpose() * invG * perm;
 			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
+			for (uint_t i = 0; i < k; ++i)
+				for (uint_t j = 0; j < k; ++j)
+					invGp(i, j) = invG(perm.indices()[i], perm.indices()[j]);
+			
+			/*
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
-			vertexHandler.PermuteProgagatorMatrix(invG, isWorm);
+			vertexHandler.PermuteProgagatorMatrix(invGp, isWorm);
+			*/
 			
 			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
 			value_t acceptRatio;
@@ -184,6 +191,11 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
+				/*
+				matrix_t<n, Eigen::Dynamic> t = S.inverse() * invG.bottomLeftCorner(n, k - n);
+				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * t;
+				invG.conservativeResize(k - n, k - n);
+				*/
 				matrix_t<n, Eigen::Dynamic> t = S.inverse() * invGp.bottomLeftCorner(n, k - n);
 				invG = invGp.topLeftCorner(k - n, k - n);
 				invG.noalias() -= invGp.topRightCorner(k - n, n) * t;
@@ -193,6 +205,7 @@ class UpdateHandler
 			}
 			else
 			{
+				//vertexHandler.PermuteProgagatorMatrix(invG, isWorm);
 				return false;
 			}
 		}
@@ -380,8 +393,8 @@ class UpdateHandler
 			}
 
 			invG = stabInvG;
-			return 0.0;
-			//return MatrixCondition(invG);
+			//return 0.0;
+			return MatrixCondition(invG);
 		}
 		
 		VertexHandler_t& GetVertexHandler()
