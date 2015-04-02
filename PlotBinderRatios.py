@@ -17,6 +17,7 @@ for l in range(len(L)):
 	filelist = []
 	filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_hex_V2.0-T0.50-0.54/*L" + L[l] + "*.out"))
 	for f in range(len(filelist)):
 		if len(filelist[f]) == 0:
 			continue

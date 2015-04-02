@@ -49,8 +49,8 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 		APPMCLL = $(HPCWORK)/ctqmc/
 	endif
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DNDEBUG $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-	LDFLAGS = 
+	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
+	LDFLAGS = $(FLAGS_MATH_LINKER)
 	SUPERLP = 
 	ifeq ($(USE_MKL), TRUE)
 		CFLAGS += -DEIGEN_USE_MKL_ALL
@@ -65,7 +65,7 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 else
 	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -g $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-4.650.4/include
-	LDFLAGS = -L$(HOME)/OpenBLAS/lib/ -L$(HOME)/armadillo-4.650.4/lib -lopenblas -llapack
+	LDFLAGS = -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -L$(HOME)/armadillo-4.650.4/lib -lblas -llapack
 	SUPERLP =
 endif
 

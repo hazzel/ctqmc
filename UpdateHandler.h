@@ -100,10 +100,15 @@ class UpdateHandler
 				matrix_t vinvG = v * invG;
 				
 				matrix_t newInvG(k + n, k + n);
-				newInvG.submat(k, 0, n + k, k) = -S * vinvG;
-				newInvG.submat(0, 0, k, k) = invG - invGu * newInvG.submat(k, 0, k + n, k);
-				newInvG.submat(0, k, k, k + n) = -invGu * S;
-				newInvG.submat(k, k, k + n, k + n) = S;
+				matrix_t s = -S * vinvG;
+				if (k != 0)
+				{
+					newInvG.submat(k, 0, n + k - 1, k - 1) = -S * vinvG;
+					newInvG.submat(0, 0, k - 1, k - 1) = invG - invGu * newInvG.submat(k, 0, k + n - 1, k - 1);
+					newInvG.submat(0, k, k - 1, k + n - 1) = -invGu * S;
+				}
+				newInvG.submat(k, k, k + n - 1, k + n - 1) = S;
+				invG = newInvG;
 				
 				vertexHandler.AddBufferedVertices(isWorm);
 				return true;
@@ -135,7 +140,7 @@ class UpdateHandler
 				for (uint_t j = 0; j < k; ++j)
 					invGp(i, j) = invG(perm(i), perm(j));
 			
-			matrix_t S = invGp.submat(k - n, k - n, k, k);
+			matrix_t S = invGp.submat(k - n, k - n, k - 1, k - 1);
 			value_t acceptRatio;
 			if (flag == UpdateFlag::NormalUpdate)
 			{
@@ -158,8 +163,8 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				matrix_t t = arma::inv(S) * invGp.submat(k - n, 0, k, k - n);
-				invG = invGp.submat(0, 0, k - n, k - n) - invGp.submat(0, k - n, k - n, k) * t;
+				matrix_t t = arma::inv(S) * invGp.submat(k - n, 0, k - 1, k - n - 1);
+				invG = invGp.submat(0, 0, k - n - 1, k - n - 1) - invGp.submat(0, k - n, k - n - 1, k - 1) * t;
 
 				vertexHandler.RemoveBufferedVertices(isWorm);
 				return true;
@@ -321,9 +326,9 @@ class UpdateHandler
 
 		value_t StabilizeInvG()
 		{
-			if (invG.rows() == 0)
+			if (invG.n_rows == 0)
 				return 0.0;
-			matrix_t G(invG.rows(), invG.cols());
+			matrix_t G(invG.n_rows, invG.n_cols);
 			vertexHandler.PropagatorMatrix(G);
 			invG = arma::inv(G);
 			return 0.0;
@@ -331,9 +336,9 @@ class UpdateHandler
 		
 		value_t StabilizeInvG(value_t& avgError)
 		{
-			if (invG.rows() == 0)
+			if (invG.n_rows == 0)
 				return 0.0;
-			matrix_t G(invG.rows(), invG.cols());
+			matrix_t G(invG.n_rows, invG.n_cols);
 			vertexHandler.PropagatorMatrix(G);
 			matrix_t stabInvG = arma::inv(G);
 
@@ -381,7 +386,7 @@ class UpdateHandler
 	private:
 		ConfigSpace_t& configSpace;
 		VertexHandler_t vertexHandler;
-		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
+		matrix_t invG;
 		uint_t maxWorms = 2;
 		bool print = true;
 };
