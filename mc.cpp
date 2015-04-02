@@ -553,6 +553,7 @@ void CLASSNAME::do_update()
 				measure[myrep].add("avgInvGError", avgError);
 			#else
 				measure.add("avgInvGError", avgError);
+				measure.add("condition", cond);
 			#endif
 			rebuildCnt = 0;
 		}
