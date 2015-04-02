@@ -177,8 +177,8 @@ void CLASSNAME::init()
 		measure.add_observable("deltaZ", nPrebins);
 		measure.add_observable("deltaW2", nPrebins);
 		measure.add_observable("deltaW4", nPrebins);
-		measure.add_observable("avgInvGError", nPrebins);
-		measure.add_observable("condition", nPrebins);
+		measure.add_observable("avgInvGError");
+		measure.add_observable("condition");
 		measure.add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
 	#endif
 }

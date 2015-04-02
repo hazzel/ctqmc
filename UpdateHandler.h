@@ -136,7 +136,6 @@ class UpdateHandler
 			
 			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k);
 			vertexHandler.PermutationMatrix(perm.indices(), isWorm);
-			//matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp = perm.transpose() * invG * perm;
 			
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
 			for (uint_t i = 0; i < k; ++i)
@@ -363,6 +362,7 @@ class UpdateHandler
 			}
 
 			invG = stabInvG;
+			//return MatrixCondition(invG);
 			return 0.0;
 		}
 		
