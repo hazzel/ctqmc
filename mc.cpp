@@ -369,6 +369,7 @@ void CLASSNAME::do_update()
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
 				acceptedUpdates(UpdateType::AddVertex, state) += 1.0;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::AddVertex, state) += 1.0;
 		}
@@ -379,6 +380,7 @@ void CLASSNAME::do_update()
 			if (configSpace.RemoveRandomVertices<N>(preFactor, false))
 			{
 				acceptedUpdates(UpdateType::RemoveVertex, state) += 1.0;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::RemoveVertex, state) += 1.0;
 		}
@@ -389,6 +391,7 @@ void CLASSNAME::do_update()
 			if (configSpace.AddRandomVertices<N>(preFactor, false))
 			{
 				acceptedUpdates(UpdateType::Add2Vertices, state) += 1.0;
+				++rebuildCnt;
 			}
 			proposedUpdates(UpdateType::Add2Vertices, state) += 1.0;
 		}
