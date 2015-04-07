@@ -391,6 +391,12 @@ class UpdateHandler
 					avgError += err / N;
 				}
 			}
+			
+			std::cout << "invG" << std::endl;
+			PrintMatrix(invG);
+			std::cout << "stabInvG" << std::endl;
+			PrintMatrix(stabInvG);
+			std::cin.get();
 
 			invG = stabInvG;
 			return 0.0;
