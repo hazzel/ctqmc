@@ -152,9 +152,8 @@ class UpdateHandler
 				return false;
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
-
 			
-			
+			/*
 			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k);
 			vertexHandler.PermutationMatrix(perm.indices(), isWorm);
 			
@@ -162,13 +161,23 @@ class UpdateHandler
 			for (uint_t i = 0; i < k; ++i)
 				for (uint_t j = 0; j < k; ++j)
 					invGp(i, j) = invG(perm.indices()[i], perm.indices()[j]);
-			
-			/*
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
-			vertexHandler.PermuteProgagatorMatrix(invGp, isWorm);
 			*/
 			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
+			vertexHandler.PermuteProgagatorMatrix(invGp, isWorm);
+			
+			PrintMatrix(invGp);
+			std::cout << "-------------------" << std::endl;
+			vertexHandler.PermuteProgagatorMatrix(invG, isWorm);
+			PrintMatrix(invG);
+			std::cout << "-------------------" << std::endl;
+			vertexHandler.PermuteProgagatorMatrix(invG, isWorm);
+			PrintMatrix(invG);
+			std::cout << "-------------------" << std::endl;
+			std::cin.get();
+			
 			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
+			//matrix_t<n, n> S = invG.template bottomRightCorner<n, n>();
 			value_t acceptRatio;
 			if (flag == UpdateFlag::NormalUpdate)
 			{
@@ -191,16 +200,34 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
+				
+				matrix_t<n, Eigen::Dynamic> t = S.inverse() * invGp.bottomLeftCorner(n, k - n);
+				invG.resize(k - n, k - n);
+				invG = invGp.topLeftCorner(k - n, k - n);
+				invG.noalias() -= invGp.topRightCorner(k - n, n) * t;
+				
 				/*
 				matrix_t<n, Eigen::Dynamic> t = S.inverse() * invG.bottomLeftCorner(n, k - n);
 				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * t;
 				invG.conservativeResize(k - n, k - n);
 				*/
-				matrix_t<n, Eigen::Dynamic> t = S.inverse() * invGp.bottomLeftCorner(n, k - n);
-				invG = invGp.topLeftCorner(k - n, k - n);
-				invG.noalias() -= invGp.topRightCorner(k - n, n) * t;
-
+				
 				vertexHandler.RemoveBufferedVertices(isWorm);
+				
+				/*
+				if (k - n > 0)
+				{
+					std::cout << "invG" << std::endl;
+					PrintMatrix(invG);
+					std::cout << "stabInvG" << std::endl;
+					matrix_t<Eigen::Dynamic, Eigen::Dynamic> G;
+					vertexHandler.PropagatorMatrix(G);
+					matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = G.inverse();
+					PrintMatrix(stabInvG);
+					std::cin.get();
+				}
+				*/
+			
 				return true;
 			}
 			else
@@ -391,12 +418,6 @@ class UpdateHandler
 					avgError += err / N;
 				}
 			}
-			
-			std::cout << "invG" << std::endl;
-			PrintMatrix(invG);
-			std::cout << "stabInvG" << std::endl;
-			PrintMatrix(stabInvG);
-			std::cin.get();
 
 			invG = stabInvG;
 			return 0.0;
