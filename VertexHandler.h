@@ -15,6 +15,7 @@
 #include "types.h"
 #include "ConfigSpace.h"
 #include "UpdateHandler.h"
+#include "Eigen/Dense"
 
 template<typename Index_t, typename Value_t>
 struct Node
@@ -106,7 +107,7 @@ class VertexHandler
 		{
 			using namespace Eigen;
 			IOFormat CommaInitFmt(StreamPrecision, DontAlignCols, ", ", ", ", "", "", " << ", ";");
-			IOFormat CleanFmt(FullPrecision, 0, ", ", "\n", "[", "]");
+			IOFormat CleanFmt(1, 0, ", ", "\n", "[", "]");
 			IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
 			IOFormat HeavyFmt(FullPrecision, 0, ", ", ",\n", "{", "}", "{", "}");
 			//std::cout << M.format(CommaInitFmt) << std::endl;
@@ -475,6 +476,53 @@ class VertexHandler
 					m.col(indexBuffer[n - i - 1]).swap(m.col(m.rows() - i - 1));
 				}
 			}
+		}
+		
+		template<typename M>
+		void PermuteBackProgagatorMatrix(M& m, bool isWorm)
+		{
+			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
+			for (uint_t i = 0; i < n; i+=2)
+			{
+				if (isWorm)
+				{
+					m.row(wormNodes[indexBuffer[i]]).swap(m.row(m.rows() - n + i));
+					m.col(wormNodes[indexBuffer[i]]).swap(m.col(m.rows() - n + i));
+					
+					m.row(wormNodes[indexBuffer[i + 1]]).swap(m.row(m.rows() - n + i + 1));
+					m.col(wormNodes[indexBuffer[i + 1]]).swap(m.col(m.rows() - n + i + 1));
+				}
+				else
+				{
+					m.row(indexBuffer[i]).swap(m.row(m.rows() - n + i));
+					m.col(indexBuffer[i]).swap(m.col(m.rows() - n + i));
+					
+					m.row(indexBuffer[i + 1]).swap(m.row(m.rows() - n + i + 1));
+					m.col(indexBuffer[i + 1]).swap(m.col(m.rows() - n + i + 1));
+				}
+			}
+		}
+		
+		void test()
+		{
+			Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> t(10, 10);
+			for (uint_t i = 0; i < 10; ++i)
+				for (uint_t j = 0; j < 10; ++j)
+					t(i, j) = 10*i + j;
+			std::cout << "t" << std::endl;
+			PrintMatrix(t);
+			indexBuffer[0] = 2;
+			indexBuffer[1] = 3;
+			indexBuffer[2] = 6;
+			indexBuffer[3] = 7;
+			indexBufferEnd = indexBuffer.begin() + 4;
+			PermuteProgagatorMatrix(t, false);
+			std::cout << "once permuted" << std::endl;
+			PrintMatrix(t);
+			PermuteBackProgagatorMatrix(t, false);
+			std::cout << "twice permuted" << std::endl;
+			PrintMatrix(t);
+			std::cin.get();
 		}
 		
 		template<typename P>

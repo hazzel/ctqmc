@@ -358,6 +358,8 @@ void CLASSNAME::do_update()
 	{
 		std::cout << std::endl;
 		std::cout << "Thermalization" << std::endl;
+		
+		//configSpace.updateHandler.GetVertexHandler().test();
 	}
 
 	for (uint_t i = 0; i < nThermStep; ++i)
