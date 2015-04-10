@@ -49,7 +49,7 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 		APPMCLL = $(HPCWORK)/ctqmc/
 	endif
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DNDEBUG $(DEFINES)
-	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
+	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-4.650.4/include
 	LDFLAGS = $(FLAGS_MATH_LINKER)
 	SUPERLP = 
 	ifeq ($(USE_MKL), TRUE)
