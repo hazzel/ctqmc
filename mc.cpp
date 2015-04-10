@@ -663,14 +663,25 @@ void CLASSNAME::OptimizeZeta()
 		
 		evalableParameters[1] = configSpace.zeta2;
 		evalableParameters[2] = configSpace.zeta4;
+		prevZeta.push_back(std::make_pair(configSpace.zeta2, configSpace.zeta4));
 		value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-		//therm.Reset();
+		therm.Reset();
 		++nZetaOptimization;
 		sweep = 0;
 		std::cout << nZetaOptimization << std::endl;
 		if (nZetaOptimization == nOptimizationSteps)
 		{
 			sweep = nOptimizationSteps * nOptimizationTherm;
+			value_t zeta2mean = 0.0, zeta4mean = 0.0;
+			for (uint_t i = 0; i < prevZeta.size(); ++i)
+			{
+				zeta2mean += prevZeta[i].first / static_cast<value_t>(prevZeta.size());
+				zeta4mean += prevZeta[i].second / static_cast<value_t>(prevZeta.size());
+			}
+			configSpace.zeta2 = zeta2mean;
+			configSpace.zeta4 = zeta4mean;
+			evalableParameters[1] = configSpace.zeta2;
+			evalableParameters[2] = configSpace.zeta4;
 			std::cout << "Zeta2(T=" << 1./configSpace.beta << ",V=" << configSpace.V << ") = " << configSpace.zeta2 * m * configSpace.beta << std::endl;
 			std::cout << "Zeta4(T=" << 1./configSpace.beta << ",V=" << configSpace.V << ") = " << configSpace.zeta4 * m * m * m * configSpace.beta << std::endl;
 		}

@@ -170,6 +170,7 @@ class CLASSNAME
 		uint_t nZetaOptimization = 0;
 		uint_t nOptimizationSteps;
 		uint_t nOptimizationTherm;
+		std::vector< std::pair<value_t, value_t> > prevZeta;
 		bool annealing = false;
 		value_t startT = 2.5;
 		value_t finalT;

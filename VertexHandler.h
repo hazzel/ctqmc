@@ -356,7 +356,7 @@ class VertexHandler
 		void WoodburyAddVertices(U& u, V& v, A& a)
 		{
 			uint_t k = nodes.size();
-			uint_t n = a.cols();
+			uint_t n = std::distance(nodeBuffer.begin(), nodeBufferEnd);
 			for (uint_t i = 0; i < n; ++i)
 			{
 				for (uint_t j = 0; j < k; ++j)

@@ -9,12 +9,12 @@ from ParseDataOutput import *
 
 color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-L = ["3", "4", "5", "6", "9", "12"]
+L = ["2", "3", "4", "5", "6", "9", "12"]
 for l in range(len(L)):
 	filelist = []
-	filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
 
 	for f in range(len(filelist)):
@@ -38,10 +38,10 @@ for l in range(len(L)):
 			plist = ParseParameters(filelist[f][i])
 			elist = ParseEvalables(filelist[f][i])
 			x.append(float(plist["T"]))
-			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**(1./nu) )
-			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**(1./nu) )
-			yM4.append( ArrangePlot(elist, "M4")[0][0] * float(L[l])**(2./nu) )
-			yM4err.append( ArrangePlot(elist, "M4")[1][0] * float(L[l])**(2./nu) )
+			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**(0.666) )
+			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**(0.666) )
+			yM4.append( ArrangePlot(elist, "M4")[0][0] * float(L[l])**(2.*0.666) )
+			yM4err.append( ArrangePlot(elist, "M4")[1][0] * float(L[l])**(2.*0.666) )
 		
 		plt.figure(f)
 		m = re.search("V" + fpn, filelist[f][0])

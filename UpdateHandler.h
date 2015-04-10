@@ -40,7 +40,11 @@ class UpdateHandler
 		
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
-		{}
+		{
+			Ubuf.resize(100, 100);
+			Vbuf.resize(100, 100);
+			Abuf.resize(20, 20);
+		}
 		
 		void Init()
 		{}
@@ -65,7 +69,63 @@ class UpdateHandler
 			value_t det;
 			return AddVertices<N>(preFactor, isWorm, det, UpdateFlag::NormalUpdate);
 		}
+		
+		/*
+		template<int_t N>
+		bool AddVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
+		{
+			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
+			const uint_t n = 2 * N;
+			if (k > Ubuf.rows() || k > Vbuf.cols())
+			{
+				Ubuf.resize(k+20, Ubuf.cols());
+				Vbuf.resize(Vbuf.rows(), k+20);
+			}
+			matrix_t<n, n> a(n, n);
+			vertexHandler.WoodburyAddVertices(Ubuf, Vbuf, a);
 
+			matrix_t<Eigen::Dynamic, n> invGu = invG * Ubuf.topLeftCorner(k, n);
+			matrix_t<n, n> invS = a.template topLeftCorner<n, n>();
+			invS.noalias() -= Vbuf.topLeftCorner(n, k) * invGu;
+
+			value_t acceptRatio;
+			if (flag == UpdateFlag::NormalUpdate)
+			{
+				det = invS.determinant();
+				acceptRatio = preFactor * det;
+			}
+			else if (flag == UpdateFlag::NoUpdate)
+			{
+				det = invS.determinant();
+				acceptRatio = 0.0;
+			}
+			else if (flag == UpdateFlag::ForceUpdate)
+			{
+				acceptRatio = 1.0;
+			}
+			if (print && acceptRatio < 0.0)
+			{
+				std::cout << "AddVertices(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
+				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
+			}
+			if (configSpace.rng() < acceptRatio)
+			{
+				matrix_t<n, n> S = invS.inverse();
+				matrix_t<n, Eigen::Dynamic> vinvG = Vbuf.topLeftCorner(n, k) * invG;
+				
+				invG.conservativeResize(k + n, k + n);
+				invG.bottomLeftCorner(n, k) = -S * vinvG;
+				invG.topLeftCorner(k, k).noalias() -= invGu * invG.bottomLeftCorner(n, k);
+				invG.topRightCorner(k, n).noalias() = -invGu * S;
+				invG.template bottomRightCorner<n, n>() = S;
+				
+				vertexHandler.AddBufferedVertices(isWorm);
+				return true;
+			}
+			return false;
+		}
+		*/
+		
 		template<int_t N>
 		bool AddVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
 		{
@@ -134,13 +194,13 @@ class UpdateHandler
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
 			
-			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k);
-			vertexHandler.PermutationMatrix(perm.indices(), isWorm);
+			std::vector<value_t> perm(k);
+			vertexHandler.PermutationMatrix(perm, isWorm);
 			
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
 			for (uint_t i = 0; i < k; ++i)
 				for (uint_t j = 0; j < k; ++j)
-					invGp(i, j) = invG(perm.indices()[i], perm.indices()[j]);
+					invGp(i, j) = invG(perm[i], perm[j]);
 			
 			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
 			value_t acceptRatio;
@@ -177,6 +237,62 @@ class UpdateHandler
 				return false;
 			}
 		}
+		
+		/*
+		template<int_t N>
+		bool RemoveVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
+		{
+			if (isWorm && vertexHandler.Worms() < N)
+				return false;
+			if ((!isWorm) && vertexHandler.Vertices() < N)
+				return false;
+			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
+			const uint_t n = 2 * N;
+			
+			std::vector<value_t> perm(k);
+			vertexHandler.PermutationMatrix(perm, isWorm);
+			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
+			for (uint_t i = 0; i < k; ++i)
+				for (uint_t j = 0; j < k; ++j)
+					invGp(i, j) = invG(perm[i], perm[j]);
+			
+			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
+			value_t acceptRatio;
+			if (flag == UpdateFlag::NormalUpdate)
+			{
+				det = S.determinant();
+				acceptRatio = preFactor * det;
+			}
+			else if (flag == UpdateFlag::NoUpdate)
+			{
+				det = S.determinant();
+				acceptRatio = 0.0;
+			}
+			else if (flag == UpdateFlag::ForceUpdate)
+			{
+				acceptRatio = 1.0;
+			}
+			if (print && acceptRatio < 0.0)
+			{
+				std::cout << "RemoveVertices(" << N << "): AcceptRatio" << acceptRatio << std::endl;
+				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
+			}
+			if (configSpace.rng() < acceptRatio)
+			{
+				matrix_t<n, Eigen::Dynamic> t = S.inverse() * invGp.bottomLeftCorner(n, k - n);
+				invG = invGp.topLeftCorner(k - n, k - n);
+				invG.noalias() -= invGp.topRightCorner(k - n, n) * t;
+
+				vertexHandler.RemoveBufferedVertices(isWorm);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		*/
 
 		bool OpenUpdate(value_t preFactor)
 		{
@@ -210,7 +326,8 @@ class UpdateHandler
 				return false;
 			}
 		}
-		/*	
+		
+		/*
 		template<int_t W>
 		bool ShiftWorm()
 		{
@@ -225,11 +342,33 @@ class UpdateHandler
 			vertexHandler.WoodburyWorm(wormU, wormV, wormA);
 			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
 
-			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k + l);
-			vertexHandler.PermutationMatrix(perm.indices(), true);
-			invG = perm.transpose() * invG * perm;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> M = invG.topLeftCorner(k, k);
-			M.noalias() -= invG.topRightCorner(k, l) * invG.template bottomRightCorner<l, l>().inverse() * invG.bottomLeftCorner(l, k);
+			std::vector<value_t> perm(k + l);
+			vertexHandler.PermutationMatrix(perm, true);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k + l, k + l);
+			for (uint_t i = 0; i < k + l; ++i)
+				for (uint_t j = 0; j < k + l; ++j)
+					invGp(i, j) = invG(perm[i], perm[j]);
+			
+			
+			//Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k + l);
+			//vertexHandler.PermutationMatrix(perm.indices(), true);
+			//invG = perm.transpose() * invG * perm;
+			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> M = invGp.topLeftCorner(k, k);
+			M.noalias() -= invGp.topRightCorner(k, l) * invGp.template bottomRightCorner<l, l>().inverse() * invGp.bottomLeftCorner(l, k);
+			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> g(k + l, k + l);
+			vertexHandler.PropagatorMatrix(g);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> gp(k + l, k + l);
+			for (uint_t i = 0; i < k + l; ++i)
+				for (uint_t j = 0; j < k + l; ++j)
+					gp(i, j) = g(perm[i], perm[j]);
+			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> gtl = gp.topLeftCorner(k, k);
+			int mc = MatrixCondition(gtl);
+			std::cout << mc << std::endl;
+			if (mc > 100000)
+				std::cin.get();
 
 			matrix_t<l, l> invS = wormA;
 			invS.noalias() -= wormV * M * wormU;
@@ -260,26 +399,42 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
+				
 				matrix_t<l, l> S = shiftedInvS.inverse();
 				matrix_t<l, Eigen::Dynamic> R = -S * shiftedWormV * M;
 				matrix_t<Eigen::Dynamic, l> Mu = M * shiftedWormU;
-				invG.topLeftCorner(k, k) = M;
-				invG.topLeftCorner(k, k).noalias() -= Mu * R;
-				invG.topRightCorner(k, l).noalias() = -Mu * S;
-				invG.bottomLeftCorner(l, k) = R;
-				invG.template bottomRightCorner<l, l>() = S;
-				invG = perm * invG * perm.transpose();
+				invGp.topLeftCorner(k, k) = M;
+				invGp.topLeftCorner(k, k).noalias() -= Mu * R;
+				invGp.topRightCorner(k, l).noalias() = -Mu * S;
+				invGp.bottomLeftCorner(l, k) = R;
+				invGp.template bottomRightCorner<l, l>() = S;
+				//invG = perm * invG * perm.transpose();
+				
+				for (uint_t i = 0; i < k + l; ++i)
+					for (uint_t j = 0; j < k + l; ++j)
+						invG(perm[i], perm[j]) = invGp(i, j);
 
 				vertexHandler.ApplyWormShift();
+				
+				
+				//value_t det;
+				//RemoveVertices<W>(preFactorRem * vertexHandler.WormIndexBufferParity(), true, det, UpdateFlag::ForceUpdate);
+				//AddVertices<W>(preFactorAdd * vertexHandler.VertexBufferParity(), true, det, UpdateFlag::ForceUpdate);
+				
 				return true;
 			}
 			else
 			{
-				invG = perm * invG * perm.transpose();
+				//invG = perm * invG * perm.transpose();
+				
+				for (uint_t i = 0; i < k + l; ++i)
+					for (uint_t j = 0; j < k + l; ++j)
+						invG(perm[i], perm[j]) = invGp(i, j);
 				return false;
 			}
 		}
 		*/
+		
 		
 		template<int_t W>
 		bool ShiftWorm()
@@ -396,6 +551,9 @@ class UpdateHandler
 		ConfigSpace_t& configSpace;
 		VertexHandler_t vertexHandler;
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
+		matrix_t<Eigen::Dynamic, Eigen::Dynamic> Ubuf;
+		matrix_t<Eigen::Dynamic, Eigen::Dynamic> Vbuf;
+		matrix_t<Eigen::Dynamic, Eigen::Dynamic> Abuf;
 		uint_t maxWorms = 2;
 		bool print = true;
 };
