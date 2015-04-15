@@ -53,11 +53,9 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 					std::cout << this->distanceHistogram[i] << std::endl;
 				std::cout << "Dist(0, N/2) = " << this->distanceMap[0][this->nSites / 2] << std::endl;
 			}
-		}
-
-		SublatticeType Sublattice(int_t site)
-		{
-			return ((site % 2) == 0 ? SublatticeType::A : SublatticeType::B);
+			this->sublatVector.resize(this->nSites);
+			for (int_t i = 0; i < this->nSites; ++i)
+				this->sublatVector[i] = GetSublattice(i);
 		}
 		
 		double Parity(int_t site)
@@ -65,12 +63,17 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 			return ((site % 2) == 0 ? 1.0 : -1.0);
 		}
 	private:
+		SublatticeType GetSublattice(int_t site)
+		{
+			return ((site % 2) == 0 ? SublatticeType::A : SublatticeType::B);
+		}
+		
 		int_t ShiftSiteHardCode(int_t site, int_t direction, int_t distance = 1)
 		{
 			int_t newSite = site;
 			for (int_t i = 0; i < distance; ++i)
 			{
-				if (Sublattice(newSite) == SublatticeType::B)
+				if (GetSublattice(newSite) == SublatticeType::B)
 				{
 					if ((newSite + 1) % (2*this->L) == 0)
 					{
@@ -163,7 +166,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 				int_t dist = 1;
 				int_t i = this->RandomSite(rng);
 				int_t j = this->RandomSite(rng);
-				while(this->distanceMap[i][j] < 0 || (this->Sublattice(i) != this->Sublattice(j)))
+				while(this->distanceMap[i][j] < 0 || (GetSublattice(i) != GetSublattice(j)))
 				{
 					i = this->RandomSite(rng);
 					j = this->RandomSite(rng);
