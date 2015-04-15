@@ -26,6 +26,7 @@ class GeometryBase
 		using lookup_t = LookUpTable < int_t, int_t, 2 >;
 		using vector_t = std::vector< int_t >;
 		enum SublatticeType {A, B};
+		using sub_lat_vector_t = std::vector< SublatticeType >;
 		
 	public:
 		GeometryBase()
@@ -38,39 +39,43 @@ class GeometryBase
 		}
 		
 		virtual void Resize(int_t l, RNG& rng) = 0;
-		virtual SublatticeType Sublattice(int_t site) = 0;
 		
-		int_t Distance(int_t s1, int_t s2)
+		inline SublatticeType Sublattice(int_t site)
+		{
+			return sublatVector[site];
+		}
+		
+		inline int_t Distance(int_t s1, int_t s2)
 		{
 			return distanceMap[s1][s2];
 		}
 
-		int_t DistanceHistogram(int_t distance)
+		inline int_t DistanceHistogram(int_t distance)
 		{
 			return distanceHistogram[distance];
 		}
 
-		bool IsNeighbor(int_t s1, int_t s2)
+		inline bool IsNeighbor(int_t s1, int_t s2)
 		{
 			return Distance(s1, s2) == 1;
 		}
 
-		int_t Sites()
+		inline int_t Sites()
 		{
 			return nSites;
 		}
 
-		int_t Bonds()
+		inline int_t Bonds()
 		{
 			return nBonds;
 		}
 		
-		int_t MaxDistance()
+		inline int_t MaxDistance()
 		{
 			return maxDistance;
 		}
 
-		int_t RandomDirection(RNG& rng)
+		inline int_t RandomDirection(RNG& rng)
 		{
 			return static_cast<int_t>(rng() * nDirections);
 		}
@@ -102,12 +107,12 @@ class GeometryBase
 			return s;
 		}
 		
-		int_t NeighborhoodCount(int_t distance)
+		inline int_t NeighborhoodCount(int_t distance)
 		{
 			return numNeighborhood[distance];
 		}
 
-		int_t RandomSite(RNG& rng)
+		inline int_t RandomSite(RNG& rng)
 		{
 			return static_cast<int_t>(rng() * nSites);
 		}
@@ -227,6 +232,7 @@ class GeometryBase
 		int_t nBonds;
 		int_t nDirections;
 		int_t maxDistance;
+		sub_lat_vector_t sublatVector;
 		lookup_t distanceMap;
 		vector_t distanceHistogram;
 		int_t** neighborList;
