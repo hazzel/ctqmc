@@ -438,6 +438,50 @@ class VertexHandler
 			}
 		}
 		
+		template<typename M>
+		void PermuteProgagatorMatrix(M& m, bool isWorm)
+		{
+			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
+			for (uint_t i = 0; i < n; i+=2)
+			{
+				uint_t j0;
+				if (isWorm)
+					j0 = wormNodes[indexBuffer[n - i - 2]];
+				else
+					 j0 = indexBuffer[n - i - 2];
+				for (uint_t j = j0; j < m.rows() - i - 2; j+=2)
+				{
+					m.row(j).swap(m.row(j+2));
+					m.col(j).swap(m.col(j+2));
+					
+					m.row(j+1).swap(m.row(j+3));
+					m.col(j+1).swap(m.col(j+3));
+				}
+			}
+		}
+		
+		template<typename M>
+		void PermuteBackProgagatorMatrix(M& m, bool isWorm)
+		{
+			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
+			for (uint_t i = 0; i < n; i+=2)
+			{
+				uint_t j0;
+				if (isWorm)
+					j0 = wormNodes[indexBuffer[i]];
+				else
+					 j0 = indexBuffer[i];
+				for (uint_t j = m.rows() - n + i; j > j0; j-=2)
+				{
+					m.row(j).swap(m.row(j-2));
+					m.col(j).swap(m.col(j-2));
+					
+					m.row(j+1).swap(m.row(j-1));
+					m.col(j+1).swap(m.col(j-1));
+				}
+			}
+		}
+		
 		template<typename P>
 		void PermutationMatrix(P& perm, bool isWorm)
 		{

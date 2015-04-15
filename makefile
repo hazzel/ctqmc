@@ -63,9 +63,10 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	LDFLAGS =
 	SUPERLP =
 else
-	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -g $(DEFINES)
+#	CFLAGS  = -O3 -ffast-math -march=native -pipe -g -Wall $(DEFINES)
+	CFLAGS  = -O3 -ffast-math -pg -Wno-deprecated -std=c++11 -g $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-	LDFLAGS = 
+	LDFLAGS = -pg
 	SUPERLP =
 endif
 

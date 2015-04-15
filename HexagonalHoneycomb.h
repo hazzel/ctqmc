@@ -39,9 +39,17 @@ class HexagonalHoneycomb : public GeometryBase<RNG, Int_t>
 			this->GenerateDistanceHistogram();
 			this->numNeighborhood.resize(this->maxDistance + 1, 0);
 			this->CountNeighborhood();
+			this->sublatVector.resize(this->nSites);
+			for (int_t i = 0; i < this->nSites; ++i)
+				this->sublatVector[i] = GetSublattice(i);
 		}
-
-		SublatticeType Sublattice(int_t site)
+		
+		double Parity(int_t site)
+		{
+			return (Sublattice(site) == SublatticeType::A ? 1.0 : -1.0);
+		}
+	private:
+		SublatticeType GetSublattice(int_t site)
 		{
 			site_t s = this->indexMap[site];
 			if (std::get<0>(s) + std::get<1>(s) + std::get<2>(s) == 1)
@@ -50,11 +58,6 @@ class HexagonalHoneycomb : public GeometryBase<RNG, Int_t>
 				return SublatticeType::B;
 		}
 		
-		double Parity(int_t site)
-		{
-			return (Sublattice(site) == SublatticeType::A ? 1.0 : -1.0);
-		}
-	private:
 		void BuildIndexMap()
 		{
 			int_t cnt = 0;

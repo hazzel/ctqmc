@@ -54,7 +54,7 @@ class UpdateHandler
 		{
 			using namespace Eigen;
 			IOFormat CommaInitFmt(StreamPrecision, DontAlignCols, ", ", ", ", "", "", " << ", ";");
-			IOFormat CleanFmt(FullPrecision, 0, ", ", "\n", "[", "]");
+			IOFormat CleanFmt(1, 0, ", ", "\n", "[", "]");
 			IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
 			IOFormat HeavyFmt(FullPrecision, 0, ", ", ",\n", "{", "}", "{", "}");
 			//std::cout << M.format(CommaInitFmt) << std::endl;
@@ -184,6 +184,7 @@ class UpdateHandler
 			return RemoveVertices<N>(preFactor, isWorm, det, UpdateFlag::NormalUpdate);
 		}
 
+
 		template<int_t N>
 		bool RemoveVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
 		{
@@ -194,13 +195,18 @@ class UpdateHandler
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
 			
+			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
+			vertexHandler.PermuteProgagatorMatrix(invGp, isWorm);
+			
+			/*
 			std::vector<value_t> perm(k);
 			vertexHandler.PermutationMatrix(perm, isWorm);
-			
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
 			for (uint_t i = 0; i < k; ++i)
 				for (uint_t j = 0; j < k; ++j)
 					invGp(i, j) = invG(perm[i], perm[j]);
+			*/
 			
 			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
 			value_t acceptRatio;
@@ -237,8 +243,8 @@ class UpdateHandler
 				return false;
 			}
 		}
-		
-		/*
+
+/*
 		template<int_t N>
 		bool RemoveVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
 		{
@@ -249,15 +255,9 @@ class UpdateHandler
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
 			
-			std::vector<value_t> perm(k);
-			vertexHandler.PermutationMatrix(perm, isWorm);
+			vertexHandler.PermuteProgagatorMatrix(invG, isWorm);
 			
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
-			for (uint_t i = 0; i < k; ++i)
-				for (uint_t j = 0; j < k; ++j)
-					invGp(i, j) = invG(perm[i], perm[j]);
-			
-			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
+			matrix_t<n, n> S = invG.template bottomRightCorner<n, n>();
 			value_t acceptRatio;
 			if (flag == UpdateFlag::NormalUpdate)
 			{
@@ -280,15 +280,16 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				matrix_t<n, Eigen::Dynamic> t = S.inverse() * invGp.bottomLeftCorner(n, k - n);
-				invG = invGp.topLeftCorner(k - n, k - n);
-				invG.noalias() -= invGp.topRightCorner(k - n, n) * t;
+				matrix_t<n, Eigen::Dynamic> t = S.inverse() * invG.bottomLeftCorner(n, k - n);
+				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * t;
+				invG.conservativeResize(k - n, k - n);
 
 				vertexHandler.RemoveBufferedVertices(isWorm);
 				return true;
 			}
 			else
 			{
+				vertexHandler.PermuteBackProgagatorMatrix(invG, isWorm);
 				return false;
 			}
 		}
