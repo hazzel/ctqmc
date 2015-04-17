@@ -40,11 +40,7 @@ class UpdateHandler
 		
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
-		{
-			Ubuf.resize(100, 100);
-			Vbuf.resize(100, 100);
-			Abuf.resize(20, 20);
-		}
+		{}
 		
 		void Init()
 		{}
@@ -184,7 +180,7 @@ class UpdateHandler
 			return RemoveVertices<N>(preFactor, isWorm, det, UpdateFlag::NormalUpdate);
 		}
 
-
+		
 		template<int_t N>
 		bool RemoveVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
 		{
@@ -195,18 +191,15 @@ class UpdateHandler
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
 			
-			
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
 			vertexHandler.PermuteProgagatorMatrix(invGp, isWorm);
 			
-			/*
-			std::vector<value_t> perm(k);
-			vertexHandler.PermutationMatrix(perm, isWorm);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
-			for (uint_t i = 0; i < k; ++i)
-				for (uint_t j = 0; j < k; ++j)
-					invGp(i, j) = invG(perm[i], perm[j]);
-			*/
+			//std::vector<value_t> perm(k);
+			//vertexHandler.PermutationMatrix(perm, isWorm);
+			//matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
+			//for (uint_t i = 0; i < k; ++i)
+			//	for (uint_t j = 0; j < k; ++j)
+			//		invGp(i, j) = invG(perm[i], perm[j]);
 			
 			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
 			value_t acceptRatio;
@@ -243,8 +236,9 @@ class UpdateHandler
 				return false;
 			}
 		}
+		
 
-/*
+		/*
 		template<int_t N>
 		bool RemoveVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
 		{
@@ -294,6 +288,7 @@ class UpdateHandler
 			}
 		}
 		*/
+		
 
 		bool OpenUpdate(value_t preFactor)
 		{
@@ -552,9 +547,6 @@ class UpdateHandler
 		ConfigSpace_t& configSpace;
 		VertexHandler_t vertexHandler;
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
-		matrix_t<Eigen::Dynamic, Eigen::Dynamic> Ubuf;
-		matrix_t<Eigen::Dynamic, Eigen::Dynamic> Vbuf;
-		matrix_t<Eigen::Dynamic, Eigen::Dynamic> Abuf;
 		uint_t maxWorms = 2;
 		bool print = true;
 };

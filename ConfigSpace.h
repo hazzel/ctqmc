@@ -191,7 +191,7 @@ class ConfigSpace
 			uint_t t = static_cast<uint_t>(std::abs(tau_p) / dtau);
 			uint_t N = lattice->Sites(), i = std::min({i1, i2}), j = std::max({i1, i2});
 			uint_t x = i * N - (i + i*i) / 2 + j;
-			value_t tau_t = t * dtau, G_t = lookUpTableG0[x][t], G_tt = lookUpTableG0[x][t+1];
+			value_t tau_t = t * dtau, G_t = lookUpTableG0(x, t), G_tt = lookUpTableG0(x, t+1);
 			value_t g = G_t + (tau_p - tau_t) * (G_tt - G_t) / dtau;
 			value_t sign = 1.0;
 			if (std::abs(tau) > beta/2.0 && lattice->Sublattice(i1) != lattice->Sublattice(i2))
@@ -232,7 +232,7 @@ class ConfigSpace
 						for (uint_t j = i; j < lattice->Sites(); ++j)
 						{
 							uint_t x = i * N - (i + i*i) / 2 + j;
-							lookUpTableG0[x][t] = G0(i, j);
+							lookUpTableG0(x, t) = G0(i, j);
 						}
 					}
 					if (t % (nTimeBins / 10) == 0)
@@ -323,7 +323,7 @@ class ConfigSpace
 			{
 				for (uint_t j = 0; j < nTimeBins + 1; ++j)
 				{
-					os.write((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
+					os.write((char*)&lookUpTableG0(i, j), sizeof(lookUpTableG0(i, j)));
 				}
 			}
 			os.close();
@@ -342,7 +342,7 @@ class ConfigSpace
 					{
 						for (uint_t j = 0; j < nTimeBins + 1; ++j)
 						{
-							is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
+							is.read((char*)&lookUpTableG0(i, j), sizeof(lookUpTableG0(i, j)));
 						}
 					}
 				}
@@ -364,7 +364,7 @@ class ConfigSpace
 		value_t zeta4;
 		uint_t nTimeBins;
 		uint_t maxWorms = 4;
-		LookUpTable<value_t, uint_t, 2> lookUpTableG0;
+		LookUpTable<value_t, 2> lookUpTableG0;
 		value_t dtau;
 		StateType state = StateType::Z;
 		matrix_t hoppingMatrix;

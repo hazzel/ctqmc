@@ -5,6 +5,7 @@
 #include <limits>
 #include <functional>
 #include <omp.h>
+#include <gperftools/profiler.h>
 
 void M2Function(double& out, std::vector< std::valarray<double>* >& o, double* p)
 {
@@ -133,12 +134,13 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	corrVector.resize(configSpace.lattice->MaxDistance() + 1, 0.0);
 	
 	BuildUpdateWeightMatrix();
+	ProfilerStart("gperf/mc_rhom.prof");
 }
 
 CLASSNAME::~CLASSNAME()
 {
 	delete[] evalableParameters;
-	//fpu_fix_end(&old_cw);
+	ProfilerStop();
 }
 
 void CLASSNAME::random_write(odump& d)
@@ -673,10 +675,10 @@ void CLASSNAME::OptimizeZeta()
 		{
 			sweep = nOptimizationSteps * nOptimizationTherm;
 			value_t zeta2mean = 0.0, zeta4mean = 0.0;
-			for (uint_t i = 0; i < prevZeta.size(); ++i)
+			for (uint_t i = prevZeta.size() / 2; i < prevZeta.size(); ++i)
 			{
-				zeta2mean += prevZeta[i].first / static_cast<value_t>(prevZeta.size());
-				zeta4mean += prevZeta[i].second / static_cast<value_t>(prevZeta.size());
+				zeta2mean += prevZeta[i].first / static_cast<value_t>(prevZeta.size() / 2);
+				zeta4mean += prevZeta[i].second / static_cast<value_t>(prevZeta.size() / 2);
 			}
 			configSpace.zeta2 = zeta2mean;
 			configSpace.zeta4 = zeta4mean;

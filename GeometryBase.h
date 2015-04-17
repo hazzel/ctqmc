@@ -23,7 +23,7 @@ class GeometryBase
 	public:
 		typedef Int_t int_t;
 		using site_t = std::tuple < int_t, int_t, int_t >;
-		using lookup_t = LookUpTable < int_t, int_t, 2 >;
+		using lookup_t = LookUpTable < int_t, 2 >;
 		using vector_t = std::vector< int_t >;
 		enum SublatticeType {A, B};
 		using sub_lat_vector_t = std::vector< SublatticeType >;
@@ -47,7 +47,7 @@ class GeometryBase
 		
 		inline int_t Distance(int_t s1, int_t s2)
 		{
-			return distanceMap[s1][s2];
+			return distanceMap(s1, s2);
 		}
 
 		inline int_t DistanceHistogram(int_t distance)
@@ -128,7 +128,7 @@ class GeometryBase
 			{
 				for (int_t j = 0; j < nSites; ++j)
 				{
-					os.write((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
+					os.write((char*)&distanceMap(i, j), sizeof(distanceMap(i, j)));
 				}
 				for (int_t j = 0; j < nDirections; ++j)
 				{
@@ -158,7 +158,7 @@ class GeometryBase
 					{
 						for (int_t j = 0; j < nSites; ++j)
 						{
-							is.read((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
+							is.read((char*)&distanceMap(i, j), sizeof(distanceMap(i, j)));
 						}
 						for (int_t j = 0; j < nDirections; ++j)
 						{
