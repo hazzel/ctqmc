@@ -232,34 +232,6 @@ class VertexHandler
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
 		}
 		
-		/*
-		void RemoveBufferedVertices(bool isWorm)
-		{
-			for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
-			{
-				if (isWorm)
-					nodes[wormNodes[*(it-1)]] = nodes[nodeNumber - 1];
-				else
-					nodes[*(it-1)] = nodes[nodeNumber - 1];
-				if (nodes[nodeNumber - 1].Worm)
-				{
-					auto wit = std::find(wormNodes.begin(), wormNodes.end(), nodeNumber - 1);
-					if (isWorm)
-						*wit = wormNodes[*(it-1)];
-					else
-						*wit = *(it-1);
-				}
-				--nodeNumber;
-			}
-			if (isWorm)
-			{
-				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
-					wormNodes.erase(wormNodes.begin() + *(it-1));
-			}
-			std::sort(wormNodes.begin(), wormNodes.end());
-		}
-		*/
-		
 		void RemoveBufferedVertices(bool isWorm)
 		{
 			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
@@ -408,7 +380,7 @@ class VertexHandler
 		void WoodburyAddVertices(U& u, V& v, A& a)
 		{
 			uint_t k = nodeNumber;
-			uint_t n = a.cols();
+			uint_t n = a.n_cols;
 			for (uint_t i = 0; i < n; ++i)
 			{
 				for (uint_t j = 0; j < k; ++j)
@@ -488,78 +460,27 @@ class VertexHandler
 			}
 		}
 		
-		template<typename M>
-		void PermuteProgagatorMatrix(M& m, bool isWorm)
+		template<typename P>
+		void PermutationMatrix(P& perm, bool isWorm)
 		{
+			for (uint_t i = 0; i < perm.size(); ++i)
+				perm[i] = i;
 			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
-			for (uint_t i = 0; i < n; i+=2)
+			for (uint_t i = 0; i < n; ++i)
 			{
 				if (isWorm)
-				{
-					m.row(wormNodes[indexBuffer[n - i - 2]]).swap(m.row(m.rows() - i - 2));
-					m.col(wormNodes[indexBuffer[n - i - 2]]).swap(m.col(m.rows() - i - 2));
-					
-					m.row(wormNodes[indexBuffer[n - i - 1]]).swap(m.row(m.rows() - i - 1));
-					m.col(wormNodes[indexBuffer[n - i - 1]]).swap(m.col(m.rows() - i - 1));
+				{	
+					perm[wormNodes[indexBuffer[n - i - 1]]] = perm[nodeNumber - i - 1];
+					perm[nodeNumber - i - 1] = wormNodes[indexBuffer[n - i - 1]];
 				}
 				else
 				{
-					m.row(indexBuffer[n - i - 2]).swap(m.row(m.rows() - i - 2));
-					m.col(indexBuffer[n - i - 2]).swap(m.col(m.rows() - i - 2));
-					
-					m.row(indexBuffer[n - i - 1]).swap(m.row(m.rows() - i - 1));
-					m.col(indexBuffer[n - i - 1]).swap(m.col(m.rows() - i - 1));
+					perm[indexBuffer[n - i - 1]] = perm[nodeNumber - i - 1];
+					perm[nodeNumber - i - 1] = indexBuffer[n - i - 1];
 				}
 			}
 		}
-		
-		template<typename M>
-		void PermuteBackProgagatorMatrix(M& m, bool isWorm)
-		{
-			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
-			for (uint_t i = 0; i < n; i+=2)
-			{
-				if (isWorm)
-				{
-					m.row(wormNodes[indexBuffer[i]]).swap(m.row(m.rows() - n + i));
-					m.col(wormNodes[indexBuffer[i]]).swap(m.col(m.rows() - n + i));
-					
-					m.row(wormNodes[indexBuffer[i + 1]]).swap(m.row(m.rows() - n + i + 1));
-					m.col(wormNodes[indexBuffer[i + 1]]).swap(m.col(m.rows() - n + i + 1));
-				}
-				else
-				{
-					m.row(indexBuffer[i]).swap(m.row(m.rows() - n + i));
-					m.col(indexBuffer[i]).swap(m.col(m.rows() - n + i));
-					
-					m.row(indexBuffer[i + 1]).swap(m.row(m.rows() - n + i + 1));
-					m.col(indexBuffer[i + 1]).swap(m.col(m.rows() - n + i + 1));
-				}
-			}
-		}
-		
-		void test()
-		{
-			Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> t(10, 10);
-			for (uint_t i = 0; i < 10; ++i)
-				for (uint_t j = 0; j < 10; ++j)
-					t(i, j) = 10*i + j;
-			std::cout << "t" << std::endl;
-			PrintMatrix(t);
-			indexBuffer[0] = 2;
-			indexBuffer[1] = 3;
-			indexBuffer[2] = 6;
-			indexBuffer[3] = 7;
-			indexBufferEnd = indexBuffer.begin() + 4;
-			PermuteProgagatorMatrix(t, false);
-			std::cout << "once permuted" << std::endl;
-			PrintMatrix(t);
-			PermuteBackProgagatorMatrix(t, false);
-			std::cout << "twice permuted" << std::endl;
-			PrintMatrix(t);
-			std::cin.get();
-		}
-		
+		/*
 		template<typename P>
 		void PermutationMatrix(P& perm, bool isWorm)
 		{
@@ -586,6 +507,7 @@ class VertexHandler
 				}
 			}
 		}
+		*/
 			
 		void Serialize(odump& d)
 		{
