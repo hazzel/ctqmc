@@ -60,11 +60,11 @@ class UpdateHandler
 			using namespace Eigen;
 			IOFormat CommaInitFmt(StreamPrecision, DontAlignCols, ", ", ", ", "", "", " << ", ";");
 			IOFormat CleanFmt(FullPrecision, 0, ", ", "\n", "[", "]");
-			IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
+			IOFormat OctaveFmt(FullPrecision, 0, ", ", "\n", "[", "]");
 			IOFormat HeavyFmt(FullPrecision, 0, ", ", ",\n", "{", "}", "{", "}");
 			//std::cout << M.format(CommaInitFmt) << std::endl;
-			std::cout << M.format(CleanFmt) << std::endl;
-			//std::cout << M.format(OctaveFmt) << std::endl;
+			//std::cout << M.format(CleanFmt) << std::endl;
+			std::cout << M.format(OctaveFmt) << std::endl;
 			//std::cout << M.format(HeavyFmt) << std::endl;
 		}
 		
@@ -193,16 +193,18 @@ class UpdateHandler
 				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * t;
 				invG.conservativeResize(k - n, k - n);
 				
-				vertexHandler.PrintIndexBuffer();
-				vertexHandler.PrintVertices();
+				//vertexHandler.PrintIndexBuffer();
+				//vertexHandler.PrintVertices();
 				
 				vertexHandler.RemoveBufferedVertices(isWorm);
 				
-				vertexHandler.PrintVertices();
-				double test;
-				StabilizeInvG(test);
-				std::cout << test << std::endl;
-				std::cin.get();
+				//vertexHandler.PrintVertices();
+				//PrintMatrix(invG);
+				//double test;
+				//StabilizeInvG(test);
+				//PrintMatrix(invG);
+				//std::cout << test << std::endl;
+				//std::cin.get();
 				return true;
 			}
 			else
