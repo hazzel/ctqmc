@@ -232,6 +232,7 @@ class VertexHandler
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
 		}
 		
+		/*
 		void RemoveBufferedVertices(bool isWorm)
 		{
 			for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
@@ -250,6 +251,40 @@ class VertexHandler
 				}
 				--nodeNumber;
 			}
+			if (isWorm)
+			{
+				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
+					wormNodes.erase(wormNodes.begin() + *(it-1));
+			}
+			std::sort(wormNodes.begin(), wormNodes.end());
+		}
+		*/
+		
+		void RemoveBufferedVertices(bool isWorm)
+		{
+			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
+			for (uint_t i = 0; i < n; ++i)
+			{
+				if (isWorm)
+				{
+					if (nodes[nodeNumber - i - 1].Worm)
+					{
+						auto wit = std::find(wormNodes.begin(), wormNodes.end(), nodeNumber - i - 1);
+						*wit = wormNodes[indexBuffer[n - i - 1]];
+					}
+					std::swap(nodes[wormNodes[indexBuffer[n - i - 1]]], nodes[nodeNumber - i - 1]);
+				}
+				else
+				{
+					if (nodes[nodeNumber - i - 1].Worm)
+					{
+						auto wit = std::find(wormNodes.begin(), wormNodes.end(), nodeNumber - i - 1);
+						*wit = indexBuffer[n - i - 1];
+					}
+					std::swap(nodes[indexBuffer[n - i - 1]], nodes[nodeNumber - i - 1]);
+				}
+			}
+			nodeNumber -= n;
 			if (isWorm)
 			{
 				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
