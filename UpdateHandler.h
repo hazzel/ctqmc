@@ -193,11 +193,16 @@ class UpdateHandler
 				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * t;
 				invG.conservativeResize(k - n, k - n);
 				
+				vertexHandler.PrintIndexBuffer();
+				vertexHandler.PrintVertices();
+				
 				vertexHandler.RemoveBufferedVertices(isWorm);
 				
+				vertexHandler.PrintVertices();
 				double test;
 				StabilizeInvG(test);
 				std::cout << test << std::endl;
+				std::cin.get();
 				return true;
 			}
 			else
