@@ -193,13 +193,8 @@ class UpdateHandler
 			
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
 			vertexHandler.PermuteProgagatorMatrix(invGp, isWorm);
-			
-			//std::vector<value_t> perm(k);
-			//vertexHandler.PermutationMatrix(perm, isWorm);
 			//matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
-			//for (uint_t i = 0; i < k; ++i)
-			//	for (uint_t j = 0; j < k; ++j)
-			//		invGp(i, j) = invG(perm[i], perm[j]);
+			//vertexHandler.FillPermutedMatrix(invG, invGp, isWorm);
 			
 			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
 			value_t acceptRatio;
