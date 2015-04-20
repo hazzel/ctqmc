@@ -5,6 +5,7 @@
 #include <limits>
 #include <functional>
 #include <omp.h>
+#include <gperftools/profiler.h>
 
 void M2Function(double& out, std::vector< std::valarray<double>* >& o, double* p)
 {
@@ -133,12 +134,14 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	corrVector.resize(configSpace.lattice->MaxDistance() + 1, 0.0);
 	
 	BuildUpdateWeightMatrix();
+	ProfilerStart("gperf/mc.prof");
 }
 
 CLASSNAME::~CLASSNAME()
 {
 	delete[] evalableParameters;
 	//fpu_fix_end(&old_cw);
+	ProfilerStop();
 }
 
 void CLASSNAME::random_write(odump& d)
