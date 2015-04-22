@@ -12,17 +12,17 @@ color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 L = ["2", "3", "4", "5", "6", "9", "12", "15"]
 for l in range(len(L)):
 	filelist = []
-	#filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot_hex_V1.5/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot_hex_V1.75/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot_hex_V1.875/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_hex_V2.25/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_hex_V2.5/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_hex_V3.0/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V2.25/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V2.5/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V3.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V3.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
 	for f in range(len(filelist)):

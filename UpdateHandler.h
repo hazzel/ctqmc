@@ -191,10 +191,60 @@ class UpdateHandler
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
 			
+			//matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
+			//vertexHandler.PermuteProgagatorMatrix(invGp, isWorm);
+			
+			matrix_t<n, n> S(n, n);
+			vertexHandler.FillSMatrix(S, invG, isWorm);
+			value_t acceptRatio;
+			if (flag == UpdateFlag::NormalUpdate)
+			{
+				det = S.determinant();
+				acceptRatio = preFactor * det;
+			}
+			else if (flag == UpdateFlag::NoUpdate)
+			{
+				det = S.determinant();
+				acceptRatio = 0.0;
+			}
+			else if (flag == UpdateFlag::ForceUpdate)
+			{
+				acceptRatio = 1.0;
+			}
+			if (print && acceptRatio < 0.0)
+			{
+				std::cout << "RemoveVertices(" << N << "): AcceptRatio" << acceptRatio << std::endl;
+				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
+			}
+			if (configSpace.rng() < acceptRatio)
+			{
+				vertexHandler.PermuteProgagatorMatrix(invG, isWorm);
+				matrix_t<n, Eigen::Dynamic> t = S.inverse() * invG.bottomLeftCorner(n, k - n);
+				invG.topLeftCorner(k - n, k - n).noalias() -= invG.topRightCorner(k - n, n) * t;
+				invG.conservativeResize(k - n, k - n);
+
+				vertexHandler.RemoveBufferedVertices(isWorm);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+		/*
+		template<int_t N>
+		bool RemoveVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
+		{
+			if (isWorm && vertexHandler.Worms() < N)
+				return false;
+			if ((!isWorm) && vertexHandler.Vertices() < N)
+				return false;
+			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
+			const uint_t n = 2 * N;
+			
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
 			vertexHandler.PermuteProgagatorMatrix(invGp, isWorm);
-			//matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k, k);
-			//vertexHandler.FillPermutedMatrix(invG, invGp, isWorm);
 			
 			matrix_t<n, n> S = invGp.template bottomRightCorner<n, n>();
 			value_t acceptRatio;
@@ -231,6 +281,7 @@ class UpdateHandler
 				return false;
 			}
 		}
+		*/
 		
 
 		/*

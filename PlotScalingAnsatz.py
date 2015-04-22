@@ -15,11 +15,11 @@ for l in range(len(L)):
 	#filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.25/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V3.0*/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_hex_V3.5*/*L" + L[l] + "*.out"))
 
 	for f in range(len(filelist)):
 		if len(filelist[f]) == 0:
@@ -27,11 +27,13 @@ for l in range(len(L)):
 		filelist[f].sort()
 		z = 0
 		beta = 0.125
-		eta = 0.9
+		eta = 0.25
 		nu = 1.
 		gamma = 7./4.
 		V = 3.0
-		Tc = 0.26
+		#Tc = 0.516
+		#Tc = 0.92
+		Tc = 1.19
 		x = []
 		yM2 = []
 		yM2err = []
@@ -56,21 +58,21 @@ for l in range(len(L)):
 			plt.suptitle(r'$V = ' + m.group(0)[1:] + ',\ T_c = ' + str(Tc) + ',\ \\nu = ' + str(nu) + ',\ \\eta = ' + str(eta) + ',\ z = ' + str(z) + '$', fontsize=16)
 		plt.subplot(2, 2, 1)
 		plt.xlabel(r'$T$')
-		plt.ylabel(r'$M_2 L^{2 \beta/\nu}$')
+		plt.ylabel(r'$M_2 L^{\eta}$')
 		plt.plot(np.array(x), np.array(yM2), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM2), yerr=np.array(yM2err), color=color_cycle[l])
 		plt.legend(loc='upper right')
 		
 		plt.subplot(2, 2, 3)
 		plt.xlabel(r'$T$')
-		plt.ylabel(r'$M_4 L^{4 \beta/\nu}$')
+		plt.ylabel(r'$M_4 L^{2 \eta}$')
 		plt.plot(np.array(x), np.array(yM4), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM4), yerr=np.array(yM4err), color=color_cycle[l])
 		plt.legend(loc='upper right')
 		
 		plt.subplot(2, 2, 2)
 		plt.xlabel(r'$(T-T_c)L^{1/\nu}$')
-		plt.ylabel(r'$M_2 L^{z+\eta}$')
+		plt.ylabel(r'$M_2 L^{\eta}$')
 		for i in range(len(x)):
 			x[i] = (x[i] - Tc) * float(L[l])**(1./nu)
 		plt.plot(np.array(x), np.array(yM2), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
@@ -79,7 +81,7 @@ for l in range(len(L)):
 		
 		plt.subplot(2, 2, 4)
 		plt.xlabel(r'$(T-T_c)L^{1/\nu}$')
-		plt.ylabel(r'$M_4 L^{2z+2\eta}$')
+		plt.ylabel(r'$M_4 L^{2\eta}$')
 		plt.plot(np.array(x), np.array(yM4), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM4), yerr=np.array(yM4err), color=color_cycle[l])
 		plt.legend(loc='upper right')

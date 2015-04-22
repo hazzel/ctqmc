@@ -482,21 +482,20 @@ class VertexHandler
 			}
 		}
 		
-		template<typename M>
-		void FillPermutedMatrix(M& m1, M& m2, bool isWorm)
+		template<typename M, typename N>
+		void FillSMatrix(M& S, N& invG, bool isWorm)
 		{
-			/*
 			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
-			uint_t last = 0;
 			for (uint_t i = 0; i < n; i+=2)
 			{
-				for (uint_t i = 0; i < n; i+=2)
+				for (uint_t j = 0; j < n; j+=2)
 				{
-					m1.block(last, 0, indexBuffer[i], indexBuffer[i]);
-					m1.block(0, 0, indexBuffer[i], indexBuffer[i]);
+					if (isWorm)
+						S.template block<2, 2>(i, j) = invG.template block<2, 2>(wormNodes[indexBuffer[i]], wormNodes[indexBuffer[j]]);
+					else
+						S.template block<2, 2>(i, j) = invG.template block<2, 2>(indexBuffer[i], indexBuffer[j]);
 				}
 			}
-			*/
 		}
 		
 		template<typename P>
