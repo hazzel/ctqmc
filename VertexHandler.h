@@ -317,7 +317,24 @@ class VertexHandler
 		void ApplyWormShift()
 		{
 			for (uint_t i = 0; i < wormNodes.size(); ++i)
+			{
 				nodes[wormNodes[i]] = nodeBuffer[i];
+			}
+		}
+		
+		template<typename P>
+		void ApplyWormShift(P& perm)
+		{
+			uint_t k = nodes.size();
+			std::vector<node_t> nodesTmp(nodes);
+			for (uint_t i = 0; i < k; ++i)
+				nodes[i] = nodesTmp[perm[i]];
+			
+			for (uint_t i = 0; i < wormNodes.size(); ++i)
+			{
+				wormNodes[i] = k - wormNodes.size() + i;
+				nodes[wormNodes[i]] = nodeBuffer[i];
+			}
 		}
 		
 		std::size_t Vertices()
@@ -422,7 +439,9 @@ class VertexHandler
 					if (!nodes[j].Worm)
 					{
 						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-						v(i, n) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
+						//v(i, n) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
+						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
+						v(i, n) = u(n, i) * sign;
 						++n;
 					}
 				}
@@ -431,7 +450,9 @@ class VertexHandler
 					if (i < j)
 					{
 						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
+						a(j, i) = a(i, j) * sign;
+						//a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 					}
 				}
 				a(i, i) = 0.0;

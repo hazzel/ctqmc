@@ -142,6 +142,7 @@ class CLASSNAME
 		int nUpdateType = 15;
 		int nStateType = 3;
 		matrix_t updateWeightMatrix = matrix_t(nUpdateType, nStateType);
+		matrix_t proposeProbabilityMatrix = matrix_t(nUpdateType, nStateType);
 		matrix_t acceptedUpdates = matrix_t(nUpdateType, nStateType);
 		matrix_t proposedUpdates = matrix_t(nUpdateType, nStateType);
 		parser param;

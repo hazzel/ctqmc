@@ -28,7 +28,7 @@ public:
 	{
 		AllocateTable(dimX, dimY);
 	}
-	virtual ~LookUpTable()
+	~LookUpTable()
 	{
 		DeallocateTable();
 	}
@@ -111,7 +111,7 @@ public:
 	{
 		AllocateTable(dimX, dimY);
 	}
-	virtual ~LookUpTable()
+	~LookUpTable()
 	{
 		DeallocateTable();
 	}
@@ -189,7 +189,7 @@ class LookUpTable<T, 3>
 		{
 			AllocateTable(dimX, dimY, dimZ);
 		}
-		virtual ~LookUpTable()
+		~LookUpTable()
 		{
 			DeallocateTable();
 		}
