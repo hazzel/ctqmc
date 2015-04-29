@@ -5,7 +5,7 @@
 #include <limits>
 #include <functional>
 #include <omp.h>
-//#include <gperftools/profiler.h>
+#include <gperftools/profiler.h>
 
 void M2Function(double& out, std::vector< std::valarray<double>* >& o, double* p)
 {

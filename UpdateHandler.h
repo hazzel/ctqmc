@@ -50,7 +50,7 @@ class UpdateHandler
 		{
 			using namespace Eigen;
 			IOFormat CommaInitFmt(StreamPrecision, DontAlignCols, ", ", ", ", "", "", " << ", ";");
-			IOFormat CleanFmt(1, 0, ", ", "\n", "[", "]");
+			IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
 			IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
 			IOFormat HeavyFmt(FullPrecision, 0, ", ", ",\n", "{", "}", "{", "}");
 			//std::cout << M.format(CommaInitFmt) << std::endl;
@@ -269,7 +269,51 @@ class UpdateHandler
 				return false;
 			}
 		}
-/*
+		
+		
+		template<int_t W>
+		bool ShiftWorm()
+		{
+			uint_t k = 2 * vertexHandler.Vertices();
+			const uint_t l = 2 * W;
+
+			matrix_t<Eigen::Dynamic, l> U_row(k + l, l), U_col(k + l, l);
+			matrix_t<l, Eigen::Dynamic> V_row(l, k + l), V_col(l, k + l);
+			vertexHandler.WoodburyShiftRowsCols(U_row, V_col);
+			V_row.setZero();
+			U_col.setZero();
+			for (uint_t i = 0; i < l; ++i)
+			{
+				V_row(i, vertexHandler.WormPositions()[i]) = 1.0;
+				U_col(vertexHandler.WormPositions()[i], i) = 1.0;
+			}
+			matrix_t<l, l> W = V_col * V_row.transpose();
+			W.noalias() += U_col.transpose() * U_row;
+			matrix_t<l, l> T = W.inverse();
+			T.noalias() += V_row * invG * U_col;
+			
+			value_t acceptRatio = W.determinant() * T.determinant() * vertexHandler.WormShiftParity();
+			if (print && acceptRatio < 0.0)
+			{
+				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
+			}
+			if (configSpace.rng() < acceptRatio)
+			{
+				matrix_t<Eigen::Dynamic, l> invGu = invG * U_col;
+				matrix_t<l, Eigen::Dynamic> invGv = V_row * invG;
+				invG.noalias() -= invGu * T.inverse() * invGv;
+
+				vertexHandler.ApplyWormShift();
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+		
+		/*
 		template<int_t W>
 		bool ShiftWorm()
 		{
@@ -283,12 +327,8 @@ class UpdateHandler
 			vertexHandler.ShiftWormToBuffer();
 			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
 
-			std::vector<value_t> perm(k + l);
-			vertexHandler.PermutationMatrix(perm, true);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k + l, k + l);
-			for (uint_t i = 0; i < k + l; ++i)
-				for (uint_t j = 0; j < k + l; ++j)
-					invGp(i, j) = invG(perm[i], perm[j]);
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
+			vertexHandler.PermuteProgagatorMatrix(invGp, true);
 			
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> M = invGp.topLeftCorner(k, k);
 			M.noalias() -= invGp.topRightCorner(k, l) * invGp.template bottomRightCorner<l, l>().inverse() * invGp.bottomLeftCorner(l, k);
@@ -299,40 +339,36 @@ class UpdateHandler
 			shiftedInvS.noalias() -= shiftedWormV * M * shiftedWormU;
 			value_t detAdd = shiftedInvS.determinant();
 
-			value_t preFactorRem, preFactorAdd;
-			value_t m = configSpace.lattice->Sites();
-			if (W == 1)
-			{
-				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
-				preFactorAdd = 1.0 / preFactorRem;
-			}
-			else if (W == 2)
-			{
-				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
-				preFactorAdd = 1.0 / preFactorRem;
-			}
-
-			//value_t acceptRatio = detRem * detAdd * vertexHandler.WormShiftParity();
-			value_t acceptRatio = std::min({detRem * preFactorRem, 1.0}) * std::min({detAdd * preFactorAdd, 1.0}) * vertexHandler.WormShiftParity();
+			value_t acceptRatio = detRem * detAdd * vertexHandler.WormShiftParity();
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
+				matrix_t<Eigen::Dynamic, l> U_row(k + l, l), U_col(k + l, l);
+				matrix_t<l, Eigen::Dynamic> V_row(l, k + l), V_col(l, k + l);
 				
-				matrix_t<l, l> S = shiftedInvS.inverse();
-				matrix_t<l, Eigen::Dynamic> R = -S * shiftedWormV * M;
-				matrix_t<Eigen::Dynamic, l> Mu = M * shiftedWormU;
+				vertexHandler.WoodburyShiftRowsCols(U_row, V_col);
+				V_row.setZero();
+				U_col.setZero();
+				for (uint_t i = 0; i < l; ++i)
+				{
+					V_row(i, vertexHandler.WormPositions()[i]) = 1.0;
+					U_col(vertexHandler.WormPositions()[i], i) = 1.0;
+				}
+				
+				matrix_t<Eigen::Dynamic, l> invGu = invG * U_row;
+				matrix_t<l, Eigen::Dynamic> invGv = V_row * invG;
+				matrix_t<l, l> t = (matrix_t<l, l>::Identity() + V_row * invGu).inverse();
+				invG.noalias() -= invGu * t * invGv;
+				
+				invGu = invG * U_col;
+				invGv = V_col * invG;
+				t = (matrix_t<l, l>::Identity() + V_col * invGu).inverse();
+				invG.noalias() -= invGu * t * invGv;
 
-				invG.topLeftCorner(k, k) = M;
-				invG.topLeftCorner(k, k).noalias() -= Mu * R;
-				invG.topRightCorner(k, l).noalias() = -Mu * S;
-				invG.bottomLeftCorner(l, k) = R;
-				invG.template bottomRightCorner<l, l>() = S;
-				
-				vertexHandler.ApplyWormShift(perm);
-				
+				vertexHandler.ApplyWormShift();
 				return true;
 			}
 			else
@@ -343,84 +379,6 @@ class UpdateHandler
 		*/
 		
 		/*
-		template<int_t W>
-		bool ShiftWorm()
-		{
-			uint_t k = 2 * vertexHandler.Vertices();
-			const uint_t l = 2 * W;
-
-			matrix_t<Eigen::Dynamic, l> wormU(k, l), shiftedWormU(k, l);
-			matrix_t<l, Eigen::Dynamic> wormV(l, k), shiftedWormV(l, k);
-			matrix_t<l, l> wormA(l, l), shiftedWormA(l, l);
-
-			vertexHandler.ShiftWormToBuffer();
-			vertexHandler.WoodburyWorm(wormU, wormV, wormA);
-			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
-
-			std::vector<value_t> perm(k + l);
-			vertexHandler.PermutationMatrix(perm, true);
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(k + l, k + l);
-			for (uint_t i = 0; i < k + l; ++i)
-				for (uint_t j = 0; j < k + l; ++j)
-					invGp(i, j) = invG(perm[i], perm[j]);
-			
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> M = invGp.topLeftCorner(k, k);
-			M.noalias() -= invGp.topRightCorner(k, l) * invGp.template bottomRightCorner<l, l>().inverse() * invGp.bottomLeftCorner(l, k);
-			
-			matrix_t<l, l> invS = wormA;
-			invS.noalias() -= wormV * M * wormU;
-			value_t detInvS = invS.determinant();
-
-			matrix_t<l, l> shiftedInvS = shiftedWormA;
-			shiftedInvS.noalias() -= shiftedWormV * M * shiftedWormU;
-			value_t detShiftedInvS = shiftedInvS.determinant();
-
-			value_t preFactorRem, preFactorAdd;
-			value_t m = configSpace.lattice->Sites();
-			if (W == 1)
-			{
-				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
-				preFactorAdd = 1.0 / preFactorRem;
-			}
-			else if (W == 2)
-			{
-				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
-				preFactorAdd = 1.0 / preFactorRem;
-			}
-
-			value_t acceptRatio = detShiftedInvS / detInvS * vertexHandler.WormShiftParity();
-			if (print && acceptRatio < 0.0)
-			{
-				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
-			}
-			if (configSpace.rng() < acceptRatio)
-			{
-				
-				matrix_t<l, l> S = shiftedInvS.inverse();
-				matrix_t<l, Eigen::Dynamic> R = -S * shiftedWormV * M;
-				matrix_t<Eigen::Dynamic, l> Mu = M * shiftedWormU;
-				invGp.topLeftCorner(k, k) = M;
-				invGp.topLeftCorner(k, k).noalias() -= Mu * R;
-				invGp.topRightCorner(k, l).noalias() = -Mu * S;
-				invGp.bottomLeftCorner(l, k) = R;
-				invGp.template bottomRightCorner<l, l>() = S;
-				
-				for (uint_t i = 0; i < k + l; ++i)
-					for (uint_t j = 0; j < k + l; ++j)
-						invG(perm[i], perm[j]) = invGp(i, j);
-
-				vertexHandler.ApplyWormShift();
-				
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-		*/
-		
-		
 		template<int_t W>
 		bool ShiftWorm()
 		{
@@ -453,6 +411,7 @@ class UpdateHandler
 			}
 			return false;
 		}
+		*/
 
 		void Clear()
 		{
@@ -503,6 +462,21 @@ class UpdateHandler
 			invG = stabInvG;
 			//return MatrixCondition(invG);
 			return 0.0;
+		}
+		
+		template<typename Matrix>
+		void SymmetrizeMatrix(Matrix& M)
+		{	
+			for (uint_t i = 0; i < M.rows(); ++i)
+			{
+				for (uint_t j = 0; j < i; ++j)
+				{
+					value_t mean = (std::abs(M(i, j)) + std::abs(M(j, i))) / 2.0;
+					M(i, j) = sgn(M(i, j)) * mean;
+					M(j, i) = sgn(M(j, i)) * mean;
+				}
+				M(i, i) = 0.;
+			}
 		}
 		
 		VertexHandler_t& GetVertexHandler()

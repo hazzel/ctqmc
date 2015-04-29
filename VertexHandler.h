@@ -379,7 +379,6 @@ class VertexHandler
 				for (uint_t j = 0; j < k; ++j)
 				{
 					u(j, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-					//v(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 					value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
 					v(i, j) = u(j, i) * sign;
 				}
@@ -390,7 +389,6 @@ class VertexHandler
 						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
 						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
 						a(j, i) = a(i, j) * sign;
-						//a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 					}
 				}
 				a(i, i) = 0.0;
@@ -410,7 +408,8 @@ class VertexHandler
 					if (!nodes[j].Worm)
 					{
 						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau + configSpace.infinTau);
-						v(i, n) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[j].Site, nodes[wormNodes[i]].Tau - nodes[j].Tau - configSpace.infinTau);
+						value_t sign = (configSpace.lattice->Sublattice(nodes[wormNodes[i]].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
+						v(i, n) = u(n, i) * sign;
 						++n;
 					}
 				}
@@ -419,7 +418,8 @@ class VertexHandler
 					if (i < j)
 					{
 						a(i, j) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Tau - nodes[wormNodes[j]].Tau + configSpace.infinTau);
-						a(j, i) = configSpace.LookUpG0(nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Tau - nodes[wormNodes[i]].Tau - configSpace.infinTau);
+						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
+						a(j, i) = a(i, j) * sign;
 					}
 				}
 				a(i, i) = 0.0;
@@ -439,7 +439,6 @@ class VertexHandler
 					if (!nodes[j].Worm)
 					{
 						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-						//v(i, n) = configSpace.LookUpG0(nodeBuffer[i].Site, nodes[j].Site, nodeBuffer[i].Tau - nodes[j].Tau - configSpace.infinTau);
 						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
 						v(i, n) = u(n, i) * sign;
 						++n;
@@ -452,11 +451,71 @@ class VertexHandler
 						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
 						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
 						a(j, i) = a(i, j) * sign;
-						//a(j, i) = configSpace.LookUpG0(nodeBuffer[j].Site, nodeBuffer[i].Site, nodeBuffer[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
 					}
 				}
 				a(i, i) = 0.0;
 			}
+		}
+		
+		template<typename U, typename V>
+		void WoodburyShiftRowsCols(U& u, V& v)
+		{
+			uint_t k = nodes.size();
+			uint_t l = wormNodes.size();
+			value_t shiftedU, U;
+			for (uint_t i = 0; i < l; ++i)
+			{
+				uint_t n = 0;
+				for (uint_t j = 0; j < k; ++j)
+				{
+					if (j == wormNodes[i])
+					{
+						u(j, i) = 0.0;
+						v(i, j) = 0.0;
+						++n;
+					}
+					else if (!nodes[j].Worm)
+					{
+						if (j < wormNodes[i])
+						{
+							shiftedU = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau + configSpace.infinTau);
+							u(j, i) = shiftedU - U;
+						}
+						else
+						{
+							shiftedU = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau - configSpace.infinTau);
+							u(j, i) = shiftedU - U;
+						}
+						value_t shiftedV = shiftedU * (configSpace.lattice->Sublattice(nodes[j].Site) == configSpace.lattice->Sublattice(nodeBuffer[i].Site) ? -1.0 : 1.0);
+						value_t V = U * (configSpace.lattice->Sublattice(nodes[j].Site) == configSpace.lattice->Sublattice(nodes[wormNodes[i]].Site) ? -1.0 : 1.0);
+						v(i, j) = shiftedV - V;
+					}
+					else
+					{
+						if (j < wormNodes[i])
+						{
+							shiftedU = configSpace.LookUpG0(nodeBuffer[n].Site, nodeBuffer[i].Site, nodeBuffer[n].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau + configSpace.infinTau);
+							u(j, i) = shiftedU - U;
+						}
+						else
+						{
+							shiftedU = configSpace.LookUpG0(nodeBuffer[n].Site, nodeBuffer[i].Site, nodeBuffer[n].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
+							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau - configSpace.infinTau);
+							u(j, i) = shiftedU - U;
+						}
+						v(i, j) = 0.0;
+						++n;
+					}
+				}
+			}
+		}
+		
+		std::vector<std::size_t>& WormPositions()
+		{
+			return wormNodes;
 		}
 		
 		template<typename M>

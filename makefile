@@ -64,7 +64,8 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	SUPERLP =
 else
 #	CFLAGS  = -O3 -ffast-math -march=native -pipe -g -Wall $(DEFINES)
-	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -std=c++11 -g $(DEFINES)
+#	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -std=c++11 -g $(DEFINES)
+	CFLAGS  = -Ofast -ffast-math -flto -fwhole-program -Wno-deprecated -std=c++11 -g $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/gperftools-2.4/install/include
 	LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -lprofiler
 	SUPERLP =
