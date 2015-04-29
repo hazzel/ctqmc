@@ -270,13 +270,14 @@ class UpdateHandler
 			}
 		}
 		
-		
+		/*
 		template<int_t W>
 		bool ShiftWorm()
 		{
 			uint_t k = 2 * vertexHandler.Vertices();
 			const uint_t l = 2 * W;
 
+			vertexHandler.ShiftWormToBuffer();
 			matrix_t<Eigen::Dynamic, l> U_row(k + l, l), U_col(k + l, l);
 			matrix_t<l, Eigen::Dynamic> V_row(l, k + l), V_col(l, k + l);
 			vertexHandler.WoodburyShiftRowsCols(U_row, V_col);
@@ -287,8 +288,10 @@ class UpdateHandler
 				V_row(i, vertexHandler.WormPositions()[i]) = 1.0;
 				U_col(vertexHandler.WormPositions()[i], i) = 1.0;
 			}
-			matrix_t<l, l> W = V_col * V_row.transpose();
-			W.noalias() += U_col.transpose() * U_row;
+			matrix_t<l, Eigen::Dynamic> U_col_inv = U_col.transpose() * (U_col * U_col.transpose()).inverse();
+			matrix_t<Eigen::Dynamic, l> V_row_inv = (V_row.transpose() * V_row).inverse() * V_row.transpose();
+			matrix_t<l, l> W = V_col * V_row_inv;
+			W.noalias() += U_col_inv * U_row;
 			matrix_t<l, l> T = W.inverse();
 			T.noalias() += V_row * invG * U_col;
 			
@@ -297,6 +300,7 @@ class UpdateHandler
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
 			}
+			std::cout << acceptRatio << std::endl;
 			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t<Eigen::Dynamic, l> invGu = invG * U_col;
@@ -304,6 +308,7 @@ class UpdateHandler
 				invG.noalias() -= invGu * T.inverse() * invGv;
 
 				vertexHandler.ApplyWormShift();
+				std::cout << "---" << std::endl;
 				return true;
 			}
 			else
@@ -311,9 +316,9 @@ class UpdateHandler
 				return false;
 			}
 		}
+		*/
 		
 		
-		/*
 		template<int_t W>
 		bool ShiftWorm()
 		{
@@ -376,7 +381,7 @@ class UpdateHandler
 				return false;
 			}
 		}
-		*/
+		
 		
 		/*
 		template<int_t W>
