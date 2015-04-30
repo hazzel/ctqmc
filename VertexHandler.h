@@ -295,7 +295,7 @@ class VertexHandler
 			
 			nodeBuffer[r].Site = configSpace.lattice->RandomWalk(nodeBuffer[r].Site, 1, configSpace.rng);
 			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
-			nodeBuffer[r].Tau += -0.05 * configSpace.beta + configSpace.rng() * 0.1 * configSpace.beta;
+			nodeBuffer[r].Tau += -0.1 * configSpace.beta + configSpace.rng() * 0.2 * configSpace.beta;
 			if (nodeBuffer[r].Tau > configSpace.beta)
 				nodeBuffer[r].Tau -= configSpace.beta;
 			else if (nodeBuffer[r].Tau < 0.0)
@@ -376,11 +376,15 @@ class VertexHandler
 			uint_t n = std::distance(nodeBuffer.begin(), nodeBufferEnd);
 			for (uint_t i = 0; i < n; ++i)
 			{
-				for (uint_t j = 0; j < k; ++j)
+				for (uint_t j = 0; j < k; j+=2)
 				{
 					u(j, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
 					value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
 					v(i, j) = u(j, i) * sign;
+					
+					u(j + 1, i) = configSpace.LookUpG0(nodes[j + 1].Site, nodeBuffer[i].Site, nodes[j + 1].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j + 1].Site) ? -1.0 : 1.0);
+					v(i, j + 1) = u(j + 1, i) * sign;
 				}
 				for (uint_t j = 0; j < n; ++j)
 				{

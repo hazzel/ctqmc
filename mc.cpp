@@ -134,13 +134,13 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	corrVector.resize(configSpace.lattice->MaxDistance() + 1, 0.0);
 	
 	BuildUpdateWeightMatrix();
-	//ProfilerStart("gperf/mc.prof");
+	ProfilerStart("gperf/mc.prof");
 }
 
 CLASSNAME::~CLASSNAME()
 {
 	delete[] evalableParameters;
-	//ProfilerStop();
+	ProfilerStop();
 }
 
 void CLASSNAME::random_write(odump& d)
@@ -290,23 +290,22 @@ bool CLASSNAME::is_thermalized()
 
 void CLASSNAME::BuildUpdateWeightMatrix()
 {
-
 	//ALL TRANSITIONS
-	proposeProbabilityMatrix <<	0.25 / 10.0	,	0.2 / 10.0	,	0.2 / 10.0,
-											4.75 / 10.0	,	3.8 / 10.0	,	3.8 / 10.0,
+	proposeProbabilityMatrix <<	0.625 / 10.0,	0.4 / 10.0	,	0.4 / 10.0,
+											4.375 / 10.0,	2.6 / 10.0	,	2.6 / 10.0,
 											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-											0.05 / 10.0	,	0.05 / 10.0	,	0.05 / 10.0,
-											0.95 / 10.0	,	0.95 / 10.0	,	0.95 / 10.0,
-											0.05 / 10.0	,	0.05 / 10.0	,	0.05 / 10.0,
-											0.95 / 10.0	,	0.95 / 10.0	,	0.95 / 10.0,
-											1.5 / 10.0	,	0.0			,	0.0,
-											0.0			,	1.5 / 10.0	,	0.0, 
-											1.5 / 10.0	,	0.0			,	0.0,
-											0.0			,	0.0			,	1.5 / 10.0,
-											0.0			,	1.5 / 10.0	,	0.0,
-											0.0			,	0.0			,	1.5 / 10.0,
-											0.0			,	1.0 / 10.0	,	1.0 / 10.0;
+											0.125 / 10.0,	0.125 / 10.0,	0.125 / 10.0,
+											0.875 / 10.0,	0.875 / 10.0,	0.875 / 10.0,
+											0.1 / 10.0	,	0.9 / 10.0	,	0.1 / 10.0,
+											0.9 / 10.0	,	0.1 / 10.0	,	0.9 / 10.0,
+											0.5 / 10.0	,	0.0			,	0.0,
+											0.0			,	0.5 / 10.0	,	0.0, 
+											0.5 / 10.0	,	0.0			,	0.0,
+											0.0			,	0.0			,	0.5 / 10.0,
+											0.0			,	0.5 / 10.0	,	0.0,
+											0.0			,	0.0			,	0.5 / 10.0,
+											0.0			,	4.0 / 10.0	,	4.0 / 10.0;
 
 /*
 	//ALL TRANSITIONS
@@ -337,45 +336,6 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 				updateWeightMatrix(i, j) = updateWeightMatrix(i - 1, j) + proposeProbabilityMatrix(i, j);
 		}
 	}
-	
-	/*
-	//ALL TRANSITIONS
-	updateWeightMatrix <<				5.0 / 30.0	,	2.0 / 10.0	,	2.0 / 10.0,
-												5.0 / 10.0	,	4.0 / 10.0	,	4.0 / 10.0,
-												0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												5.5 / 10.0	,	4.5 / 10.0	,	4.5 / 10.0,
-												6.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
-												6.5 / 10.0	,	5.5 / 10.0	,	5.5 / 10.0,
-												7.0 / 10.0	,	6.0 / 10.0	,	6.0 / 10.0,
-												8.5 / 10.0	,	0.0			,	0.0,
-												0.0			,	7.5 / 10.0	,	0.0, 
-												10.0 / 10.0	,	0.0			,	0.0,
-												0.0			,	0.0			,	7.5 / 10.0,
-												0.0			,	9.0 / 10.0	,	0.0,
-												0.0			,	0.0			,	9.0 / 10.0,
-												0.0			,	10.0 / 10.0	,	10.0 / 10.0;
-	*/
-
-	/*
-	//ONLY Z
-	updateWeightMatrix <<				2.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												4.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												5.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												6.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												7.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												8.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												9.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												10.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-												0.0 / 10.0	,	0.0			,	0.0,
-												0.0			,	0.0 / 10.0	,	0.0, 
-												0.0 / 10.0	,	0.0			,	0.0,
-												0.0			,	0.0			,	0.0 / 10.0,
-												0.0			,	0.0 / 10.0	,	0.0,
-												0.0			,	0.0			,	0.0 / 10.0,
-												0.0			,	0.0 / 10.0	,	0.0 / 10.0;
-	*/
-
 	acceptedUpdates.setZero();
 	proposedUpdates.setZero();
 }
@@ -398,7 +358,7 @@ void CLASSNAME::PrintAcceptanceMatrix(std::ostream& out)
 		}
 		out << std::endl;
 	}
-	out << "Total updates accepted: " << acceptedUpdates.sum() << std::endl;
+	out << "Total updates accepted: " << acceptedUpdates.sum() << " (" << acceptedUpdates.sum() / proposedUpdates.sum() * 100.0 << " %)" << std::endl;
 	out << "Total updates proposed: " << proposedUpdates.sum() << std::endl;
 }
 

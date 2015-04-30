@@ -235,6 +235,13 @@ class ConfigSpace
 							uint_t x = i * N - (i + i*i) / 2 + j;
 							lookUpTableG0(x, t) = G0(i, j);
 						}
+						/*
+						for (uint_t j = 0; j < lattice->Sites(); ++j)
+						{
+							if (t == 3372 && lattice->Distance(i, j) == 4 && i == 23)
+								std::cout << G0(i, j) << std::endl;
+						}
+						*/
 					}
 					if (t % (nTimeBins / 10) == 0)
 					{
