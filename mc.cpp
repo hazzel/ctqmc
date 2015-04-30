@@ -134,13 +134,13 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	corrVector.resize(configSpace.lattice->MaxDistance() + 1, 0.0);
 	
 	BuildUpdateWeightMatrix();
-	ProfilerStart("gperf/mc.prof");
+	//ProfilerStart("gperf/mc.prof");
 }
 
 CLASSNAME::~CLASSNAME()
 {
 	delete[] evalableParameters;
-	ProfilerStop();
+	//ProfilerStop();
 }
 
 void CLASSNAME::random_write(odump& d)
