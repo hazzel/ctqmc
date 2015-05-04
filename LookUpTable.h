@@ -111,6 +111,10 @@ public:
 	{
 		AllocateTable(dimX, dimY);
 	}
+	LookUpTable(uint_t dimX, uint_t dimY, T value)
+	{
+		AllocateTable(dimX, dimY, value);
+	}
 	~LookUpTable()
 	{
 		DeallocateTable();
@@ -161,6 +165,14 @@ public:
 		this->dimX = dimX;
 		this->dimY = dimY;
 		table = new T[dimX*dimY];
+	}
+	
+	void AllocateTable(uint_t dimX, uint_t dimY, T value)
+	{
+		AllocateTable(dimX, dimY);
+		for (uint_t i = 0; i < dimX; ++i)
+			for (uint_t j = 0; j < dimY; ++j)
+				table[i*dimY + j] = T(value);
 	}
 
 	void DeallocateTable()

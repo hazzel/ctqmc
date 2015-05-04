@@ -125,7 +125,7 @@ class CLASSNAME
 			value_t T = finalT + (nThermalize - sweep) / nThermalize * (startT - finalT);
 			configSpace.SetTemperature(T);
 			evalableParameters[0] = configSpace.beta;
-			configSpace.BuildG0LookUpTable("");
+			configSpace.BuildG0LookUpTable();
 		}
 		
 		void ClearExpOrderHist();

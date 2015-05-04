@@ -103,8 +103,8 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	configSpace.BuildHoppingMatrix();
 
 	//Build G0 look up table
-	std::string g0_file = path + "g0lookup/" + geometry + "-B" + ToString(configSpace.nTimeBins / 1000) + "-L" + ToString(L) + "-T" + ToString(T);
-	configSpace.BuildG0LookUpTable(g0_file);
+	//std::string g0_file = path + "g0lookup/" + geometry + "-B" + ToString(configSpace.nTimeBins / 1000) + "-L" + ToString(L) + "-T" + ToString(T);
+	configSpace.BuildG0LookUpTable();
 	configSpace.updateHandler.Init();
 	
 	int_t nhd = param.value_or_default<int_t>("NHOODDIST", 1);
@@ -134,13 +134,13 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	corrVector.resize(configSpace.lattice->MaxDistance() + 1, 0.0);
 	
 	BuildUpdateWeightMatrix();
-	//ProfilerStart("gperf/mc.prof");
+	ProfilerStart("gperf/mc.prof");
 }
 
 CLASSNAME::~CLASSNAME()
 {
 	delete[] evalableParameters;
-	//ProfilerStop();
+	ProfilerStop();
 }
 
 void CLASSNAME::random_write(odump& d)
