@@ -262,7 +262,6 @@ class ConfigSpace
 		}
 		*/
 		
-		
 		void BuildG0LookUpTable()
 		{
 			uint_t nValues = BuildG0IndexTable();
@@ -278,6 +277,7 @@ class ConfigSpace
 					{
 						uint_t index = lookUpIndex(i, j);
 						lookUpTableG0(index, t) = (G0(i, j) + cnt[index] * lookUpTableG0(index, t)) / (1.0 + cnt[index]);
+						//lookUpTableG0(index, t) = G0(i, j);
 						++cnt[index];
 					}
 				}
