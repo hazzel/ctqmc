@@ -9,17 +9,17 @@ from ParseDataOutput import *
 
 color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-L = ["2", "3", "4", "5", "6", "9", "12"]
+L = ["3", "4", "5", "6", "9", "12"]
 for l in range(len(L)):
 	filelist = []
 	#filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.25/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V3.0*/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_hex_V3.5*/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V3.5*/*L" + L[l] + "*.out"))
 
 	for f in range(len(filelist)):
 		if len(filelist[f]) == 0:
@@ -30,10 +30,10 @@ for l in range(len(L)):
 		eta = 0.25
 		nu = 1.
 		gamma = 7./4.
-		V = 3.0
+		V = 1.625
 		#Tc = 0.516
 		#Tc = 0.92
-		Tc = 1.19
+		Tc = 0.292
 		x = []
 		yM2 = []
 		yM2err = []
@@ -45,8 +45,8 @@ for l in range(len(L)):
 			plist = ParseParameters(filelist[f][i])
 			elist = ParseEvalables(filelist[f][i])
 			x.append(float(plist["T"]))
-			exp = eta
-			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**(exp) )
+			exp = 0.84
+			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**(exp))
 			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**(exp) )
 			yM4.append( ArrangePlot(elist, "M4")[0][0] * float(L[l])**(2. * exp) )
 			yM4err.append( ArrangePlot(elist, "M4")[1][0] * float(L[l])**(2. * exp) )
