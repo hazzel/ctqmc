@@ -291,8 +291,8 @@ bool CLASSNAME::is_thermalized()
 void CLASSNAME::BuildUpdateWeightMatrix()
 {
 	//ALL TRANSITIONS
-	proposeProbabilityMatrix <<	0.625 / 10.0,	0.4 / 10.0	,	0.4 / 10.0,
-											4.375 / 10.0,	2.6 / 10.0	,	2.6 / 10.0,
+	proposeProbabilityMatrix <<	0.625 / 10.0,	0.6 / 10.0	,	0.6 / 10.0,
+											4.375 / 10.0,	3.4 / 10.0	,	3.4 / 10.0,
 											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 											0.125 / 10.0,	0.125 / 10.0,	0.125 / 10.0,
@@ -305,7 +305,7 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	0.0			,	0.5 / 10.0,
 											0.0			,	0.5 / 10.0	,	0.0,
 											0.0			,	0.0			,	0.5 / 10.0,
-											0.0			,	4.0 / 10.0	,	4.0 / 10.0;
+											0.0			,	3.0 / 10.0	,	3.0 / 10.0;
 
 /*
 	//ALL TRANSITIONS

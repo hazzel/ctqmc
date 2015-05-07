@@ -398,6 +398,41 @@ class VertexHandler
 				a(i, i) = 0.0;
 			}
 		}
+		
+		template<typename U, typename V, typename A>
+		void WoodburyAddShiftedVertices(U& u, V& v, A& a)
+		{
+			uint_t k = nodes.size();
+			uint_t n = std::distance(nodeBuffer.begin(), nodeBufferEnd);
+			for (uint_t i = 0; i < n; ++i)
+			{
+				uint_t c = 0;
+				for (uint_t j = 0; j < k; j+=2)
+				{
+					if (nodes[j].Worm)
+						continue;
+					else
+						c+=2;
+					u(c, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
+					v(i, c) = u(c, i) * sign;
+					
+					u(c + 1, i) = configSpace.LookUpG0(nodes[j + 1].Site, nodeBuffer[i].Site, nodes[j + 1].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j + 1].Site) ? -1.0 : 1.0);
+					v(i, c + 1) = u(c + 1, i) * sign;
+				}
+				for (uint_t j = 0; j < n; ++j)
+				{
+					if (i < j)
+					{
+						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
+						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
+						a(j, i) = a(i, j) * sign;
+					}
+				}
+				a(i, i) = 0.0;
+			}
+		}
 
 		template<typename U, typename V, typename A>
 		void WoodburyWorm(U& u, V& v, A& a)

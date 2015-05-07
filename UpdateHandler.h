@@ -270,6 +270,7 @@ class UpdateHandler
 			}
 		}
 		
+		
 		template<int_t W>
 		bool ShiftWorm()
 		{
@@ -303,6 +304,7 @@ class UpdateHandler
 			matrix_t<l, l> w5 = V_2 * w4 * w3;
 			
 			value_t acceptRatio = w1.determinant() * (w2 - w5).determinant() * vertexHandler.WormShiftParity();
+			//value_t acceptRatio = w1.determinant() * (w2 - w5).determinant() * vertexHandler.WormIndexBufferParity() * vertexHandler.VertexBufferParity();
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
@@ -330,6 +332,7 @@ class UpdateHandler
 				return false;
 			}
 		}
+		
 		
 		/*
 		template<int_t W>
@@ -401,7 +404,10 @@ class UpdateHandler
 		template<int_t W>
 		bool ShiftWorm()
 		{
+			uint_t k = 2 * vertexHandler.Vertices();
+			const uint_t l = 2 * W;
 			vertexHandler.ShiftWormToBuffer();
+			
 			value_t preFactorRem, preFactorAdd;
 			value_t m = configSpace.lattice->Sites();
 			if (W == 1)
@@ -414,6 +420,81 @@ class UpdateHandler
 				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
 				preFactorAdd = 1.0 / preFactorRem;
 			}
+			
+			matrix_t<l, l> S(l, l);
+			vertexHandler.FillSMatrix(S, invG, true);
+			value_t detRem = S.determinant();
+			
+			if (configSpace.rng() > detRem * vertexHandler.WormIndexBufferParity())
+				return false;
+			
+			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
+			vertexHandler.PermuteProgagatorMatrix(invGp, true);
+			matrix_t<l, Eigen::Dynamic> t (l, k);
+			t.noalias() = S.inverse() * invGp.bottomLeftCorner(l, k);
+			invGp.topLeftCorner(k, k).noalias() -= invGp.topRightCorner(k, l) * t;
+			
+			matrix_t<Eigen::Dynamic, l> shiftedWormU(k, l);
+			matrix_t<l, Eigen::Dynamic> shiftedWormV(l, k);
+			matrix_t<l, l> shiftedWormA(l, l);
+			//vertexHandler.WoodburyAddShiftedVertices(shiftedWormU, shiftedWormV, shiftedWormA);
+			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
+			
+			matrix_t<Eigen::Dynamic, l> invGu = invGp.topLeftCorner(k, k) * shiftedWormU;
+			matrix_t<l, l> invS = shiftedWormA;
+			invS.noalias() -= shiftedWormV * invGu;
+			value_t detAdd = invS.determinant();
+			
+			//value_t acceptRatio = detRem * detAdd * vertexHandler.WormShiftParity();
+			value_t acceptRatio = detAdd * vertexHandler.VertexBufferParity();
+			//value_t acceptRatio = std::min({preFactorRem * detRem, 1.0}) * std::min({preFactorAdd * detAdd, 1.0}) * vertexHandler.WormShiftParity();
+			if (print && acceptRatio < 0.0)
+			{
+				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
+			}
+			if (configSpace.rng() < acceptRatio)
+			{
+				matrix_t<l, l> S = invS.inverse();
+				matrix_t<l, Eigen::Dynamic> vinvG = shiftedWormV * invGp.topLeftCorner(k, k);
+				
+				invG.bottomLeftCorner(l, k).noalias() = -S * vinvG;
+				invG.topLeftCorner(k, k) = invGp.topLeftCorner(k, k);
+				invG.topLeftCorner(k, k).noalias() -= invGu * invG.bottomLeftCorner(l, k);
+				invG.topRightCorner(k, l).noalias() = -invGu * S;
+				invG.template bottomRightCorner<l, l>() = S;
+				
+				vertexHandler.RemoveBufferedVertices(true);
+				vertexHandler.AddBufferedVertices(true);
+				
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		*/
+		
+		/*
+		template<int_t W>
+		bool ShiftWorm()
+		{
+			vertexHandler.ShiftWormToBuffer();
+			value_t preFactorRem = 1.0, preFactorAdd = 1.0;
+			value_t m = configSpace.lattice->Sites();
+
+			if (W == 1)
+			{
+				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
+				preFactorAdd = 1.0 / preFactorRem;
+			}
+			else if (W == 2)
+			{
+				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
+				preFactorAdd = 1.0 / preFactorRem;
+			}
+			
+			//preFactorRem = 1.0; preFactorAdd = 1.0;
 			if (RemoveVertices<W>(preFactorRem * vertexHandler.WormIndexBufferParity(), true))
 			{
 				if (AddVertices<W>(preFactorAdd * vertexHandler.VertexBufferParity(), true))
