@@ -40,20 +40,15 @@ class VertexHandler
 		typedef typename ConfigSpace_t::value_t value_t;
 		typedef Node<uint_t, value_t> node_t;
 		
-		struct Configuration
-		{
-			std::vector<node_t> nodes;
-			std::vector<node_t> wormNodes;
-		};
-		
 		VertexHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace)
 		{
 			std::size_t maxBufferSize = 20;
-			nodeBuffer.resize(100);
+			nodeBuffer.resize(40);
 			nodeBufferEnd = nodeBuffer.end();
 			indexBuffer.resize(maxBufferSize);
 			indexBufferEnd = indexBuffer.end();
+			imTime.resize(2 * configSpace.nTimeBins, 0);
 		}
 		
 		void PrintVertices()
@@ -86,8 +81,8 @@ class VertexHandler
 		
 		void PrintVertexBuffer()
 		{
-			for (auto node : nodeBuffer)
-				std::cout << "(" << node.Site << " , " << node.Tau << ") ";
+			for (uint_t i = 0; i < nodeBuffer.size(); i+=2)
+				std::cout << "(" << nodeBuffer[i].Site << " , " << nodeBuffer[i+1].Site << ", " << nodeBuffer[i].Tau << ", D = " << configSpace.lattice->Distance(nodeBuffer[i].Site, nodeBuffer[i+1].Site) << ") ";
 			std::cout << std::endl;
 		}
 		
@@ -289,20 +284,33 @@ class VertexHandler
 			nodeBufferEnd = nodeBuffer.begin() + l;
 			indexBufferEnd = indexBuffer.begin() + l;
 
+			/*
+			for (uint_t i = 0; i < l; i+=2)
+			{
+				uint_t r = static_cast<uint_t>(configSpace.rng() * 2);
+				wormShiftParity = 1.0;
+				wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[i+r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			
+				nodeBuffer[i+r].Site = configSpace.lattice->RandomWalk(nodeBuffer[i+r].Site, 1, configSpace.rng);
+				wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[i+r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			}
+			*/
+			
 			uint_t r = static_cast<uint_t>(configSpace.rng() * l);
 			wormShiftParity = 1.0;
 			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			
 			nodeBuffer[r].Site = configSpace.lattice->RandomWalk(nodeBuffer[r].Site, 1, configSpace.rng);
 			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
-			nodeBuffer[r].Tau += -0.1 * configSpace.beta + configSpace.rng() * 0.2 * configSpace.beta;
-			if (nodeBuffer[r].Tau > configSpace.beta)
-				nodeBuffer[r].Tau -= configSpace.beta;
-			else if (nodeBuffer[r].Tau < 0.0)
-				nodeBuffer[r].Tau += configSpace.beta;
 			
+			
+			value_t tau = nodeBuffer[0].Tau - 0.1 * configSpace.beta + configSpace.rng() * 0.2 * configSpace.beta;
+			if (tau > configSpace.beta)
+				tau -= configSpace.beta;
+			else if (tau < 0.0)
+				tau += configSpace.beta;
 			for (uint_t i = 0; i < l; ++i)
-				nodeBuffer[i].Tau = nodeBuffer[r].Tau;
+				nodeBuffer[i].Tau = tau;
 		}
 
 		template<int_t W>
@@ -660,6 +668,20 @@ class VertexHandler
 				}
 			}
 		}
+		
+		void MeasureImaginaryTime()
+		{
+			for (uint_t i = 0; i < nodes.size(); i += 2)
+				++imTime[static_cast<uint_t>(nodes[i].Tau / configSpace.dtau)];
+			sum += nodes.size() / 2;
+		}
+		
+		template<typename T>
+		void PrintImaginaryTime(T& stream)
+		{
+			for (auto i : imTime)
+				stream << static_cast<value_t>(i) / static_cast<value_t>(sum) << std::endl;
+		}
 			
 		void Serialize(odump& d)
 		{
@@ -681,4 +703,6 @@ class VertexHandler
 		std::vector<std::size_t> indexBuffer;
 		typename std::vector<std::size_t>::iterator indexBufferEnd;
 		value_t wormShiftParity;
+		std::vector<uint_t> imTime;
+		uint_t sum = 0;
 };

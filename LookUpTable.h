@@ -159,6 +159,16 @@ public:
 	{
 		return table[i1*dimY + i2];
 	}
+	
+	inline uint_t DimX() const
+	{
+		return dimX;
+	}
+	
+	inline uint_t DimY() const
+	{
+		return dimY;
+	}
 
 	void AllocateTable(uint_t dimX, uint_t dimY)
 	{

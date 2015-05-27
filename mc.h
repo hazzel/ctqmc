@@ -173,6 +173,6 @@ class CLASSNAME
 		uint_t nOptimizationTherm;
 		std::vector< std::pair<value_t, value_t> > prevZeta;
 		bool annealing = false;
-		value_t startT = 2.5;
+		value_t startT = 5.0;
 		value_t finalT;
 };

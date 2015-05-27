@@ -101,10 +101,13 @@ class UpdateHandler
 				std::cout << "AddVertices(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
 				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
 			}
+			
 			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t<n, n> S = invS.inverse();
 				matrix_t<n, Eigen::Dynamic> vinvG = v * invG;
+				
+				value_t preDet = invG.determinant();
 				
 				invG.conservativeResize(k + n, k + n);
 				invG.bottomLeftCorner(n, k).noalias() = -S * vinvG;
@@ -113,6 +116,10 @@ class UpdateHandler
 				invG.template bottomRightCorner<n, n>() = S;
 				
 				vertexHandler.AddBufferedVertices(isWorm);
+				if (k == 0)
+					weight = det;
+				else
+					weight *= det;
 				return true;
 			}
 			return false;
@@ -229,6 +236,10 @@ class UpdateHandler
 				invG.conservativeResize(k - n, k - n);
 
 				vertexHandler.RemoveBufferedVertices(isWorm);
+				if (k - n == 0)
+					weight = 0.0;
+				else
+					weight *= det;
 				return true;
 			}
 			else
@@ -313,6 +324,7 @@ class UpdateHandler
 			{
 				//update columns
 				invG.noalias() -= w4 * invGv1;
+				
 				//update rows
 				matrix_t<l, Eigen::Dynamic> invGv2 = V_2 * invG;
 				matrix_t<l, l> w6(l, l);
@@ -323,8 +335,9 @@ class UpdateHandler
 					w6.block(0, i, l, 2) = invGv2.block(0, pos, l, 2);
 				}
 				invG.noalias() -= invGu2 * (I + w6).inverse() * invGv2;
-
 				vertexHandler.ApplyWormShift();
+				
+				weight *= acceptRatio;
 				return true;
 			}
 			else
@@ -425,8 +438,8 @@ class UpdateHandler
 			vertexHandler.FillSMatrix(S, invG, true);
 			value_t detRem = S.determinant();
 			
-			if (configSpace.rng() > detRem * vertexHandler.WormIndexBufferParity())
-				return false;
+			//if (configSpace.rng() > detRem * vertexHandler.WormIndexBufferParity())
+			//	return false;
 			
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> invGp(invG);
 			vertexHandler.PermuteProgagatorMatrix(invGp, true);
@@ -445,8 +458,8 @@ class UpdateHandler
 			invS.noalias() -= shiftedWormV * invGu;
 			value_t detAdd = invS.determinant();
 			
-			//value_t acceptRatio = detRem * detAdd * vertexHandler.WormShiftParity();
-			value_t acceptRatio = detAdd * vertexHandler.VertexBufferParity();
+			value_t acceptRatio = detRem * detAdd * vertexHandler.WormShiftParity();
+			//value_t acceptRatio = detAdd * vertexHandler.VertexBufferParity();
 			//value_t acceptRatio = std::min({preFactorRem * detRem, 1.0}) * std::min({preFactorAdd * detAdd, 1.0}) * vertexHandler.WormShiftParity();
 			if (print && acceptRatio < 0.0)
 			{
@@ -466,6 +479,7 @@ class UpdateHandler
 				vertexHandler.RemoveBufferedVertices(true);
 				vertexHandler.AddBufferedVertices(true);
 				
+				weight *= acceptRatio;
 				return true;
 			}
 			else
@@ -474,6 +488,7 @@ class UpdateHandler
 			}
 		}
 		*/
+		
 		
 		/*
 		template<int_t W>
@@ -512,6 +527,11 @@ class UpdateHandler
 			return false;
 		}
 		*/
+		
+		value_t GetWeight()
+		{
+			return weight;
+		}
 
 		void Clear()
 		{
@@ -549,16 +569,18 @@ class UpdateHandler
 			matrix_t<Eigen::Dynamic, Eigen::Dynamic> stabInvG = solver.inverse();
 
 			avgError = 0.0;
+			value_t avg = 0.0;
 			value_t N = stabInvG.rows() * stabInvG.rows();
 			for (uint_t i = 0; i < stabInvG.rows(); ++i)
 			{
 				for (uint_t j = 0; j < stabInvG.cols(); ++j)
 				{
 					value_t err = std::abs(invG(i, j) - stabInvG(i, j));
+					avg += std::abs(stabInvG(i, j)) / N;
 					avgError += err / N;
 				}
 			}
-
+			avgError /= avg;
 			invG = stabInvG;
 			//return MatrixCondition(invG);
 			return 0.0;
@@ -610,5 +632,6 @@ class UpdateHandler
 		VertexHandler_t vertexHandler;
 		matrix_t<Eigen::Dynamic, Eigen::Dynamic> invG;
 		uint_t maxWorms = 2;
-		bool print = false;
+		bool print = true;
+		value_t weight = 0.0;
 };

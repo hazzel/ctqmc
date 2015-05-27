@@ -25,6 +25,15 @@ void M4Function(double& out, std::vector< std::valarray<double>* >& o, double* p
 	out = (w4 / z) / (p[0] * p[2] * p[3] * p[3] * p[3] * p[3]);
 }
 
+void ChiFunction(double& out, std::vector< std::valarray<double>* >& o, double* p)
+{
+	double z=(*o[0])[0];
+	double w2=(*o[1])[0];
+	double w4=(*o[2])[0];
+	
+	out = (w2 / z) / (p[0] * p[1] * p[3] * p[3]);
+}
+
 void BinderRatioFunction(double& out, std::vector< std::valarray<double>* >& o, double* p)
 {
 	double z=(*o[0])[0];
@@ -168,9 +177,11 @@ void CLASSNAME::init()
 			measure[i].add_observable("<w>", nPrebins);
 			measure[i].add_observable("deltaZ", nPrebins);
 			measure[i].add_observable("deltaW2", nPrebins);
+			measure[i].add_observable("deltaChi", nPrebins);
 			measure[i].add_observable("deltaW4", nPrebins);
-			measure[i].add_observable("avgInvGError", nPrebins);
-			measure[i].add_observable("condition", nPrebins);
+			measure[i].add_observable("avgInvGError");
+			measure[i].add_observable("condition");
+			measure[i].add_observable("weight", nPrebins);
 			measure[i].add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
 		}
 	#else
@@ -178,9 +189,11 @@ void CLASSNAME::init()
 		measure.add_observable("<w>", nPrebins);
 		measure.add_observable("deltaZ", nPrebins);
 		measure.add_observable("deltaW2", nPrebins);
+		measure.add_observable("deltaChi", nPrebins);
 		measure.add_observable("deltaW4", nPrebins);
 		measure.add_observable("avgInvGError");
 		measure.add_observable("condition");
+		measure.add_observable("weight", nPrebins);
 		measure.add_vectorobservable("Corr", configSpace.lattice->MaxDistance() + 1, nPrebins);
 	#endif
 }
@@ -218,6 +231,10 @@ void CLASSNAME::write(const std::string& dir)
 		for (uint_t i = 0; i < std::max(exporderHistZ.size(), exporderHistW2.size()); ++i)
 			ostream << i << " " << GetWithDef(exporderHistZ, i, 0) << " " << GetWithDef(exporderHistW2, i, 0) << std::endl;
 		ostream.close();
+		ofile = std::string(dir+"imtime.txt");
+		ostream.open(ofile.c_str());
+		configSpace.updateHandler.GetVertexHandler().PrintImaginaryTime(ostream);
+		ostream.close();
 	#endif
 	
 	ostream.open(dir+"probabilities.txt");
@@ -254,6 +271,7 @@ void CLASSNAME::write_output(const std::string& dir, int para)
 {
 	measure[para].add_evalable("M2","deltaZ","deltaW2","deltaW4", M2Function, evalableParameters);
 	measure[para].add_evalable("M4","deltaZ","deltaW2","deltaW4", M4Function, evalableParameters);
+	measure[para].add_evalable("Chi","deltaZ","deltaChi","deltaW4", ChiFunction, evalableParameters);
 	measure[para].add_evalable("BinderRatio","deltaZ","deltaW2","deltaW4", BinderRatioFunction, evalableParameters);
 	measure[para].add_evalable("AvgExpOrder","k","deltaZ", AvgExporderFunction);
 	measure[para].add_vectorevalable("Correlations","Corr","deltaZ", CorrFunction, evalableParameters);
@@ -270,6 +288,7 @@ void CLASSNAME::write_output(const std::string& dir)
 {
 	measure.add_evalable("M2","deltaZ","deltaW2","deltaW4", M2Function, evalableParameters);
 	measure.add_evalable("M4","deltaZ","deltaW2","deltaW4", M4Function, evalableParameters);
+	measure.add_evalable("Chi","deltaZ","deltaChi","deltaW4", ChiFunction, evalableParameters);
 	measure.add_evalable("BinderRatio","deltaZ","deltaW2","deltaW4", BinderRatioFunction, evalableParameters);
 	measure.add_evalable("AvgExpOrder","k","deltaZ", AvgExporderFunction);
 	measure.add_vectorevalable("Correlations","Corr","deltaZ", CorrFunction, evalableParameters);
@@ -290,6 +309,7 @@ bool CLASSNAME::is_thermalized()
 
 void CLASSNAME::BuildUpdateWeightMatrix()
 {
+	
 	//ALL TRANSITIONS
 	proposeProbabilityMatrix <<	0.625 / 10.0,	0.6 / 10.0	,	0.6 / 10.0,
 											4.375 / 10.0,	3.4 / 10.0	,	3.4 / 10.0,
@@ -306,10 +326,28 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	0.5 / 10.0	,	0.0,
 											0.0			,	0.0			,	0.5 / 10.0,
 											0.0			,	3.0 / 10.0	,	3.0 / 10.0;
-
+	
 /*
 	//ALL TRANSITIONS
-	proposeProbabilityMatrix <<	2.5 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
+	proposeProbabilityMatrix <<				0.625 / 10.0,	0.6 / 10.0	,	0.6 / 10.0,
+											4.375 / 10.0,	3.4 / 10.0	,	3.4 / 10.0,
+											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
+											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
+											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
+											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
+											1.5 / 10.0	,	0.0			,	0.0,
+											0.0			,	1.5 / 10.0	,	0.0, 
+											1.5 / 10.0	,	0.0			,	0.0,
+											0.0			,	0.0			,	1.5 / 10.0,
+											0.0			,	1.5 / 10.0	,	0.0,
+											0.0			,	0.0			,	1.5 / 10.0,
+											0.0			,	1.0 / 10.0	,	1.0 / 10.0;
+*/
+/*
+	//ALL TRANSITIONS
+	proposeProbabilityMatrix <<				2.5 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
 											2.5 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
 											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
@@ -582,7 +620,8 @@ void CLASSNAME::do_update()
 			rebuildCnt = 0;
 		}
 	}
-	MeasureExpOrder();
+	//MeasureExpOrder();
+	//configSpace.updateHandler.GetVertexHandler().MeasureImaginaryTime();
 	++sweep;
 
 	if (nZetaOptimization < nOptimizationSteps)
@@ -690,19 +729,23 @@ void CLASSNAME::OptimizeZeta()
 		++nZetaOptimization;
 		sweep = 0;
 		std::cout << nZetaOptimization << std::endl;
-		if (nZetaOptimization == nOptimizationSteps)
+
+		if (nZetaOptimization > 10)
 		{
-			sweep = nOptimizationSteps * nOptimizationTherm;
 			value_t zeta2mean = 0.0, zeta4mean = 0.0;
 			for (uint_t i = prevZeta.size() * 3 / 4; i < prevZeta.size(); ++i)
 			{
 				zeta2mean += prevZeta[i].first / static_cast<value_t>(prevZeta.size() / 4);
 				zeta4mean += prevZeta[i].second / static_cast<value_t>(prevZeta.size() / 4);
 			}
-			configSpace.zeta2 = zeta2mean;
-			configSpace.zeta4 = zeta4mean;
-			evalableParameters[1] = configSpace.zeta2;
-			evalableParameters[2] = configSpace.zeta4;
+			if (nZetaOptimization == nOptimizationSteps)
+			{
+				sweep = nOptimizationSteps * nOptimizationTherm;
+				configSpace.zeta2 = zeta2mean;
+				configSpace.zeta4 = zeta4mean;
+				evalableParameters[1] = configSpace.zeta2;
+				evalableParameters[2] = configSpace.zeta4;
+			}
 			std::cout << "Zeta2(T=" << 1./configSpace.beta << ",V=" << configSpace.V << ") = " << configSpace.zeta2 * m * configSpace.beta << std::endl;
 			std::cout << "Zeta4(T=" << 1./configSpace.beta << ",V=" << configSpace.V << ") = " << configSpace.zeta4 * m * m * m * configSpace.beta << std::endl;
 		}
@@ -719,8 +762,10 @@ void CLASSNAME::do_measurement()
 	
 	#ifdef MCL_PT
 		measure[myrep].add("<w>", configSpace.updateHandler.GetVertexHandler().Worms());
+		measure[myrep].add("weight", configSpace.updateHandler.GetWeight());
 	#else
 		measure.add("<w>", configSpace.updateHandler.GetVertexHandler().Worms());
+		measure.add("weight", configSpace.updateHandler.GetWeight());
 	#endif
 	uint_t R = 0;
 	value_t sign, c;
@@ -732,30 +777,34 @@ void CLASSNAME::do_measurement()
 				measure[myrep].add("deltaZ", 1.0);
 				measure[myrep].add("deltaW2", 0.0);
 				measure[myrep].add("deltaW4", 0.0);
+				measure[myrep].add("deltaChi", 0.0);
 				measure[myrep].add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
 			#else
 				measure.add("deltaZ", 1.0);
 				measure.add("deltaW2", 0.0);
 				measure.add("deltaW4", 0.0);
+				measure.add("deltaChi", 0.0);
 				measure.add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
 			#endif
 			break;
 
 		case StateType::W2:
+			sign = configSpace.updateHandler.GetVertexHandler().WormParity();
 			#ifdef MCL_PT
 				measure[myrep].add("deltaZ", 0.0);
 				measure[myrep].add("deltaW2", 1.0);
 				measure[myrep].add("deltaW4", 0.0);
+				measure[myrep].add("deltaChi", sign);
 				measure[myrep].add("k", 0.0);
 			#else
 				measure.add("deltaZ", 0.0);
 				measure.add("deltaW2", 1.0);
+				measure.add("deltaChi", sign);
 				measure.add("deltaW4", 0.0);
 				measure.add("k", 0.0);
 			#endif
 
 			R = configSpace.updateHandler.GetVertexHandler().WormDistance();
-			sign = configSpace.updateHandler.GetVertexHandler().WormParity();
 			corrVector[R] = sign / configSpace.lattice->DistanceHistogram(R);
 			break;
 		case StateType::W4:
@@ -763,11 +812,13 @@ void CLASSNAME::do_measurement()
 				measure[myrep].add("deltaZ", 0.0);
 				measure[myrep].add("deltaW2", 0.0);
 				measure[myrep].add("deltaW4", 1.0);
+				measure[myrep].add("deltaChi", 0.0);
 				measure[myrep].add("k", 0.0);
 			#else
 				measure.add("deltaZ", 0.0);
 				measure.add("deltaW2", 0.0);
 				measure.add("deltaW4", 1.0);
+				measure.add("deltaChi", 0.0);
 				measure.add("k", 0.0);
 			#endif
 			break;

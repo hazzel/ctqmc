@@ -134,32 +134,6 @@ class ConfigSpace
 			return updateHandler.template ShiftWorm<W>();
 		}
 
-		/*
-		template<int_t W>
-		bool ShiftWorm()
-		{
-			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<W>();
-			updateHandler.GetVertexHandler().ShiftWormToBuffer();
-			uint_t m = lattice->MaxDistance();
-			value_t preFactorRemove = updateHandler.GetVertexHandler().WormIndexBufferParity() / (lattice->Sites() * m * beta * zeta2);
-			value_t preFactorAdd = updateHandler.GetVertexHandler().VertexBufferParity() * lattice->Sites() * m * beta * zeta2;
-			value_t detRemove, detAdd;
-			updateHandler.template RemoveVertices<W>(preFactorRemove, true, detRemove, UpdateFlag::NoUpdate);
-			updateHandler.template AddVertices<W>(preFactorAdd, true, detAdd, UpdateFlag::NoUpdate);
-			value_t detShift = std::min({preFactorRemove*detRemove, 1.0}) * std::min({preFactorAdd*detAdd, 1.0});
-			//value_t detShift = detRemove*detAdd;
-
-			if (rng() < detShift)
-			{
-				updateHandler.template RemoveVertices<W>(preFactorRemove, true, detRemove, UpdateFlag::ForceUpdate);
-				updateHandler.template AddVertices<W>(preFactorAdd, true, detAdd, UpdateFlag::ForceUpdate);
-				return true;
-			}
-			else
-				return false;
-		}
-		*/
-
 		void Clear()
 		{
 			updateHandler.Clear();
@@ -214,7 +188,7 @@ class ConfigSpace
 				tau_p = std::abs(tau);
 			uint_t t = static_cast<uint_t>(std::abs(tau_p) / dtau);
 			uint_t x = lookUpIndex(i1, i2);
-			value_t tau_t = t * dtau, G_t = lookUpTableG0(x, t), G_tt = lookUpTableG0(x, t+1);
+			value_t tau_t = t * dtau, G_t = lookUpTableG0(x, t), G_tt = lookUpTableG0(x, t + 1);
 			value_t g = G_t + (tau_p - tau_t) * (G_tt - G_t) / dtau;
 			value_t sign = 1.0;
 			bool sameSublattice = lattice->Sublattice(i1) == lattice->Sublattice(i2);
@@ -236,37 +210,10 @@ class ConfigSpace
 			g0 = hopEV * hopDiag * hopEVT;
 		}
 		
-		/*
-		void BuildG0LookUpTable()
-		{
-			uint_t N = lattice->Sites();
-			lookUpTableG0.AllocateTable((N*N + N) / 2, nTimeBins + 1);
-			matrix_t G0(hopDiag.rows(), hopDiag.cols());
-			for (uint_t t = 0; t <= nTimeBins; ++t)
-			{
-				EvaluateG0(dtau * t, G0);
-				for (uint_t i = 0; i < lattice->Sites(); ++i)
-				{
-					for (uint_t j = i; j < lattice->Sites(); ++j)
-					{
-						uint_t x = i * N - (i + i*i) / 2 + j;
-						lookUpTableG0(x, t) = G0(i, j);
-					}
-				}
-				if (t % (nTimeBins / 10) == 0)
-				{
-					std::cout << ".";
-					std::cout.flush();
-				}
-			}
-		}
-		*/
-		
 		void BuildG0LookUpTable()
 		{
 			uint_t nValues = BuildG0IndexTable();
 			matrix_t G0(hopDiag.rows(), hopDiag.cols());
-			value_t threshold = std::pow(10.0, -12.0);
 			for (uint_t t = 0; t <= nTimeBins; ++t)
 			{
 				EvaluateG0(dtau * t, G0);
@@ -277,7 +224,6 @@ class ConfigSpace
 					{
 						uint_t index = lookUpIndex(i, j);
 						lookUpTableG0(index, t) = (G0(i, j) + cnt[index] * lookUpTableG0(index, t)) / (1.0 + cnt[index]);
-						//lookUpTableG0(index, t) = G0(i, j);
 						++cnt[index];
 					}
 				}
@@ -295,7 +241,7 @@ class ConfigSpace
 			lookUpIndex.AllocateTable(N, N, -1);
 			matrix_t G0(hopDiag.rows(), hopDiag.cols());
 			value_t threshold = std::pow(10.0, -12.0);
-			uint_t t = nTimeBins / 3;
+			uint_t t = 10;
 			std::vector<value_t> nValues;
 			
 			EvaluateG0(dtau * t, G0);
@@ -303,24 +249,21 @@ class ConfigSpace
 			{
 				for (uint_t j = i; j < lattice->Sites(); ++j)
 				{
-					for (uint_t k = 0; k < 3; ++k)
+					bool isStored = false;
+					for (uint_t k = 0; k < nValues.size(); ++k)
 					{
-						bool isStored = false;
-						for (uint_t k = 0; k < nValues.size(); ++k)
+						if (std::abs(nValues[k] - G0(i, j)) < threshold)
 						{
-							if (std::abs(nValues[k] - G0(i, j)) < threshold)
-							{
-								isStored = true;
-								lookUpIndex(i, j) = k;
-								lookUpIndex(j, i) = k;
-							}
+							isStored = true;
+							lookUpIndex(i, j) = k;
+							lookUpIndex(j, i) = k;
 						}
-						if (!isStored)
-						{
-							nValues.push_back(G0(i, j));
-							lookUpIndex(i, j) = nValues.size() - 1;
-							lookUpIndex(j, i) = nValues.size() - 1;
-						}
+					}
+					if (!isStored)
+					{
+						nValues.push_back(G0(i, j));
+						lookUpIndex(i, j) = nValues.size() - 1;
+						lookUpIndex(j, i) = nValues.size() - 1;
 					}
 				}
 			}
@@ -404,7 +347,6 @@ class ConfigSpace
 		value_t zeta4;
 		uint_t nTimeBins;
 		uint_t maxWorms = 4;
-		//LookUpTable<value_t, 2> lookUpTableG0;
 		LookUpTable<value_t, 2> lookUpTableG0;
 		LookUpTable<int_t, 2> lookUpIndex;
 		value_t dtau;
