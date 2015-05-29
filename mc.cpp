@@ -25,15 +25,6 @@ void M4Function(double& out, std::vector< std::valarray<double>* >& o, double* p
 	out = (w4 / z) / (p[0] * p[2] * p[3] * p[3] * p[3] * p[3]);
 }
 
-void ChiFunction(double& out, std::vector< std::valarray<double>* >& o, double* p)
-{
-	double z=(*o[0])[0];
-	double w2=(*o[1])[0];
-	double w4=(*o[2])[0];
-	
-	out = (w2 / z) / (p[0] * p[1] * p[3] * p[3]);
-}
-
 void BinderRatioFunction(double& out, std::vector< std::valarray<double>* >& o, double* p)
 {
 	double z=(*o[0])[0];
@@ -41,6 +32,15 @@ void BinderRatioFunction(double& out, std::vector< std::valarray<double>* >& o, 
 	double w4=(*o[2])[0];
 	
 	out = (p[0] * p[1] * p[1] / p[2]) * (w4 * z / (w2 * w2));
+}
+
+void ChiFunction(double& out, std::vector< std::valarray<double>* >& o, double* p)
+{
+	double z=(*o[0])[0];
+	double w2=(*o[1])[0];
+	double w4=(*o[2])[0];
+	
+	out = (w2 / z) / (p[0] * p[1] * p[3] * p[3]);
 }
 
 void AvgExporderFunction(double& out, std::vector< std::valarray<double>* >& o)
@@ -68,7 +68,7 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	
 	param.read_file(dir);
 	value_t T = param.value_or_default<value_t>("T", 1.);
-	L = param.value_or_default<uint_t>("L", 4);
+	L = param.value_or_default<uint_t>("L", 6);
 	pt_spacing = param.value_or_default<uint_t>("GLOBAL_UPDATE_SPACING", 100);
 	label = 0;
 	
@@ -142,6 +142,19 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	evalableParameters[3] = configSpace.lattice->Sites();
 	corrVector.resize(configSpace.lattice->MaxDistance() + 1, 0.0);
 	
+	//Read thermalized state if it exists
+	therm_path = path + "thermalization/therm-" + "L" + ToString(L) + "-V" + ToString(configSpace.V) + "-T" + ToString(T) + "-" + geometry;
+	if (FileExists(therm_path))
+	{
+		read_state(therm_path);
+		sweep = nThermalize;
+		std::cout << "Thermalization...Done" << std::endl;
+	}
+	else
+	{
+		sweep = 0;
+	}
+	
 	BuildUpdateWeightMatrix();
 	//ProfilerStart("gperf/mc.prof");
 }
@@ -177,8 +190,8 @@ void CLASSNAME::init()
 			measure[i].add_observable("<w>", nPrebins);
 			measure[i].add_observable("deltaZ", nPrebins);
 			measure[i].add_observable("deltaW2", nPrebins);
-			measure[i].add_observable("deltaChi", nPrebins);
 			measure[i].add_observable("deltaW4", nPrebins);
+			measure[i].add_observable("deltaChi", nPrebins);
 			measure[i].add_observable("avgInvGError");
 			measure[i].add_observable("condition");
 			measure[i].add_observable("weight", nPrebins);
@@ -189,8 +202,8 @@ void CLASSNAME::init()
 		measure.add_observable("<w>", nPrebins);
 		measure.add_observable("deltaZ", nPrebins);
 		measure.add_observable("deltaW2", nPrebins);
-		measure.add_observable("deltaChi", nPrebins);
 		measure.add_observable("deltaW4", nPrebins);
+		measure.add_observable("deltaChi", nPrebins);
 		measure.add_observable("avgInvGError");
 		measure.add_observable("condition");
 		measure.add_observable("weight", nPrebins);
@@ -231,19 +244,21 @@ void CLASSNAME::write(const std::string& dir)
 		for (uint_t i = 0; i < std::max(exporderHistZ.size(), exporderHistW2.size()); ++i)
 			ostream << i << " " << GetWithDef(exporderHistZ, i, 0) << " " << GetWithDef(exporderHistW2, i, 0) << std::endl;
 		ostream.close();
-		ofile = std::string(dir+"imtime.txt");
-		ostream.open(ofile.c_str());
-		configSpace.updateHandler.GetVertexHandler().PrintImaginaryTime(ostream);
-		ostream.close();
 	#endif
 	
 	ostream.open(dir+"probabilities.txt");
 	PrintAcceptanceMatrix(ostream);
 	ostream.close();
 }
+void CLASSNAME::write_state(const std::string& dir)
+{
+	odump d(dir);
+	configSpace.Serialize(d);
+	d.close();
+}
 bool CLASSNAME::read(const std::string& dir)
 {
-	idump d(dir+"dump");
+	idump d(dir);
 	if (!d) 
 		return false;
 	else
@@ -265,14 +280,26 @@ bool CLASSNAME::read(const std::string& dir)
 		return true;
 	}
 }
+bool CLASSNAME::read_state(const std::string& dir)
+{
+	idump d(dir+"dump");
+	if (!d) 
+		return false;
+	else
+	{
+		configSpace.Serialize(d);
+		d.close();
+		return true;
+	}
+}
 
 #ifdef MCL_PT
 void CLASSNAME::write_output(const std::string& dir, int para)
 {
 	measure[para].add_evalable("M2","deltaZ","deltaW2","deltaW4", M2Function, evalableParameters);
 	measure[para].add_evalable("M4","deltaZ","deltaW2","deltaW4", M4Function, evalableParameters);
-	measure[para].add_evalable("Chi","deltaZ","deltaChi","deltaW4", ChiFunction, evalableParameters);
 	measure[para].add_evalable("BinderRatio","deltaZ","deltaW2","deltaW4", BinderRatioFunction, evalableParameters);
+	measure[para].add_evalable("Chi","deltaZ","deltaChi","deltaW4", ChiFunction, evalableParameters);
 	measure[para].add_evalable("AvgExpOrder","k","deltaZ", AvgExporderFunction);
 	measure[para].add_vectorevalable("Correlations","Corr","deltaZ", CorrFunction, evalableParameters);
 	std::ofstream f;
@@ -288,8 +315,8 @@ void CLASSNAME::write_output(const std::string& dir)
 {
 	measure.add_evalable("M2","deltaZ","deltaW2","deltaW4", M2Function, evalableParameters);
 	measure.add_evalable("M4","deltaZ","deltaW2","deltaW4", M4Function, evalableParameters);
-	measure.add_evalable("Chi","deltaZ","deltaChi","deltaW4", ChiFunction, evalableParameters);
 	measure.add_evalable("BinderRatio","deltaZ","deltaW2","deltaW4", BinderRatioFunction, evalableParameters);
+	measure.add_evalable("Chi","deltaZ","deltaChi","deltaW4", ChiFunction, evalableParameters);
 	measure.add_evalable("AvgExpOrder","k","deltaZ", AvgExporderFunction);
 	measure.add_vectorevalable("Correlations","Corr","deltaZ", CorrFunction, evalableParameters);
 	std::ofstream f;
@@ -621,7 +648,6 @@ void CLASSNAME::do_update()
 		}
 	}
 	//MeasureExpOrder();
-	//configSpace.updateHandler.GetVertexHandler().MeasureImaginaryTime();
 	++sweep;
 
 	if (nZetaOptimization < nOptimizationSteps)
@@ -634,6 +660,7 @@ void CLASSNAME::do_update()
 		{
 			std::cout << "Done" << std::endl;
 			ClearExpOrderHist();
+			write_state(therm_path);
 		}
 	}
 	if (annealing && !is_thermalized() && (sweep % (nThermalize / 25)) == 0)
@@ -799,8 +826,8 @@ void CLASSNAME::do_measurement()
 			#else
 				measure.add("deltaZ", 0.0);
 				measure.add("deltaW2", 1.0);
-				measure.add("deltaChi", sign);
 				measure.add("deltaW4", 0.0);
+				measure.add("deltaChi", sign);
 				measure.add("k", 0.0);
 			#endif
 

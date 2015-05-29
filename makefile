@@ -39,15 +39,13 @@ ifeq ($(MODE),PT)
 	LD=$(MPICC)
 endif
 
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 MCLL  = $(HOME)/mc/load_leveller/trunk
-APPMCLL = $(HOME)/mc/ctqmc/
+APPMCLL = $(CURDIR)
 USE_MKL = FALSE
-USE_HPC = FALSE
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
-	ifeq ($(USE_HPC), TRUE)
-		APPMCLL = $(HPCWORK)/ctqmc/
-	endif
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DNDEBUG $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/gperftools-2.4/install/include
 	LDFLAGS = 
@@ -64,7 +62,7 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	SUPERLP =
 else
 #	CFLAGS  = -O3 -ffast-math -march=native -pipe -g -Wall $(DEFINES)
-	CFLAGS  = -Ofast -m64 -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g $(DEFINES)
+	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g $(DEFINES)
 #	CFLAGS  = -Ofast -ffast-math -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/gperftools-2.4/install/include
 	LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -lprofiler

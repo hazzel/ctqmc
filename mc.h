@@ -82,6 +82,8 @@ class CLASSNAME
 		void init();
 		void write(const std::string& dir);
 		bool read(const std::string& dir);
+		void write_state(const std::string& dir);
+		bool read_state(const std::string& dir);
 		#ifdef MCL_PT
 			void write_output(const std::string& dir, int para);
 		#else
@@ -146,7 +148,7 @@ class CLASSNAME
 		matrix_t acceptedUpdates = matrix_t(nUpdateType, nStateType);
 		matrix_t proposedUpdates = matrix_t(nUpdateType, nStateType);
 		parser param;
-		uint_t sweep = 0;
+		uint_t sweep;
 		uint_t rebuildCnt = 0;
 		int myrep;
 		uint_t pt_spacing;
@@ -166,10 +168,11 @@ class CLASSNAME
 		uint_t L;
 		bool isInitialized = false;
 		std::string path;
+		std::string therm_path;
 		Measure therm;
 		std::map< value_t, std::pair<value_t, value_t> > zetaOptimization;
-		uint_t nZetaOptimization = 0;
-		uint_t nOptimizationSteps;
+		uint_t nZetaOptimization;
+		uint_t nOptimizationSteps = 0;
 		uint_t nOptimizationTherm;
 		std::vector< std::pair<value_t, value_t> > prevZeta;
 		bool annealing = false;

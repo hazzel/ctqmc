@@ -48,7 +48,6 @@ class VertexHandler
 			nodeBufferEnd = nodeBuffer.end();
 			indexBuffer.resize(maxBufferSize);
 			indexBufferEnd = indexBuffer.end();
-			imTime.resize(2 * configSpace.nTimeBins, 0);
 		}
 		
 		void PrintVertices()
@@ -669,20 +668,6 @@ class VertexHandler
 			}
 		}
 		
-		void MeasureImaginaryTime()
-		{
-			for (uint_t i = 0; i < nodes.size(); i += 2)
-				++imTime[static_cast<uint_t>(nodes[i].Tau / configSpace.dtau)];
-			sum += nodes.size() / 2;
-		}
-		
-		template<typename T>
-		void PrintImaginaryTime(T& stream)
-		{
-			for (auto i : imTime)
-				stream << static_cast<value_t>(i) / static_cast<value_t>(sum) << std::endl;
-		}
-			
 		void Serialize(odump& d)
 		{
 			d.write(nodes);
@@ -703,6 +688,5 @@ class VertexHandler
 		std::vector<std::size_t> indexBuffer;
 		typename std::vector<std::size_t>::iterator indexBufferEnd;
 		value_t wormShiftParity;
-		std::vector<uint_t> imTime;
 		uint_t sum = 0;
 };

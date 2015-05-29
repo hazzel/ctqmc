@@ -29,8 +29,10 @@ for l in range(len(L)):
 		filelist[f].sort()
 		z = 0.
 		beta = 0.125
-		eta = 0.79
-		nu = 0.65
+		eta = 0.25
+		nu = 1.
+		#eta = 0.4
+		#nu = 0.8
 		gamma = 7./4.
 		V = 1.625
 		#Tc = 0.516
@@ -75,11 +77,11 @@ for l in range(len(L)):
 		ax = plt.subplot(2, 2, 2)
 		#ax.set_xscale('log')
 		#ax.set_yscale('log')
-		plt.xlabel(r'$(T-T_c)L^{1/\nu}$')
+		plt.xlabel(r'$(T-T_c)L^{z}$')
 		plt.ylabel(r'$M_2 L^{\eta}$')
 		for i in range(len(x)):
-			x[i] = (x[i] - Tc) * float(L[l])**(1./nu)
-			#x[i] = (x[i] - Tc) * float(L[l])**(z)
+			#x[i] = (x[i] - Tc) * float(L[l])**(1./nu)
+			x[i] = (x[i] - Tc) * float(L[l])**(z)
 		plt.plot(np.array(x), np.array(yM2), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM2), yerr=np.array(yM2err), color=color_cycle[l])
 		plt.legend(loc='upper right')
@@ -87,7 +89,7 @@ for l in range(len(L)):
 		ax = plt.subplot(2, 2, 4)
 		#ax.set_xscale('log')
 		#ax.set_yscale('log')
-		plt.xlabel(r'$(T-T_c)L^{1/\nu}$')
+		plt.xlabel(r'$(T-T_c)L^{z}$')
 		plt.ylabel(r'$M_4 L^{2\eta}$')
 		plt.plot(np.array(x), np.array(yM4), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM4), yerr=np.array(yM4err), color=color_cycle[l])
