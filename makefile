@@ -2,8 +2,8 @@ DEFINES+= -DMCL_DUMP_BUFFER=0
 DEFINES+= -DMCL_MEASUREMENTS_APPEND
 DEFINES+= -DMCL_MCL_RNG_MT
 
-MODE=MPI
-#MODE=SINGLE
+#MODE=MPI
+MODE=SINGLE
 #MODE=PT
 
 OBJS = dump.o parser.o measurements.o evalable.o observable.o random.o mc.o main.o
@@ -61,8 +61,9 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	LDFLAGS =
 	SUPERLP =
 else
+	CFLAGS  = -O3 -pipe -g -std=c++11 -Wno-deprecated $(DEFINES)
 #	CFLAGS  = -O3 -ffast-math -march=native -pipe -g -Wall $(DEFINES)
-	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 $(DEFINES)
+#	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g $(DEFINES)
 #	CFLAGS  = -Ofast -ffast-math -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/gperftools-2.4/install/include
 	LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -lprofiler
