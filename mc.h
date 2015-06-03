@@ -12,7 +12,6 @@
 #include "Random.h"
 #include "HexagonalHoneycomb.h"
 #include "RhombicHoneycomb.h"
-//#define EIGEN_USE_MKL_ALL
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
 #include "measurements.h"
@@ -82,6 +81,8 @@ class CLASSNAME
 		void init();
 		void write(const std::string& dir);
 		bool read(const std::string& dir);
+		void write_state(const std::string& dir);
+		bool read_state(const std::string& dir);
 		#ifdef MCL_PT
 			void write_output(const std::string& dir, int para);
 		#else
@@ -125,7 +126,7 @@ class CLASSNAME
 			value_t T = finalT + (nThermalize - sweep) / nThermalize * (startT - finalT);
 			configSpace.SetTemperature(T);
 			evalableParameters[0] = configSpace.beta;
-			configSpace.BuildG0LookUpTable("");
+			configSpace.BuildG0LookUpTable();
 		}
 		
 		void ClearExpOrderHist();
@@ -142,10 +143,11 @@ class CLASSNAME
 		int nUpdateType = 15;
 		int nStateType = 3;
 		matrix_t updateWeightMatrix = matrix_t(nUpdateType, nStateType);
+		matrix_t proposeProbabilityMatrix = matrix_t(nUpdateType, nStateType);
 		matrix_t acceptedUpdates = matrix_t(nUpdateType, nStateType);
 		matrix_t proposedUpdates = matrix_t(nUpdateType, nStateType);
 		parser param;
-		uint_t sweep = 0;
+		uint_t sweep;
 		uint_t rebuildCnt = 0;
 		int myrep;
 		uint_t pt_spacing;
@@ -165,12 +167,14 @@ class CLASSNAME
 		uint_t L;
 		bool isInitialized = false;
 		std::string path;
+		std::string therm_path;
 		Measure therm;
 		std::map< value_t, std::pair<value_t, value_t> > zetaOptimization;
-		uint_t nZetaOptimization = 0;
-		uint_t nOptimizationSteps;
+		uint_t nZetaOptimization;
+		uint_t nOptimizationSteps = 0;
 		uint_t nOptimizationTherm;
+		std::vector< std::pair<value_t, value_t> > prevZeta;
 		bool annealing = false;
-		value_t startT = 2.5;
+		value_t startT = 5.0;
 		value_t finalT;
 };

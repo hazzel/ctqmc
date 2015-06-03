@@ -100,10 +100,10 @@ class HexagonalHoneycomb : public GeometryBase<RNG, Int_t>
 					int_t d4 = std::abs(u2 - u1 + this->L) + std::abs(v2 - v1 - 2 * this->L) + std::abs(w2 - w1 + this->L);
 					int_t d5 = std::abs(u2 - u1 - this->L) + std::abs(v2 - v1 - this->L) + std::abs(w2 - w1 + 2 * this->L);
 					int_t d6 = std::abs(u2 - u1 + this->L) + std::abs(v2 - v1 + this->L) + std::abs(w2 - w1 - 2 * this->L);
-					this->distanceMap[i][j] = std::min({ d0, d1, d2, d3, d4, d5, d6 });
-					this->distanceMap[j][i] = this->distanceMap[i][j];
+					this->distanceMap(i, j) = std::min({ d0, d1, d2, d3, d4, d5, d6 });
+					this->distanceMap(j, i) = this->distanceMap(i, j);
 				}
-				this->distanceMap[i][i] = 0;
+				this->distanceMap(i, i) = 0;
 			}
 		}	
 	private:

@@ -134,32 +134,6 @@ class ConfigSpace
 			return updateHandler.template ShiftWorm<W>();
 		}
 
-		/*
-		template<int_t W>
-		bool ShiftWorm()
-		{
-			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<W>();
-			updateHandler.GetVertexHandler().ShiftWormToBuffer();
-			uint_t m = lattice->MaxDistance();
-			value_t preFactorRemove = updateHandler.GetVertexHandler().WormIndexBufferParity() / (lattice->Sites() * m * beta * zeta2);
-			value_t preFactorAdd = updateHandler.GetVertexHandler().VertexBufferParity() * lattice->Sites() * m * beta * zeta2;
-			value_t detRemove, detAdd;
-			updateHandler.template RemoveVertices<W>(preFactorRemove, true, detRemove, UpdateFlag::NoUpdate);
-			updateHandler.template AddVertices<W>(preFactorAdd, true, detAdd, UpdateFlag::NoUpdate);
-			value_t detShift = std::min({preFactorRemove*detRemove, 1.0}) * std::min({preFactorAdd*detAdd, 1.0});
-			//value_t detShift = detRemove*detAdd;
-
-			if (rng() < detShift)
-			{
-				updateHandler.template RemoveVertices<W>(preFactorRemove, true, detRemove, UpdateFlag::ForceUpdate);
-				updateHandler.template AddVertices<W>(preFactorAdd, true, detAdd, UpdateFlag::ForceUpdate);
-				return true;
-			}
-			else
-				return false;
-		}
-		*/
-
 		void Clear()
 		{
 			updateHandler.Clear();
@@ -181,7 +155,8 @@ class ConfigSpace
 			return state;
 		}
 		
-		value_t LookUpG0(uint_t i1, uint_t i2, value_t tau)
+		/*
+		inline value_t LookUpG0(uint_t i1, uint_t i2, value_t tau)
 		{
 			value_t tau_p;
 			if (std::abs(tau) > beta/2.0)
@@ -189,17 +164,41 @@ class ConfigSpace
 			else
 				tau_p = std::abs(tau);
 			uint_t t = static_cast<uint_t>(std::abs(tau_p) / dtau);
-			uint_t N = lattice->Sites(), i = std::min({i1, i2}), j = std::max({i1, i2});
-			uint_t x = i * N - (i + i*i) / 2 + j;
-			value_t tau_t = t * dtau, G_t = lookUpTableG0[x][t], G_tt = lookUpTableG0[x][t+1];
+			uint_t i = std::min({i1, i2}), j = std::max({i1, i2});
+			uint_t x = i * lattice->Sites() - (i + i*i) / 2 + j;
+			value_t tau_t = t * dtau, G_t = lookUpTableG0(x, t), G_tt = lookUpTableG0(x, t+1);
 			value_t g = G_t + (tau_p - tau_t) * (G_tt - G_t) / dtau;
 			value_t sign = 1.0;
-			if (std::abs(tau) > beta/2.0 && lattice->Sublattice(i1) != lattice->Sublattice(i2))
+			bool sameSublattice = lattice->Sublattice(i1) == lattice->Sublattice(i2);
+			if (std::abs(tau) > beta/2.0 && (!sameSublattice))
 				sign *= -1.0;
-			if (tau < 0.0 && lattice->Sublattice(i1) == lattice->Sublattice(i2))
+			if (tau < 0.0 && sameSublattice)
 				sign *= -1.0;
 			return sign * g;
 		}
+		*/
+		
+		
+		inline value_t LookUpG0(uint_t i1, uint_t i2, value_t tau)
+		{
+			value_t tau_p;
+			if (std::abs(tau) > beta/2.0)
+				tau_p = beta - std::abs(tau);
+			else
+				tau_p = std::abs(tau);
+			uint_t t = static_cast<uint_t>(std::abs(tau_p) / dtau);
+			uint_t x = lookUpIndex(i1, i2);
+			value_t tau_t = t * dtau, G_t = lookUpTableG0(x, t), G_tt = lookUpTableG0(x, t + 1);
+			value_t g = G_t + (tau_p - tau_t) * (G_tt - G_t) / dtau;
+			value_t sign = 1.0;
+			bool sameSublattice = lattice->Sublattice(i1) == lattice->Sublattice(i2);
+			if (std::abs(tau) > beta/2.0 && (!sameSublattice))
+				sign *= -1.0;
+			if (tau < 0.0 && sameSublattice)
+				sign *= -1.0;
+			return sign * g;
+		}
+		
 
 		void EvaluateG0(value_t tau, matrix_t& g0)
 		{
@@ -211,40 +210,65 @@ class ConfigSpace
 			g0 = hopEV * hopDiag * hopEVT;
 		}
 		
-		void BuildG0LookUpTable(const std::string& filename)
+		void BuildG0LookUpTable()
 		{
-			uint_t N = lattice->Sites();
-			lookUpTableG0.AllocateTable((N*N + N) / 2, nTimeBins + 1);
-			if (fileIO && FileExists(filename))
+			uint_t nValues = BuildG0IndexTable();
+			matrix_t G0(hopDiag.rows(), hopDiag.cols());
+			for (uint_t t = 0; t <= nTimeBins; ++t)
 			{
-				std::cout << "...";
-				std::cout.flush();
-				ReadFromFile(filename);
-			}
-			else
-			{
-				matrix_t G0(hopDiag.rows(), hopDiag.cols());
-				for (uint_t t = 0; t <= nTimeBins; ++t)
+				EvaluateG0(dtau * t, G0);
+				std::vector<value_t> cnt(nValues, 0.0);
+				for (uint_t i = 0; i < lattice->Sites(); ++i)
 				{
-					EvaluateG0(dtau * t, G0);
-					for (uint_t i = 0; i < lattice->Sites(); ++i)
+					for (uint_t j = i; j < lattice->Sites(); ++j)
 					{
-						for (uint_t j = i; j < lattice->Sites(); ++j)
-						{
-							uint_t x = i * N - (i + i*i) / 2 + j;
-							lookUpTableG0[x][t] = G0(i, j);
-						}
-					}
-					if (t % (nTimeBins / 10) == 0)
-					{
-						std::cout << ".";
-						std::cout.flush();
+						uint_t index = lookUpIndex(i, j);
+						lookUpTableG0(index, t) = (G0(i, j) + cnt[index] * lookUpTableG0(index, t)) / (1.0 + cnt[index]);
+						++cnt[index];
 					}
 				}
-				
-				if (fileIO)
-					SaveToFile(filename);
+				if (t % (nTimeBins / 10) == 0)
+				{
+					std::cout << ".";
+					std::cout.flush();
+				}
 			}
+		}
+		
+		uint_t BuildG0IndexTable()
+		{
+			uint_t N = lattice->Sites();
+			lookUpIndex.AllocateTable(N, N, -1);
+			matrix_t G0(hopDiag.rows(), hopDiag.cols());
+			value_t threshold = std::pow(10.0, -12.0);
+			uint_t t = 10;
+			std::vector<value_t> nValues;
+			
+			EvaluateG0(dtau * t, G0);
+			for (uint_t i = 0; i < lattice->Sites(); ++i)
+			{
+				for (uint_t j = i; j < lattice->Sites(); ++j)
+				{
+					bool isStored = false;
+					for (uint_t k = 0; k < nValues.size(); ++k)
+					{
+						if (std::abs(nValues[k] - G0(i, j)) < threshold)
+						{
+							isStored = true;
+							lookUpIndex(i, j) = k;
+							lookUpIndex(j, i) = k;
+						}
+					}
+					if (!isStored)
+					{
+						nValues.push_back(G0(i, j));
+						lookUpIndex(i, j) = nValues.size() - 1;
+						lookUpIndex(j, i) = nValues.size() - 1;
+					}
+				}
+			}
+			lookUpTableG0.AllocateTable(nValues.size(), nTimeBins + 1, 0.0);
+			return nValues.size();
 		}
 
 		void BuildHoppingMatrix()
@@ -310,47 +334,6 @@ class ConfigSpace
 				result *= k - n + i;
 			return result;
 		}
-
-		void SaveToFile(const std::string& filename)
-		{
-			std::ofstream os(filename, std::ofstream::binary);
-			if (!os.is_open())
-			{
-				std::cout << "Error opening file: " << filename << std::endl;
-			}
-			uint_t N = lattice->Sites();
-			for (uint_t i = 0; i < (N*N + N) / 2; ++i)
-			{
-				for (uint_t j = 0; j < nTimeBins + 1; ++j)
-				{
-					os.write((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-				}
-			}
-			os.close();
-			std::cout << "File " << filename << " written: " << FileExists(filename) << std::endl;
-		}
-
-		void ReadFromFile(const std::string& filename)
-		{
-			std::ifstream is(filename, std::ofstream::binary);
-			uint_t N = lattice->Sites();
-			if (is.is_open())
-			{
-				while(is.good())
-				{
-					for (uint_t i = 0; i < (N*N + N) / 2; ++i)
-					{
-						for (uint_t j = 0; j < nTimeBins + 1; ++j)
-						{
-							is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-						}
-					}
-				}
-				is.close();
-			}
-			else
-				std::cout << "Error reading g0 look up file." << std::endl;
-		}
 	public:
 		RNG& rng;
 		uint_t L;
@@ -364,7 +347,8 @@ class ConfigSpace
 		value_t zeta4;
 		uint_t nTimeBins;
 		uint_t maxWorms = 4;
-		LookUpTable<value_t, uint_t, 2> lookUpTableG0;
+		LookUpTable<value_t, 2> lookUpTableG0;
+		LookUpTable<int_t, 2> lookUpIndex;
 		value_t dtau;
 		StateType state = StateType::Z;
 		matrix_t hoppingMatrix;

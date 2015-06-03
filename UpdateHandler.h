@@ -45,15 +45,12 @@ class UpdateHandler
 		template<typename Matrix_t>
 		void PrintMatrix(const Matrix_t& M)
 		{
-			using namespace Eigen;
-			IOFormat CommaInitFmt(StreamPrecision, DontAlignCols, ", ", ", ", "", "", " << ", ";");
-			IOFormat CleanFmt(FullPrecision, 0, ", ", "\n", "[", "]");
-			IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
-			IOFormat HeavyFmt(FullPrecision, 0, ", ", ",\n", "{", "}", "{", "}");
-			//std::cout << M.format(CommaInitFmt) << std::endl;
-			std::cout << M.format(CleanFmt) << std::endl;
-			//std::cout << M.format(OctaveFmt) << std::endl;
-			//std::cout << M.format(HeavyFmt) << std::endl;
+			for (uint_t i = 0; i < M.n_rows; ++i)
+			{
+				for (uint_t j = 0; j < M.n_cols; ++j)
+					std::cout << M(i, j) << " ";
+				std::cout << std::endl;
+			}
 		}
 
 		template<int_t N>
@@ -133,14 +130,8 @@ class UpdateHandler
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
 
-			arma::vec perm(k);
-			vertexHandler.PermutationMatrix(perm, isWorm);
-			matrix_t invGp(k, k);
-			for (uint_t i = 0; i < k; ++i)
-				for (uint_t j = 0; j < k; ++j)
-					invGp(i, j) = invG(perm(i), perm(j));
-			
-			matrix_t S = invGp.submat(k - n, k - n, k - 1, k - 1);
+			matrix_t S(n, n);
+			vertexHandler.FillSMatrix(S, invG, isWorm);
 			value_t acceptRatio;
 			if (flag == UpdateFlag::NormalUpdate)
 			{
@@ -163,6 +154,13 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
+				arma::vec perm(k);
+				vertexHandler.PermutationMatrix(perm, isWorm);
+				matrix_t invGp(k, k);
+				for (uint_t i = 0; i < k; ++i)
+					for (uint_t j = 0; j < k; ++j)
+						invGp(i, j) = invG(perm(i), perm(j));
+				
 				matrix_t t = arma::inv(S) * invGp.submat(k - n, 0, k - 1, k - n - 1);
 				invG = invGp.submat(0, 0, k - n - 1, k - n - 1) - invGp.submat(0, k - n, k - n - 1, k - 1) * t;
 
@@ -207,77 +205,70 @@ class UpdateHandler
 				return false;
 			}
 		}
-		/*	
+		
 		template<int_t W>
 		bool ShiftWorm()
 		{
 			uint_t k = 2 * vertexHandler.Vertices();
 			const uint_t l = 2 * W;
-
-			matrix_t<Eigen::Dynamic, l> wormU(k, l), shiftedWormU(k, l);
-			matrix_t<l, Eigen::Dynamic> wormV(l, k), shiftedWormV(l, k);
-			matrix_t<l, l> wormA(l, l), shiftedWormA(l, l);
-
+			
 			vertexHandler.ShiftWormToBuffer();
-			vertexHandler.WoodburyWorm(wormU, wormV, wormA);
-			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
-
-			Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(k + l);
-			vertexHandler.PermutationMatrix(perm.indices(), true);
-			invG = perm.transpose() * invG * perm;
-			matrix_t<Eigen::Dynamic, Eigen::Dynamic> M = invG.topLeftCorner(k, k);
-			M.noalias() -= invG.topRightCorner(k, l) * invG.template bottomRightCorner<l, l>().inverse() * invG.bottomLeftCorner(l, k);
-
-			matrix_t<l, l> invS = wormA;
-			invS.noalias() -= wormV * M * wormU;
-			value_t detInvS = invS.determinant();
-
-			matrix_t<l, l> shiftedInvS = shiftedWormA;
-			shiftedInvS.noalias() -= shiftedWormV * M * shiftedWormU;
-			value_t detShiftedInvS = shiftedInvS.determinant();
-
-			value_t preFactorRem, preFactorAdd;
-			value_t m = configSpace.lattice->Sites();
-			if (W == 1)
+			matrix_t U_1(k + l, l);
+			matrix_t V_2(l, k + l);
+			vertexHandler.WoodburyShiftRowsCols(U_1, V_2);
+			matrix_t I = arma::eye<matrix_t>(l, l);
+			matrix_t invGu1 = invG * U_1;
+			matrix_t invGv1(l, k + l);
+			matrix_t invGu2(k + l, l);
+			for (uint_t i = 0; i < l; i+=2)
 			{
-				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
-				preFactorAdd = 1.0 / preFactorRem;
+				uint_t pos = vertexHandler.WormPositions()[i];
+				invGv1.submat(i, 0, i + 1, k + l - 1) = invG.submat(pos, 0, pos + 1, k + l - 1);
+				invGu2.submat(0, i, k + l - 1, i + 1) = invG.submat(0, pos, k + l - 1, pos + 1);
 			}
-			else if (W == 2)
+			
+			matrix_t w1 = I + invGv1 * U_1;
+			matrix_t w2 = I + V_2 * invGu2;
+			matrix_t w3(l, l);
+			for (uint_t i = 0; i < l; i+=2)
 			{
-				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
-				preFactorAdd = 1.0 / preFactorRem;
+				uint_t pos = vertexHandler.WormPositions()[i];
+				w3.submat(i, 0, i + 1, l - 1) = invGu2.submat(pos, 0, pos + 1, l - 1);
 			}
-
-			value_t acceptRatio = detShiftedInvS / detInvS * vertexHandler.WormShiftParity();
-			//value_t acceptRatio = std::min({std::abs(preFactorRem * detShiftedInvS), 1.0}) * std::min({std::abs(preFactorAdd / detInvS), 1.0});
+			matrix_t w4 = invGu1 * arma::inv(w1);
+			matrix_t w5 = V_2 * w4 * w3;
+			
+			value_t acceptRatio = arma::det(w1) * arma::det(w2 - w5) * vertexHandler.WormShiftParity();
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				matrix_t<l, l> S = shiftedInvS.inverse();
-				matrix_t<l, Eigen::Dynamic> R = -S * shiftedWormV * M;
-				matrix_t<Eigen::Dynamic, l> Mu = M * shiftedWormU;
-				invG.topLeftCorner(k, k) = M;
-				invG.topLeftCorner(k, k).noalias() -= Mu * R;
-				invG.topRightCorner(k, l).noalias() = -Mu * S;
-				invG.bottomLeftCorner(l, k) = R;
-				invG.template bottomRightCorner<l, l>() = S;
-				invG = perm * invG * perm.transpose();
-
+				//update columns
+				invG -= w4 * invGv1;
+				
+				//update rows
+				matrix_t invGv2 = V_2 * invG;
+				matrix_t w6(l, l);
+				for (uint_t i = 0; i < l; i+=2)
+				{
+					uint_t pos = vertexHandler.WormPositions()[i];
+					invGu2.submat(0, i, k + l - 1, i + 1) = invG.submat(0, pos, k + l - 1, pos + 1);
+					w6.submat(0, i, l - 1, i + 1) = invGv2.submat(0, pos, l - 1, pos + 1);
+				}
+				invG -= invGu2 * arma::inv(I + w6) * invGv2;
 				vertexHandler.ApplyWormShift();
+				
 				return true;
 			}
 			else
 			{
-				invG = perm * invG * perm.transpose();
 				return false;
 			}
 		}
-		*/
 		
+		/*
 		template<int_t W>
 		bool ShiftWorm()
 		{
@@ -294,6 +285,8 @@ class UpdateHandler
 				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
 				preFactorAdd = 1.0 / preFactorRem;
 			}
+			preFactorRem = 1.0;
+			preFactorAdd = 1.0;
 			if (RemoveVertices<W>(preFactorRem * vertexHandler.WormIndexBufferParity(), true))
 			{
 				if (AddVertices<W>(preFactorAdd * vertexHandler.VertexBufferParity(), true))
@@ -310,8 +303,13 @@ class UpdateHandler
 			}
 			return false;
 		}
+		*/
 		
-
+		value_t GetWeight()
+		{
+			return 1.0;
+		}
+		
 		void Clear()
 		{
 			invG.resize(0, 0);
