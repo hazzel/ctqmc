@@ -12,7 +12,6 @@
 #include "Random.h"
 #include "HexagonalHoneycomb.h"
 #include "RhombicHoneycomb.h"
-//#define EIGEN_USE_MKL_ALL
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
 #include "measurements.h"

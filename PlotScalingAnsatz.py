@@ -12,11 +12,12 @@ color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 L = ["3", "4", "5", "6", "7", "9", "12"]
 for l in range(len(L)):
 	filelist = []
-	#filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_rhom_V1.625/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_rhom_V1.625/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.355/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.25/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.5/*L" + L[l] + "*.out"))
@@ -27,17 +28,16 @@ for l in range(len(L)):
 		if len(filelist[f]) == 0:
 			continue
 		filelist[f].sort()
-		z = 0.
+		#z = 0.56
+		z = 0.28
 		beta = 0.125
 		eta = 0.25
-		nu = 1.
-		#eta = 0.4
-		#nu = 0.8
+		nu = 1.0
 		gamma = 7./4.
 		V = 1.625
-		#Tc = 0.516
+		Tc = 0.50
 		#Tc = 0.92
-		Tc = 0.292
+		#Tc = 0.294
 		x = []
 		yM2 = []
 		yM2err = []
@@ -49,7 +49,8 @@ for l in range(len(L)):
 			plist = ParseParameters(filelist[f][i])
 			elist = ParseEvalables(filelist[f][i])
 			x.append(float(plist["T"]))
-			exp = z + eta
+			exp = eta + z
+			#exp = eta
 			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**(exp))
 			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**(exp) )
 			yM4.append( ArrangePlot(elist, "M4")[0][0] * float(L[l])**(2. * exp) )
@@ -77,11 +78,12 @@ for l in range(len(L)):
 		ax = plt.subplot(2, 2, 2)
 		#ax.set_xscale('log')
 		#ax.set_yscale('log')
-		plt.xlabel(r'$(T-T_c)L^{z}$')
+		plt.xlabel(r'$(T-T_c) L^{z}$')
 		plt.ylabel(r'$M_2 L^{\eta}$')
 		for i in range(len(x)):
-			#x[i] = (x[i] - Tc) * float(L[l])**(1./nu)
-			x[i] = (x[i] - Tc) * float(L[l])**(z)
+			#x[i] = float(x[i]-Tc)
+			x[i] = (x[i] - Tc) / Tc * float(L[l])**(1.)
+			#x[i] = (x[i] - Tc) * float(L[l])**((1./nu)*(1. - 1./z))
 		plt.plot(np.array(x), np.array(yM2), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM2), yerr=np.array(yM2err), color=color_cycle[l])
 		plt.legend(loc='upper right')
@@ -89,7 +91,7 @@ for l in range(len(L)):
 		ax = plt.subplot(2, 2, 4)
 		#ax.set_xscale('log')
 		#ax.set_yscale('log')
-		plt.xlabel(r'$(T-T_c)L^{z}$')
+		plt.xlabel(r'$(T-T_c) L^{z}$')
 		plt.ylabel(r'$M_4 L^{2\eta}$')
 		plt.plot(np.array(x), np.array(yM4), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM4), yerr=np.array(yM4err), color=color_cycle[l])
