@@ -157,7 +157,7 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	
 	BuildUpdateWeightMatrix();
 	//if (omp_get_thread_num() == 1)
-		ProfilerStart("gperf/mc.prof");
+		//ProfilerStart("gperf/mc.prof");
 	//Eigen::initParallel();
 }
 
@@ -165,7 +165,7 @@ CLASSNAME::~CLASSNAME()
 {
 	delete[] evalableParameters;
 	//if (omp_get_thread_num() == 1)
-		ProfilerStop();
+		//ProfilerStop();
 }
 
 void CLASSNAME::random_write(odump& d)
@@ -652,6 +652,8 @@ void CLASSNAME::do_update()
 	}
 	//MeasureExpOrder();
 	++sweep;
+	if (sweep % 1000 == 0)
+		std::cout << "sweep: " << sweep << " , pertorder: " << configSpace.updateHandler.GetVertexHandler().Vertices() + configSpace.updateHandler.GetVertexHandler().Worms() << std::endl;
 
 	if (nZetaOptimization < nOptimizationSteps)
 	{

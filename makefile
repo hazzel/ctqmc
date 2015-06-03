@@ -63,9 +63,9 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	LDFLAGS =
 	SUPERLP =
 else
-	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g $(DEFINES)
+	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g -fopenmp $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-4.650.4/include -I$(HOME)/gperftools-2.4/install/include
-	LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -L$(HOME)/armadillo-4.650.4/lib -lblas -llapack -lprofiler
+	LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -L$(HOME)/armadillo-4.650.4/lib -lblas -llapack -lprofiler -fopenmp
 	SUPERLP =
 endif
 
