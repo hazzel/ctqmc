@@ -12,9 +12,9 @@ color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 L = ["3", "4", "5", "6", "7", "9", "12"]
 for l in range(len(L)):
 	filelist = []
-	filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_rhom_V1.625/*L" + L[l] + "*.out"))
@@ -28,16 +28,15 @@ for l in range(len(L)):
 		if len(filelist[f]) == 0:
 			continue
 		filelist[f].sort()
-		#z = 0.56
-		z = 0.28
+		z = 0.
 		beta = 0.125
 		eta = 0.25
 		nu = 1.0
 		gamma = 7./4.
 		V = 1.625
-		Tc = 0.50
+		Tc = 0.499
 		#Tc = 0.92
-		#Tc = 0.294
+		#Tc = 0.293
 		x = []
 		yM2 = []
 		yM2err = []
@@ -49,8 +48,8 @@ for l in range(len(L)):
 			plist = ParseParameters(filelist[f][i])
 			elist = ParseEvalables(filelist[f][i])
 			x.append(float(plist["T"]))
-			exp = eta + z
-			#exp = eta
+			#exp = eta + z
+			exp = 0.51
 			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**(exp))
 			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**(exp) )
 			yM4.append( ArrangePlot(elist, "M4")[0][0] * float(L[l])**(2. * exp) )
@@ -82,7 +81,7 @@ for l in range(len(L)):
 		plt.ylabel(r'$M_2 L^{\eta}$')
 		for i in range(len(x)):
 			#x[i] = float(x[i]-Tc)
-			x[i] = (x[i] - Tc) / Tc * float(L[l])**(1.)
+			x[i] = (x[i] - Tc) / Tc * float(L[l])**(1.5)
 			#x[i] = (x[i] - Tc) * float(L[l])**((1./nu)*(1. - 1./z))
 		plt.plot(np.array(x), np.array(yM2), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM2), yerr=np.array(yM2err), color=color_cycle[l])
