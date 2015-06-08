@@ -147,7 +147,7 @@ class CLASSNAME
 		matrix_t acceptedUpdates = matrix_t(nUpdateType, nStateType);
 		matrix_t proposedUpdates = matrix_t(nUpdateType, nStateType);
 		parser param;
-		uint_t sweep;
+		uint_t sweep = 0;
 		uint_t rebuildCnt = 0;
 		int myrep;
 		uint_t pt_spacing;

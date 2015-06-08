@@ -150,10 +150,6 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 		sweep = nThermalize;
 		std::cout << "Thermalization...Done" << std::endl;
 	}
-	else
-	{
-		sweep = 0;
-	}
 	
 	BuildUpdateWeightMatrix();
 	//if (omp_get_thread_num() == 1)
@@ -218,6 +214,7 @@ void CLASSNAME::write(const std::string& dir)
 	odump d(dir+"dump");
 	random_write(d);
 	d.write(sweep);
+	std::cout << "write sweep: " << sweep << std::endl;
 	d.write(rebuildCnt);
 	for (uint_t i = 0; i < nUpdateType; ++i)
 	{
@@ -261,13 +258,18 @@ void CLASSNAME::write_state(const std::string& dir)
 }
 bool CLASSNAME::read(const std::string& dir)
 {
-	idump d(dir);
-	if (!d) 
+	std::cout << "read " << dir <<  std::endl;
+	idump d(dir+"dump");
+	if (!d)
+	{
+		std::cout << "read fail" << std::endl;
 		return false;
+	}
 	else
 	{
 		random_read(d);
 		d.read(sweep);
+		std::cout << "read sweep: " << sweep << std::endl;
 		d.read(rebuildCnt);
 		for (uint_t i = 0; i < nUpdateType; ++i)
 		{
@@ -285,7 +287,7 @@ bool CLASSNAME::read(const std::string& dir)
 }
 bool CLASSNAME::read_state(const std::string& dir)
 {
-	idump d(dir+"dump");
+	idump d(dir);
 	if (!d) 
 		return false;
 	else
@@ -341,21 +343,21 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 {
 	
 	//ALL TRANSITIONS
-	proposeProbabilityMatrix <<	0.4 / 10.0,	0.4 / 10.0	,	0.4 / 10.0,
-											2.6 / 10.0,	2.6 / 10.0	,	2.6 / 10.0,
-											0.25 / 10.0	,	0.125 / 10.0	,	0.125 / 10.0,
-											1.75 / 10.0	,	0.875 / 10.0	,	0.875 / 10.0,
-											0.125 / 10.0,	0.125 / 10.0,	0.125 / 10.0,
-											0.875 / 10.0,	0.875 / 10.0,	0.875 / 10.0,
-											0.1 / 10.0	,	0.9 / 10.0	,	0.1 / 10.0,
-											0.9 / 10.0	,	0.1 / 10.0	,	0.9 / 10.0,
+	proposeProbabilityMatrix <<	1.0 / 10.0,	0.7 / 10.0	,	0.7 / 10.0,
+											3.0 / 10.0,	2.3 / 10.0	,	2.3 / 10.0,
+											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
+											1.5 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
+											0.5 / 10.0,	0.25 / 10.0,	0.25 / 10.0,
+											1.5 / 10.0,	0.75 / 10.0,	0.75 / 10.0,
+											0.25 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
+											0.75 / 10.0	,	0.75 / 10.0	,	0.75 / 10.0,
 											0.5 / 10.0	,	0.0			,	0.0,
 											0.0			,	0.5 / 10.0	,	0.0, 
 											0.5 / 10.0	,	0.0			,	0.0,
 											0.0			,	0.0			,	0.5 / 10.0,
 											0.0			,	0.5 / 10.0	,	0.0,
 											0.0			,	0.0			,	0.5 / 10.0,
-											0.0			,	3.0 / 10.0	,	3.0 / 10.0;
+											0.0			,	2.0 / 10.0	,	2.0 / 10.0;
 	
 /*
 	//ALL TRANSITIONS
@@ -652,8 +654,9 @@ void CLASSNAME::do_update()
 	}
 	//MeasureExpOrder();
 	++sweep;
-	if (sweep % 100 == 0)
+	if (sweep % 1000 == 0)
 		std::cout << "sweep: " << sweep << " , pertorder: " << configSpace.updateHandler.GetVertexHandler().Vertices() + configSpace.updateHandler.GetVertexHandler().Worms() << std::endl;
+	std::cout << sweep << std::endl;
 
 	if (nZetaOptimization < nOptimizationSteps)
 	{
