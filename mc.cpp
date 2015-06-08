@@ -654,9 +654,8 @@ void CLASSNAME::do_update()
 	}
 	//MeasureExpOrder();
 	++sweep;
-	if (sweep % 1000 == 0)
+	if (sweep % 5000 == 0)
 		std::cout << "sweep: " << sweep << " , pertorder: " << configSpace.updateHandler.GetVertexHandler().Vertices() + configSpace.updateHandler.GetVertexHandler().Worms() << std::endl;
-	std::cout << sweep << std::endl;
 
 	if (nZetaOptimization < nOptimizationSteps)
 	{
