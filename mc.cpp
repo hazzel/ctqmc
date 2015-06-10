@@ -357,8 +357,8 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	0.0			,	0.5 / 10.0,
 											0.0			,	0.5 / 10.0	,	0.0,
 											0.0			,	0.0			,	0.5 / 10.0,
-											0.0			,	1.0 / 10.0	,	1.0 / 10.0,
-											0.0			,	1.0 / 10.0	,	1.0 / 10.0;
+											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
+											0.0			,	2.0 / 10.0	,	2.0 / 10.0;
 	
 /*
 	//ALL TRANSITIONS
@@ -640,6 +640,10 @@ void CLASSNAME::do_update()
 			if (state == StateType::W2)
 			{
 				result = configSpace.ReplaceWorm<1>();
+			}
+			else if (state == StateType::W4)
+			{
+				result = false;
 			}
 			if (result)
 			{
