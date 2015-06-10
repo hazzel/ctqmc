@@ -22,7 +22,7 @@
 #include "VertexHandler.h"
 #include "GeometryBase.h"
 
-enum UpdateType {AddVertex, RemoveVertex, Add2Vertices, Remove2Vertices, Add5Vertices, Remove5Vertices, Add8Vertices, Remove8Vertices, ZtoW2, W2toZ, ZtoW4, W4toZ, W2toW4, W4toW2, shiftWorm};
+enum UpdateType {AddVertex, RemoveVertex, Add2Vertices, Remove2Vertices, Add5Vertices, Remove5Vertices, Add8Vertices, Remove8Vertices, ZtoW2, W2toZ, ZtoW4, W4toZ, W2toW4, W4toW2, replaceWorm, shiftWorm};
 enum StateType {Z, W2, W4};
 
 template<typename T>
@@ -105,33 +105,61 @@ class ConfigSpace
 		template<int_t N>
 		bool OpenUpdate()
 		{
-			if ((state == StateType::Z) && (N == 1) && (updateHandler.GetVertexHandler().Vertices() > 0))
+			if ((state == StateType::Z) && (updateHandler.GetVertexHandler().Vertices() > 0))
 			{
 				updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
-				value_t preFactor = 2.0 * zeta2 * updateHandler.GetVertexHandler().Vertices() / V;
+				value_t preFactor;
+				if (N == 1)
+					preFactor = 2.0 * zeta2 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V;
+				else if (N == 2)
+					preFactor = 4.0 * zeta4 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V*V;
 				return updateHandler.OpenUpdate(preFactor);
 			}
 			else
 				return false;
 		}
-
+		
 		template<int_t N>
 		bool CloseUpdate()
 		{
-			if ((state == StateType::W2) && (N == 1) && (updateHandler.GetVertexHandler().WormDistance() == 1))
+			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
+			if ((state != StateType::Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
 			{
-				updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 				value_t preFactor = V / (2.0 * zeta2 * (updateHandler.GetVertexHandler().Vertices() + 1.0));
 				return updateHandler.CloseUpdate(preFactor);
 			}
 			else
 				return false;
 		}
+/*
+		template<int_t N>
+		bool CloseUpdate()
+		{
+			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
+			if ((state != StateType::Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
+			{
+				value_t preFactor;
+				if (N == 1)
+					preFactor = AdditionFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) * V / (2.0 * zeta2);
+				else if (N == 2)
+					preFactor = AdditionFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) * V*V / (4.0 * zeta4);
+				return updateHandler.CloseUpdate(preFactor);
+			}
+			else
+				return false;
+		}
+		*/
 		
 		template<int_t W>
 		bool ShiftWorm()
 		{
 			return updateHandler.template ShiftWorm<W>();
+		}
+		
+		template<int_t W>
+		bool ReplaceWorm()
+		{
+			return updateHandler.template ReplaceWorm<W>();
 		}
 
 		void Clear()

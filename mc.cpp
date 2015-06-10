@@ -144,7 +144,7 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	
 	//Read thermalized state if it exists
 	therm_path = path + "thermalization/therm-" + "L" + ToString(L) + "-V" + ToString(configSpace.V) + "-T" + ToString(T) + "-" + geometry;
-	if (FileExists(therm_path))
+	if (FileExists(therm_path) && nOptimizationSteps == 0)
 	{
 		read_state(therm_path);
 		sweep = nThermalize;
@@ -305,7 +305,7 @@ void CLASSNAME::write_output(const std::string& dir, int para)
 	measure[para].add_evalable("M4","deltaZ","deltaW2","deltaW4", M4Function, evalableParameters);
 	measure[para].add_evalable("BinderRatio","deltaZ","deltaW2","deltaW4", BinderRatioFunction, evalableParameters);
 	measure[para].add_evalable("Chi","deltaZ","deltaChi","deltaW4", ChiFunction, evalableParameters);
-	measure[para].add_evalable("AvgExpOrder","k","deltaZ", AvgExporderFunction);
+	//measure[para].add_evalable("AvgExpOrder","k","deltaZ", AvgExporderFunction);
 	measure[para].add_vectorevalable("Correlations","Corr","deltaZ", CorrFunction, evalableParameters);
 	std::ofstream f;
 	//f.precision(8);
@@ -322,7 +322,7 @@ void CLASSNAME::write_output(const std::string& dir)
 	measure.add_evalable("M4","deltaZ","deltaW2","deltaW4", M4Function, evalableParameters);
 	measure.add_evalable("BinderRatio","deltaZ","deltaW2","deltaW4", BinderRatioFunction, evalableParameters);
 	measure.add_evalable("Chi","deltaZ","deltaChi","deltaW4", ChiFunction, evalableParameters);
-	measure.add_evalable("AvgExpOrder","k","deltaZ", AvgExporderFunction);
+	//measure.add_evalable("AvgExpOrder","k","deltaZ", AvgExporderFunction);
 	measure.add_vectorevalable("Correlations","Corr","deltaZ", CorrFunction, evalableParameters);
 	std::ofstream f;
 	//f.precision(8);
@@ -343,12 +343,12 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 {
 	
 	//ALL TRANSITIONS
-	proposeProbabilityMatrix <<	1.0 / 10.0,	0.7 / 10.0	,	0.7 / 10.0,
-											3.0 / 10.0,	2.3 / 10.0	,	2.3 / 10.0,
+	proposeProbabilityMatrix <<	1.0 / 10.0	,	0.7 / 10.0	,	0.7 / 10.0,
+											3.0 / 10.0	,	2.3 / 10.0	,	2.3 / 10.0,
 											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
 											1.5 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
-											0.5 / 10.0,	0.25 / 10.0,	0.25 / 10.0,
-											1.5 / 10.0,	0.75 / 10.0,	0.75 / 10.0,
+											0.5 / 10.0	,	0.25 / 10.0,	0.25 / 10.0,
+											1.5 / 10.0	,	0.75 / 10.0,	0.75 / 10.0,
 											0.25 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
 											0.75 / 10.0	,	0.75 / 10.0	,	0.75 / 10.0,
 											0.5 / 10.0	,	0.0			,	0.0,
@@ -357,7 +357,8 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	0.0			,	0.5 / 10.0,
 											0.0			,	0.5 / 10.0	,	0.0,
 											0.0			,	0.0			,	0.5 / 10.0,
-											0.0			,	2.0 / 10.0	,	2.0 / 10.0;
+											0.0			,	1.0 / 10.0	,	1.0 / 10.0,
+											0.0			,	1.0 / 10.0	,	1.0 / 10.0;
 	
 /*
 	//ALL TRANSITIONS
@@ -579,7 +580,12 @@ void CLASSNAME::do_update()
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
-			if (configSpace.AddRandomVertices<2>(preFactor, true))
+			bool result;
+			if (configSpace.rng() < 1.1)
+				result = configSpace.AddRandomVertices<2>(preFactor, true);
+			else
+				result = configSpace.OpenUpdate<2>();
+			if (result)
 			{
 				acceptedUpdates(UpdateType::ZtoW4, state) += 1.0;
 				configSpace.state = StateType::W4;
@@ -591,7 +597,12 @@ void CLASSNAME::do_update()
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
-			if (configSpace.RemoveRandomVertices<2>(preFactor, true))
+			bool result;
+			if (configSpace.rng() < 1.1)
+				result = configSpace.RemoveRandomVertices<2>(preFactor, true);
+			else
+				result = configSpace.CloseUpdate<2>();
+			if (result)
 			{
 				acceptedUpdates(UpdateType::W4toZ, state) += 1.0;
 				configSpace.state = StateType::Z;
@@ -623,11 +634,27 @@ void CLASSNAME::do_update()
 			}
 			proposedUpdates(UpdateType::W4toW2, state) += 1.0;
 		}
+		else if (r < updateWeightMatrix(UpdateType::replaceWorm, state) && state != StateType::Z)
+		{
+			bool result;
+			if (state == StateType::W2)
+			{
+				result = configSpace.ReplaceWorm<1>();
+			}
+			if (result)
+			{
+				acceptedUpdates(UpdateType::replaceWorm, state) += 1.0;
+				++rebuildCnt;
+			}
+			proposedUpdates(UpdateType::replaceWorm, state) += 1.0;
+		}
 		else if (r < updateWeightMatrix(UpdateType::shiftWorm, state) && state != StateType::Z)
 		{
 			bool result;
 			if (state == StateType::W2)
+			{
 				result = configSpace.ShiftWorm<1>();
+			}
 			else if (state == StateType::W4)
 				result = configSpace.ShiftWorm<2>();
 			if (result)
@@ -654,8 +681,6 @@ void CLASSNAME::do_update()
 	}
 	//MeasureExpOrder();
 	++sweep;
-	if (sweep % 5000 == 0)
-		std::cout << "sweep: " << sweep << " , pertorder: " << configSpace.updateHandler.GetVertexHandler().Vertices() + configSpace.updateHandler.GetVertexHandler().Worms() << std::endl;
 
 	if (nZetaOptimization < nOptimizationSteps)
 	{
@@ -797,9 +822,11 @@ void CLASSNAME::do_measurement()
 	#ifdef MCL_PT
 		measure[myrep].add("<w>", configSpace.updateHandler.GetVertexHandler().Worms());
 		measure[myrep].add("weight", configSpace.updateHandler.GetWeight());
+		measure[myrep].add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
 	#else
 		measure.add("<w>", configSpace.updateHandler.GetVertexHandler().Worms());
 		measure.add("weight", configSpace.updateHandler.GetWeight());
+		measure.add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
 	#endif
 	uint_t R = 0;
 	value_t sign, c;
@@ -812,13 +839,11 @@ void CLASSNAME::do_measurement()
 				measure[myrep].add("deltaW2", 0.0);
 				measure[myrep].add("deltaW4", 0.0);
 				measure[myrep].add("deltaChi", 0.0);
-				measure[myrep].add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
 			#else
 				measure.add("deltaZ", 1.0);
 				measure.add("deltaW2", 0.0);
 				measure.add("deltaW4", 0.0);
 				measure.add("deltaChi", 0.0);
-				measure.add("k", configSpace.updateHandler.GetVertexHandler().Vertices());
 			#endif
 			break;
 
@@ -829,13 +854,11 @@ void CLASSNAME::do_measurement()
 				measure[myrep].add("deltaW2", 1.0);
 				measure[myrep].add("deltaW4", 0.0);
 				measure[myrep].add("deltaChi", sign);
-				measure[myrep].add("k", 0.0);
 			#else
 				measure.add("deltaZ", 0.0);
 				measure.add("deltaW2", 1.0);
 				measure.add("deltaW4", 0.0);
 				measure.add("deltaChi", sign);
-				measure.add("k", 0.0);
 			#endif
 
 			R = configSpace.updateHandler.GetVertexHandler().WormDistance();
@@ -847,13 +870,11 @@ void CLASSNAME::do_measurement()
 				measure[myrep].add("deltaW2", 0.0);
 				measure[myrep].add("deltaW4", 1.0);
 				measure[myrep].add("deltaChi", 0.0);
-				measure[myrep].add("k", 0.0);
 			#else
 				measure.add("deltaZ", 0.0);
 				measure.add("deltaW2", 0.0);
 				measure.add("deltaW4", 1.0);
 				measure.add("deltaChi", 0.0);
-				measure.add("k", 0.0);
 			#endif
 			break;
 	}

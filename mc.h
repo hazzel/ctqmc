@@ -140,7 +140,7 @@ class CLASSNAME
 		uint_t nRebuild;
 		uint_t nThermStep;
 		uint_t nPrebins;
-		int nUpdateType = 15;
+		int nUpdateType = 16;
 		int nStateType = 3;
 		matrix_t updateWeightMatrix = matrix_t(nUpdateType, nStateType);
 		matrix_t proposeProbabilityMatrix = matrix_t(nUpdateType, nStateType);

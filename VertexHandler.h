@@ -119,6 +119,31 @@ class VertexHandler
 			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 				nodes[wormNodes[*it]].Worm = false;
 			wormNodes.clear();
+			/*
+			for (auto it = indexBufferEnd; it != indexBuffer.begin();)
+			{
+				--it;
+				wormNodes.erase(it);
+			}
+			*/
+		}
+		
+		template<uint_t N>
+		bool ReplaceWorm()
+		{
+			AddRandomIndicesToBuffer<N>();
+			if (WormDistance() == 1)
+			{
+				nodes[wormNodes[0]].Worm = false;
+				nodes[wormNodes[1]].Worm = false;
+				nodes[indexBuffer[0]].Worm = true;
+				nodes[indexBuffer[1]].Worm = true;
+				wormNodes[0] = indexBuffer[0];
+				wormNodes[1] = indexBuffer[1];
+				return true;
+			}
+			else
+				return false;
 		}
 		
 		value_t VertexBufferParity()
@@ -167,6 +192,19 @@ class VertexHandler
 				for (uint_t i = 0; i < 4; ++i)
 					dist[i] = configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[2*r]]].Site, nodes[wormNodes[indexBuffer[i]]].Site);
 				return (*std::max_element(dist, dist+4)) <= configSpace.nhoodDist;
+			}
+		}
+		
+		template<int_t N>
+		bool WormIndexBufferDistance(uint_t distance)
+		{
+			if (N == 1)
+			{
+				return configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[0]]].Site, nodes[wormNodes[indexBuffer[1]]].Site) == distance;
+			}
+			else if(N == 2)
+			{			
+				return (configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[0]]].Site, nodes[wormNodes[indexBuffer[1]]].Site) == distance) && (configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[2]]].Site, nodes[wormNodes[indexBuffer[3]]].Site) == distance);
 			}
 		}
 		

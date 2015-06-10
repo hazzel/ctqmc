@@ -268,6 +268,12 @@ class UpdateHandler
 			}
 		}
 		
+		template<int_t W>
+		bool ReplaceWorm()
+		{
+			return vertexHandler.ReplaceWorm<W>();
+		}
+		
 		/*
 		template<int_t W>
 		bool ShiftWorm()
