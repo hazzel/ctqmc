@@ -103,16 +103,15 @@ class ConfigSpace
 		}
 
 		template<int_t N>
-		bool OpenUpdate()
+		bool OpenUpdate(value_t preFactor)
 		{
 			if ((state == StateType::Z) && (updateHandler.GetVertexHandler().Vertices() > 0))
 			{
 				updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
-				value_t preFactor;
 				if (N == 1)
-					preFactor = 2.0 * zeta2 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V;
+					preFactor *= 2.0 * zeta2 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V;
 				else if (N == 2)
-					preFactor = 4.0 * zeta4 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V*V;
+					preFactor *= 4.0 * zeta4 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V*V;
 				return updateHandler.OpenUpdate(preFactor);
 			}
 			else
@@ -120,12 +119,12 @@ class ConfigSpace
 		}
 		
 		template<int_t N>
-		bool CloseUpdate()
+		bool CloseUpdate(value_t preFactor)
 		{
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 			if ((state != StateType::Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
 			{
-				value_t preFactor = V / (2.0 * zeta2 * (updateHandler.GetVertexHandler().Vertices() + 1.0));
+				preFactor *= V / (2.0 * zeta2 * (updateHandler.GetVertexHandler().Vertices() + 1.0));
 				return updateHandler.CloseUpdate(preFactor);
 			}
 			else

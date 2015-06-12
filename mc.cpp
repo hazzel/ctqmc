@@ -124,8 +124,8 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	configSpace.zeta4 = param.value_or_default<value_t>("zeta4", 1.0);
 	configSpace.zeta4 /= m * m * m / T;
 
-	nOptimizationSteps = param.value_or_default<value_t>("ZETA_OPTIMIZATION", 25.0);
-	nOptimizationTherm = param.value_or_default<value_t>("ZETA_THERM", 2000.0);
+	nOptimizationSteps = param.value_or_default<value_t>("ZETA_OPTIMIZATION", 0.0);
+	nOptimizationTherm = param.value_or_default<value_t>("ZETA_THERM", 10000.0);
 
 	nThermalize = param.value_or_default<uint_t>("THERMALIZATION", 10000);
 	nMeasurements = param.value_or_default<uint_t>("SWEEPS", 10000);
@@ -269,7 +269,6 @@ bool CLASSNAME::read(const std::string& dir)
 	{
 		random_read(d);
 		d.read(sweep);
-		std::cout << "read sweep: " << sweep << std::endl;
 		d.read(rebuildCnt);
 		for (uint_t i = 0; i < nUpdateType; ++i)
 		{
@@ -282,6 +281,7 @@ bool CLASSNAME::read(const std::string& dir)
 		}
 		configSpace.Serialize(d);
 		d.close();
+		std::cout << "read sweep: " << sweep << " , pertorder:" << configSpace.updateHandler.GetVertexHandler().Vertices() << std::endl;
 		return true;
 	}
 }
@@ -294,6 +294,7 @@ bool CLASSNAME::read_state(const std::string& dir)
 	{
 		configSpace.Serialize(d);
 		d.close();
+		std::cout << "read sweep: " << sweep << " , pertorder:" << configSpace.updateHandler.GetVertexHandler().Vertices() << std::endl;
 		return true;
 	}
 }
@@ -341,7 +342,44 @@ bool CLASSNAME::is_thermalized()
 
 void CLASSNAME::BuildUpdateWeightMatrix()
 {
+	/*
+	//ALL TRANSITIONS
+	proposeProbabilityMatrix <<	2.05 / 10.0	,	1.35 / 10.0	,	1.25 / 10.0,
+											2.05 / 10.0	,	1.35 / 10.0	,	1.25 / 10.0,
+											1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+											1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
+											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
+											0.5 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
+											0.5 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
+											0.8 / 10.0	,	0.0			,	0.0,
+											0.0			,	1.2 / 10.0	,	0.0, 
+											0.1 / 10.0	,	0.0			,	0.0,
+											0.0			,	0.0			,	1.2 / 10.0,
+											0.0			,	0.6 / 10.0	,	0.0,
+											0.0			,	0.0			,	1.2 / 10.0,
+											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
+											0.0			,	2.0 / 10.0	,	1.6 / 10.0;
+	*/
 	
+		//ALL TRANSITIONS
+	proposeProbabilityMatrix <<	1.05 / 10.0	,	0.8 / 10.0	,	0.7 / 10.0,
+											3.05 / 10.0	,	2.4 / 10.0	,	2.3 / 10.0,
+											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
+											1.5 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
+											0.5 / 10.0	,	0.25 / 10.0,	0.25 / 10.0,
+											1.5 / 10.0	,	0.25 / 10.0,	0.25 / 10.0,
+											0.25 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
+											0.75 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
+											0.8 / 10.0	,	0.0			,	0.0,
+											0.0			,	1.2 / 10.0	,	0.0, 
+											0.1 / 10.0	,	0.0			,	0.0,
+											0.0			,	0.0			,	1.2 / 10.0,
+											0.0			,	0.6 / 10.0	,	0.0,
+											0.0			,	0.0			,	1.2 / 10.0,
+											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
+											0.0			,	2.0 / 10.0	,	1.6 / 10.0;
+/*
 	//ALL TRANSITIONS
 	proposeProbabilityMatrix <<	1.0 / 10.0	,	0.7 / 10.0	,	0.7 / 10.0,
 											3.0 / 10.0	,	2.3 / 10.0	,	2.3 / 10.0,
@@ -359,7 +397,7 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	0.0			,	0.5 / 10.0,
 											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
 											0.0			,	2.0 / 10.0	,	2.0 / 10.0;
-	
+	*/
 /*
 	//ALL TRANSITIONS
 	proposeProbabilityMatrix <<				0.625 / 10.0,	0.6 / 10.0	,	0.6 / 10.0,
@@ -546,11 +584,12 @@ void CLASSNAME::do_update()
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2;
+			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2) / proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z);
 			bool result;
 			if (configSpace.rng() < 0.1)
-				result = configSpace.AddRandomVertices<1>(preFactor, true);
+				result = configSpace.AddRandomVertices<1>(preFactor * proposeRatio, true);
 			else
-				result = configSpace.OpenUpdate<1>();
+				result = configSpace.OpenUpdate<1>(proposeRatio);
 			if (result)
 			{
 				acceptedUpdates(UpdateType::ZtoW2, state) += 1.0;
@@ -563,11 +602,12 @@ void CLASSNAME::do_update()
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
+			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z) / proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2);
 			bool result;
 			if (configSpace.rng() < 0.1)
-				result = configSpace.RemoveRandomVertices<1>(preFactor, true);
+				result = configSpace.RemoveRandomVertices<1>(preFactor * proposeRatio, true);
 			else
-				result = configSpace.CloseUpdate<1>();
+				result = configSpace.CloseUpdate<1>(proposeRatio);
 			if (result)
 			{
 				acceptedUpdates(UpdateType::W2toZ, state) += 1.0;
@@ -580,11 +620,12 @@ void CLASSNAME::do_update()
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
+			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W4toZ, StateType::W4) / proposeProbabilityMatrix(UpdateType::ZtoW4, StateType::Z);
 			bool result;
-			if (configSpace.rng() < 1.1)
-				result = configSpace.AddRandomVertices<2>(preFactor, true);
+			if (configSpace.rng() < 1.0)
+				result = configSpace.AddRandomVertices<2>(preFactor * proposeRatio, true);
 			else
-				result = configSpace.OpenUpdate<2>();
+				result = configSpace.OpenUpdate<2>(proposeRatio);
 			if (result)
 			{
 				acceptedUpdates(UpdateType::ZtoW4, state) += 1.0;
@@ -597,11 +638,12 @@ void CLASSNAME::do_update()
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
+			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::ZtoW4, StateType::Z) / proposeProbabilityMatrix(UpdateType::W4toZ, StateType::W4);
 			bool result;
-			if (configSpace.rng() < 1.1)
-				result = configSpace.RemoveRandomVertices<2>(preFactor, true);
+			if (configSpace.rng() < 1.0)
+				result = configSpace.RemoveRandomVertices<2>(preFactor * proposeRatio, true);
 			else
-				result = configSpace.CloseUpdate<2>();
+				result = configSpace.CloseUpdate<2>(proposeRatio);
 			if (result)
 			{
 				acceptedUpdates(UpdateType::W4toZ, state) += 1.0;
@@ -614,7 +656,8 @@ void CLASSNAME::do_update()
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = (configSpace.lattice->Sites() * m * configSpace.zeta4) / configSpace.zeta2;
-			if (configSpace.AddRandomVertices<1>(preFactor, true))
+			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W4toW2, StateType::W4) / proposeProbabilityMatrix(UpdateType::W2toW4, StateType::W2);
+			if (configSpace.AddRandomVertices<1>(preFactor * proposeRatio, true))
 			{
 				acceptedUpdates(UpdateType::W2toW4, state) += 1.0;
 				configSpace.state = StateType::W4;
@@ -626,7 +669,8 @@ void CLASSNAME::do_update()
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.zeta2 / (configSpace.lattice->Sites() * m * configSpace.zeta4);
-			if (configSpace.RemoveRandomVertices<1>(preFactor, true))
+			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W2toW4, StateType::W2) / proposeProbabilityMatrix(UpdateType::W4toW2, StateType::W4);
+			if (configSpace.RemoveRandomVertices<1>(preFactor * proposeRatio, true))
 			{
 				acceptedUpdates(UpdateType::W4toW2, state) += 1.0;
 				configSpace.state = StateType::W2;
@@ -658,6 +702,8 @@ void CLASSNAME::do_update()
 			if (state == StateType::W2)
 			{
 				result = configSpace.ShiftWorm<1>();
+				//if (!result)
+				//	result = configSpace.ReplaceWorm<1>();
 			}
 			else if (state == StateType::W4)
 				result = configSpace.ShiftWorm<2>();
@@ -683,7 +729,6 @@ void CLASSNAME::do_update()
 			rebuildCnt = 0;
 		}
 	}
-	//MeasureExpOrder();
 	++sweep;
 
 	if (nZetaOptimization < nOptimizationSteps)
@@ -696,7 +741,8 @@ void CLASSNAME::do_update()
 		{
 			std::cout << "Done" << std::endl;
 			ClearExpOrderHist();
-			write_state(therm_path);
+			if (!FileExists(therm_path))
+				write_state(therm_path);
 		}
 	}
 	if (annealing && !is_thermalized() && (sweep % (nThermalize / 25)) == 0)
