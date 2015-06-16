@@ -267,7 +267,7 @@ class ConfigSpace
 			uint_t N = lattice->Sites();
 			lookUpIndex.AllocateTable(N, N, -1);
 			matrix_t G0(hopDiag.rows(), hopDiag.cols());
-			value_t threshold = std::pow(10.0, -12.0);
+			value_t threshold = std::pow(10.0, -13.0);
 			uint_t t = 10;
 			std::vector<value_t> nValues;
 			

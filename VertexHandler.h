@@ -597,9 +597,32 @@ class VertexHandler
 			}
 		}
 		
+		void SwapVertexPosition(uint_t pos1, uint_t pos2)
+		{
+			if (nodes[pos1].Worm)
+			{
+				uint_t wormpos = std::find(wormNodes.begin(), wormNodes.end(), pos1) - wormNodes.begin();
+				wormNodes[wormpos] = pos2;
+				wormNodes[wormpos+1] = pos2+1;
+			}
+			if (nodes[pos2].Worm)
+			{
+				uint_t wormpos = std::find(wormNodes.begin(), wormNodes.end(), pos2) - wormNodes.begin();
+				wormNodes[wormpos] = pos1;
+				wormNodes[wormpos+1] = pos1+1;
+			}
+			std::swap(nodes[pos1], nodes[pos2]);
+			std::swap(nodes[pos1+1], nodes[pos2+1]);
+		}
+		
 		std::vector<std::size_t>& WormPositions()
 		{
 			return wormNodes;
+		}
+		
+		std::vector<std::size_t>& IndexBuffer()
+		{
+			return indexBuffer;
 		}
 		
 		template<typename M>

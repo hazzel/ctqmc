@@ -12,15 +12,17 @@ color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 L = ["3", "4", "5", "6", "7", "9", "12"]
 for l in range(len(L)):
 	filelist = []
-	filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V3.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_rhom_V1.625/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_rhom_V1.625/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V1.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.355/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.25/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V3.0*/*L" + L[l] + "*.out"))
@@ -36,9 +38,9 @@ for l in range(len(L)):
 		nu = 1.
 		gamma = 7./4.
 		#Tc = 0.499 #V2.0
-		Tc = 0.502
+		#Tc = 0.502
 		#Tc = 0.293 #V1.625
-		#Tc = 0.2 #V1.625
+		Tc = 0.246
 		#Tc = 0.74 #V2.5
 		#Tc = 0.95 #V3.0
 		x = []
@@ -53,8 +55,9 @@ for l in range(len(L)):
 			elist = ParseEvalables(filelist[f][i])
 			x.append(float(plist["T"]))
 			#exp = eta + z
-			exp = 2.*beta/nu
+			#exp = 2.*beta/nu
 			#exp = 0.51 #V2.0
+			exp = 0.25 #V1.625
 			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**(exp))
 			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**(exp) )
 			yM4.append( ArrangePlot(elist, "M4")[0][0] * float(L[l])**(2. * exp) )
@@ -86,9 +89,9 @@ for l in range(len(L)):
 		plt.ylabel(r'$M_2 L^{\eta}$')
 		for i in range(len(x)):
 			#x[i] = float(x[i]-Tc)
-			x[i] = (x[i] - Tc) / Tc * float(L[l])**(1./nu)
+			#x[i] = (x[i] - Tc) / Tc * float(L[l])**(1./nu)
 			#x[i] = x[i] * float(L[l])**(1.)
-			#x[i] = (x[i] - Tc) * float(L[l])**((1./nu)*(1. - 1./z))
+			x[i] = (x[i] - Tc) * float(L[l])**(1.)
 		plt.plot(np.array(x), np.array(yM2), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM2), yerr=np.array(yM2err), color=color_cycle[l])
 		plt.legend(loc='upper right')

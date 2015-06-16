@@ -42,12 +42,8 @@ endif
 MCLL  = $(HOME)/mc/load_leveller/trunk
 APPMCLL = $(HOME)/mc/ctqmc/
 USE_MKL = FALSE
-USE_HPC = FALSE
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
-	ifeq ($(USE_HPC), TRUE)
-		APPMCLL = $(HPCWORK)/ctqmc/
-	endif
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DNDEBUG $(DEFINES)
 	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-4.650.4/include -I$(HOME)/gperftools-2.4/install/include
 	LDFLAGS = $(FLAGS_MATH_LINKER)
@@ -63,9 +59,9 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	LDFLAGS =
 	SUPERLP =
 else
-	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g -fopenmp $(DEFINES)
+	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-4.650.4/include -I$(HOME)/gperftools-2.4/install/include
-	LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -L$(HOME)/armadillo-4.650.4/lib -lblas -llapack -lprofiler -fopenmp
+	LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -L$(HOME)/armadillo-4.650.4/lib -lblas -llapack -lprofiler
 	SUPERLP =
 endif
 

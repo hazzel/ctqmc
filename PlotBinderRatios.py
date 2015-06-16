@@ -12,11 +12,11 @@ color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 L = ["3", "4", "5", "6", "7", "9", "12", "15"]
 for l in range(len(L)):
 	filelist = []
-	filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.355/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V1.5/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_hex_V1.5/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.75/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.875/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
@@ -27,8 +27,10 @@ for l in range(len(L)):
 	#filelist.append(glob.glob("plot_hex_V3.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V4.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_T0.08/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_rhom_V1.5/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot_rhom_V1.625/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_rhom_V1.355/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot_rhom_V1.75/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot_rhom_V1.355/*L" + L[l] + "*.out"))
 	for f in range(len(filelist)):
 		if len(filelist[f]) == 0:
 			continue
@@ -47,6 +49,7 @@ for l in range(len(L)):
 			y = [i for j, i in sorted(zip(x, y))]
 			x.sort()
 		
+		#plt.xlim([0.25,0.36])
 		plt.figure(f)
 		plt.title(filelist[f][0])
 		plt.xlabel("T")

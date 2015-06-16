@@ -152,16 +152,13 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	}
 	
 	BuildUpdateWeightMatrix();
-	//if (omp_get_thread_num() == 1)
-		//ProfilerStart("gperf/mc.prof");
-	//Eigen::initParallel();
+	//ProfilerStart("gperf/mc.prof");
 }
 
 CLASSNAME::~CLASSNAME()
 {
 	delete[] evalableParameters;
-	//if (omp_get_thread_num() == 1)
-		//ProfilerStop();
+	//ProfilerStop();
 }
 
 void CLASSNAME::random_write(odump& d)

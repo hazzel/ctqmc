@@ -56,13 +56,6 @@ class UpdateHandler
 		template<int_t N>
 		bool AddVertices(value_t preFactor, bool isWorm)
 		{
-			value_t det;
-			return AddVertices<N>(preFactor, isWorm, det, UpdateFlag::NormalUpdate);
-		}
-
-		template<int_t N>
-		bool AddVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
-		{
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
 			matrix_t u(k, n), v(n, k), a(n, n);
@@ -71,21 +64,7 @@ class UpdateHandler
 			matrix_t invGu = invG * u;
 			matrix_t invS = a - v * invGu;
 
-			value_t acceptRatio;
-			if (flag == UpdateFlag::NormalUpdate)
-			{
-				det = arma::det(invS);
-				acceptRatio = preFactor * det;
-			}
-			else if (flag == UpdateFlag::NoUpdate)
-			{
-				det = arma::det(invS);
-				acceptRatio = 0.0;
-			}
-			else if (flag == UpdateFlag::ForceUpdate)
-			{
-				acceptRatio = 1.0;
-			}
+			value_t acceptRatio = preFactor * arma::det(invS);
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "AddVertices(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
@@ -116,13 +95,6 @@ class UpdateHandler
 		template<int_t N>
 		bool RemoveVertices(value_t preFactor, bool isWorm)
 		{
-			value_t det;
-			return RemoveVertices<N>(preFactor, isWorm, det, UpdateFlag::NormalUpdate);
-		}
-
-		template<int_t N>
-		bool RemoveVertices(value_t preFactor, bool isWorm, value_t& det, UpdateFlag flag)
-		{
 			if (isWorm && vertexHandler.Worms() < N)
 				return false;
 			if ((!isWorm) && vertexHandler.Vertices() < N)
@@ -132,21 +104,7 @@ class UpdateHandler
 
 			matrix_t S(n, n);
 			vertexHandler.FillSMatrix(S, invG, isWorm);
-			value_t acceptRatio;
-			if (flag == UpdateFlag::NormalUpdate)
-			{
-				det = arma::det(S);
-				acceptRatio = preFactor * det;
-			}
-			else if (flag == UpdateFlag::NoUpdate)
-			{
-				det = arma::det(S);
-				acceptRatio = 0.0;
-			}
-			else if (flag == UpdateFlag::ForceUpdate)
-			{
-				acceptRatio = 1.0;
-			}
+			value_t acceptRatio = preFactor * arma::det(S);
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "RemoveVertices(" << N << "): AcceptRatio" << acceptRatio << std::endl;
@@ -157,14 +115,46 @@ class UpdateHandler
 				arma::vec perm(k);
 				vertexHandler.PermutationMatrix(perm, isWorm);
 				matrix_t invGp(k, k);
+				
 				for (uint_t i = 0; i < k; ++i)
 					for (uint_t j = 0; j < k; ++j)
 						invGp(i, j) = invG(perm(i), perm(j));
+				/*
+				std::vector<std::size_t> pos;
+				if (vertexHandler.IndexBuffer()[0] > 0)
+					pos.push_back(0);
+				for (uint_t i = 0; i < N; ++i)
+				{
+					if (vertexHandler.IndexBuffer()[0] > 0)
+						pos.push_back(vertexHandler.IndexBuffer()[2*i] - 1);
+					if (vertexHandler.IndexBuffer()[2*N - 2] < k - 2)
+						pos.push_back(vertexHandler.IndexBuffer()[2*i] + 2);
+				}
+				if (vertexHandler.IndexBuffer()[2*N - 2] < k - 2)
+					pos.push_back(k - 1);
+				for (uint_t i = 0; i < pos.size(); i+=2)
+				{
+					for (uint_t j = 0; j < pos.size(); j+=2)
+					{
+						invGp.submat(pos[i], pos[j], pos[i+1], pos[j+1]);
+					}
+				}
+				*/
 				
 				matrix_t t = arma::inv(S) * invGp.submat(k - n, 0, k - 1, k - n - 1);
 				invG = invGp.submat(0, 0, k - n - 1, k - n - 1) - invGp.submat(0, k - n, k - n - 1, k - 1) * t;
 
 				vertexHandler.RemoveBufferedVertices(isWorm);
+				if (k - n > 4)
+				{
+					matrix_t cols = invG.submat(0, 0, k - n - 1, 1);
+					invG.submat(0, 0, k - n - 1, 1) = invG.submat(0, 2, k - n - 1, 3);
+					invG.submat(0, 2, k - n - 1, 3) = cols;
+					matrix_t rows = invG.submat(0, 0, 1, k - n - 1);
+					invG.submat(0, 0, 1, k - n - 1) = invG.submat(2, 0, 3, k - n - 1);
+					invG.submat(2, 0, 3, k - n - 1) = rows;
+					vertexHandler.SwapVertexPosition(0, 2);
+				}
 				return true;
 			}
 			else
