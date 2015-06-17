@@ -119,32 +119,12 @@ class UpdateHandler
 				for (uint_t i = 0; i < k; ++i)
 					for (uint_t j = 0; j < k; ++j)
 						invGp(i, j) = invG(perm(i), perm(j));
-				/*
-				std::vector<std::size_t> pos;
-				if (vertexHandler.IndexBuffer()[0] > 0)
-					pos.push_back(0);
-				for (uint_t i = 0; i < N; ++i)
-				{
-					if (vertexHandler.IndexBuffer()[0] > 0)
-						pos.push_back(vertexHandler.IndexBuffer()[2*i] - 1);
-					if (vertexHandler.IndexBuffer()[2*N - 2] < k - 2)
-						pos.push_back(vertexHandler.IndexBuffer()[2*i] + 2);
-				}
-				if (vertexHandler.IndexBuffer()[2*N - 2] < k - 2)
-					pos.push_back(k - 1);
-				for (uint_t i = 0; i < pos.size(); i+=2)
-				{
-					for (uint_t j = 0; j < pos.size(); j+=2)
-					{
-						invGp.submat(pos[i], pos[j], pos[i+1], pos[j+1]);
-					}
-				}
-				*/
 				
 				matrix_t t = arma::inv(S) * invGp.submat(k - n, 0, k - 1, k - n - 1);
 				invG = invGp.submat(0, 0, k - n - 1, k - n - 1) - invGp.submat(0, k - n, k - n - 1, k - 1) * t;
 
 				vertexHandler.RemoveBufferedVertices(isWorm);
+				
 				if (k - n > 4)
 				{
 					matrix_t cols = invG.submat(0, 0, k - n - 1, 1);
@@ -155,6 +135,7 @@ class UpdateHandler
 					invG.submat(2, 0, 3, k - n - 1) = rows;
 					vertexHandler.SwapVertexPosition(0, 2);
 				}
+				
 				return true;
 			}
 			else

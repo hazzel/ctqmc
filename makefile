@@ -54,9 +54,9 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 		LDFLAGS += $(FLAGS_MATH_LINKER)
 	endif
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
-	CFLAGS  = -O3 -Wno-deprecated -std=c++11 $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
-	LDFLAGS =
+	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -pipe $(DEFINES)
+	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/ -I$(HOME)/armadillo-5.200.1/include
+	LDFLAGS = -L/usr/lib64/atlas -latlas -lf77blas -llapack
 	SUPERLP =
 else
 	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g $(DEFINES)
