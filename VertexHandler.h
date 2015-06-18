@@ -239,6 +239,7 @@ class VertexHandler
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
 		}
 		
+		
 		void RemoveBufferedVertices(bool isWorm)
 		{
 			if (isWorm)
@@ -270,6 +271,41 @@ class VertexHandler
 					nodes.erase(nodes.begin() + *(it-1));
 				}
 			}
+		}
+		
+		void RemoveBufferedVertices2(bool isWorm)
+		{
+			uint_t k = nodes.size();
+			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
+			for (uint_t i = 0; i < n; ++i)
+			{
+				if (isWorm)
+				{
+					if (nodes[k - i - 1].Worm)
+					{
+						auto wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
+						*wit = wormNodes[indexBuffer[n - i - 1]];
+					}
+					std::swap(nodes[wormNodes[indexBuffer[n - i - 1]]], nodes[k - i - 1]);
+				}
+				else
+				{
+					if (nodes[k - i - 1].Worm)
+					{
+						auto wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
+						*wit = indexBuffer[n - i - 1];
+					}
+					std::swap(nodes[indexBuffer[n - i - 1]], nodes[k - i - 1]);
+				}
+			}
+			for (uint_t i = 0; i < n; ++i)
+				nodes.erase(nodes.end() - 1);
+			for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
+			{
+				if (isWorm)
+					wormNodes.erase(wormNodes.begin() + *(it-1));
+			}
+			std::sort(wormNodes.begin(), wormNodes.end());
 		}
 		
 		template<int_t N>
@@ -405,7 +441,10 @@ class VertexHandler
 			{
 				for (uint_t j = 0; j < i; ++j)
 				{
-					G(j, i) = configSpace.LookUpG0(nodes[j].Site, nodes[i].Site, nodes[j].Tau - nodes[i].Tau + configSpace.infinTau);
+					value_t dt = nodes[j].Tau - nodes[i].Tau;
+					if (std::abs(dt) < configSpace.infinTau)
+						dt += configSpace.infinTau;
+					G(j, i) = configSpace.LookUpG0(nodes[j].Site, nodes[i].Site, dt);
 					value_t sign = (configSpace.lattice->Sublattice(nodes[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
 					G(i, j) = G(j, i) * sign;
 					//G(i, j) = configSpace.LookUpG0(nodes[i].Site, nodes[j].Site, nodes[i].Tau - nodes[j].Tau - configSpace.infinTau);
@@ -423,11 +462,17 @@ class VertexHandler
 			{
 				for (uint_t j = 0; j < k; j+=2)
 				{
-					u(j, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					value_t dt = nodes[j].Tau - nodeBuffer[i].Tau;
+					if (std::abs(dt) < configSpace.infinTau)
+						dt += configSpace.infinTau;
+					u(j, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, dt);
 					value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
 					v(i, j) = u(j, i) * sign;
 					
-					u(j + 1, i) = configSpace.LookUpG0(nodes[j + 1].Site, nodeBuffer[i].Site, nodes[j + 1].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					dt = nodes[j + 1].Tau - nodeBuffer[i].Tau;
+					if (std::abs(dt) < configSpace.infinTau)
+						dt += configSpace.infinTau;
+					u(j + 1, i) = configSpace.LookUpG0(nodes[j + 1].Site, nodeBuffer[i].Site, dt);
 					sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j + 1].Site) ? -1.0 : 1.0);
 					v(i, j + 1) = u(j + 1, i) * sign;
 				}
@@ -435,7 +480,10 @@ class VertexHandler
 				{
 					if (i < j)
 					{
-						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
+						value_t dt = nodeBuffer[i].Tau - nodeBuffer[j].Tau;
+						if (std::abs(dt) < configSpace.infinTau)
+							dt += configSpace.infinTau;
+						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, dt);
 						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
 						a(j, i) = a(i, j) * sign;
 					}
@@ -458,11 +506,17 @@ class VertexHandler
 						continue;
 					else
 						c+=2;
-					u(c, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					value_t dt = nodes[j].Tau - nodeBuffer[i].Tau;
+					if (std::abs(dt) < configSpace.infinTau)
+						dt += configSpace.infinTau;
+					u(c, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, dt);
 					value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
 					v(i, c) = u(c, i) * sign;
 					
-					u(c + 1, i) = configSpace.LookUpG0(nodes[j + 1].Site, nodeBuffer[i].Site, nodes[j + 1].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+					dt = nodes[j + 1].Tau - nodeBuffer[i].Tau;
+					if (std::abs(dt) < configSpace.infinTau)
+						dt += configSpace.infinTau;
+					u(c + 1, i) = configSpace.LookUpG0(nodes[j + 1].Site, nodeBuffer[i].Site, dt);
 					sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j + 1].Site) ? -1.0 : 1.0);
 					v(i, c + 1) = u(c + 1, i) * sign;
 				}
@@ -470,7 +524,11 @@ class VertexHandler
 				{
 					if (i < j)
 					{
-						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
+						value_t dt = nodeBuffer[i].Tau - nodeBuffer[i].Tau;
+						if (std::abs(dt) < configSpace.infinTau)
+							dt += configSpace.infinTau;
+					
+						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, dt);
 						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
 						a(j, i) = a(i, j) * sign;
 					}
@@ -491,7 +549,10 @@ class VertexHandler
 				{
 					if (!nodes[j].Worm)
 					{
-						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau + configSpace.infinTau);
+						value_t dt = nodes[j].Tau - nodes[wormNodes[i]].Tau;
+						if (std::abs(dt) < configSpace.infinTau)
+							dt += configSpace.infinTau;
+						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, dt);
 						value_t sign = (configSpace.lattice->Sublattice(nodes[wormNodes[i]].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
 						v(i, n) = u(n, i) * sign;
 						++n;
@@ -501,7 +562,10 @@ class VertexHandler
 				{
 					if (i < j)
 					{
-						a(i, j) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Site, nodes[wormNodes[i]].Tau - nodes[wormNodes[j]].Tau + configSpace.infinTau);
+						value_t dt = nodes[wormNodes[i]].Tau - nodes[wormNodes[j]].Tau;
+						if (std::abs(dt) < configSpace.infinTau)
+							dt += configSpace.infinTau;
+						a(i, j) = configSpace.LookUpG0(nodes[wormNodes[i]].Site, nodes[wormNodes[j]].Site, dt);
 						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
 						a(j, i) = a(i, j) * sign;
 					}
@@ -522,7 +586,10 @@ class VertexHandler
 				{
 					if (!nodes[j].Worm)
 					{
-						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
+						value_t dt = nodes[j].Tau - nodeBuffer[i].Tau;
+						if (std::abs(dt) < configSpace.infinTau)
+							dt += configSpace.infinTau;
+						u(n, i) = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, dt);
 						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodes[j].Site) ? -1.0 : 1.0);
 						v(i, n) = u(n, i) * sign;
 						++n;
@@ -532,7 +599,10 @@ class VertexHandler
 				{
 					if (i < j)
 					{
-						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, nodeBuffer[i].Tau - nodeBuffer[j].Tau + configSpace.infinTau);
+						value_t dt = nodeBuffer[i].Tau - nodeBuffer[j].Tau;
+						if (std::abs(dt) < configSpace.infinTau)
+							dt += configSpace.infinTau;
+						a(i, j) = configSpace.LookUpG0(nodeBuffer[i].Site, nodeBuffer[j].Site, dt);
 						value_t sign = (configSpace.lattice->Sublattice(nodeBuffer[i].Site) == configSpace.lattice->Sublattice(nodeBuffer[j].Site) ? -1.0 : 1.0);
 						a(j, i) = a(i, j) * sign;
 					}
@@ -562,14 +632,28 @@ class VertexHandler
 					{
 						if (j < wormNodes[i])
 						{
-							shiftedU = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau + configSpace.infinTau);
+							value_t dt = nodes[j].Tau - nodeBuffer[i].Tau;
+							if (std::abs(dt) < configSpace.infinTau)
+								dt += configSpace.infinTau;
+							shiftedU = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, dt);
+							
+							dt = nodes[j].Tau - nodes[wormNodes[i]].Tau;
+							if (std::abs(dt) < configSpace.infinTau)
+								dt += configSpace.infinTau;
+							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, dt);
 							u(j, i) = shiftedU - U;
 						}
 						else
 						{
-							shiftedU = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, nodes[j].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
-							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau - configSpace.infinTau);
+							value_t dt = nodes[j].Tau - nodeBuffer[i].Tau;
+							if (std::abs(dt) < configSpace.infinTau)
+								dt -= configSpace.infinTau;
+							shiftedU = configSpace.LookUpG0(nodes[j].Site, nodeBuffer[i].Site, dt);
+							
+							dt = nodes[j].Tau - nodes[wormNodes[i]].Tau;
+							if (std::abs(dt) < configSpace.infinTau)
+								dt -= configSpace.infinTau;
+							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, dt);
 							u(j, i) = shiftedU - U;
 						}
 						value_t shiftedV = shiftedU * (configSpace.lattice->Sublattice(nodes[j].Site) == configSpace.lattice->Sublattice(nodeBuffer[i].Site) ? -1.0 : 1.0);
@@ -580,14 +664,28 @@ class VertexHandler
 					{
 						if (j < wormNodes[i])
 						{
-							shiftedU = configSpace.LookUpG0(nodeBuffer[n].Site, nodeBuffer[i].Site, nodeBuffer[n].Tau - nodeBuffer[i].Tau + configSpace.infinTau);
-							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau + configSpace.infinTau);
+							value_t dt = nodeBuffer[n].Tau - nodeBuffer[i].Tau;
+							if (std::abs(dt) < configSpace.infinTau)
+								dt += configSpace.infinTau;
+							shiftedU = configSpace.LookUpG0(nodeBuffer[n].Site, nodeBuffer[i].Site, dt);
+							
+							dt = nodes[j].Tau - nodes[wormNodes[i]].Tau;
+							if (std::abs(dt) < configSpace.infinTau)
+								dt += configSpace.infinTau;
+							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, dt);
 							u(j, i) = shiftedU - U;
 						}
 						else
 						{
-							shiftedU = configSpace.LookUpG0(nodeBuffer[n].Site, nodeBuffer[i].Site, nodeBuffer[n].Tau - nodeBuffer[i].Tau - configSpace.infinTau);
-							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, nodes[j].Tau - nodes[wormNodes[i]].Tau - configSpace.infinTau);
+							value_t dt = nodeBuffer[n].Tau - nodeBuffer[i].Tau;
+							if (std::abs(dt) < configSpace.infinTau)
+								dt -= configSpace.infinTau;
+							shiftedU = configSpace.LookUpG0(nodeBuffer[n].Site, nodeBuffer[i].Site, dt);
+							
+							dt = nodes[j].Tau - nodes[wormNodes[i]].Tau;
+							if (std::abs(dt) < configSpace.infinTau)
+								dt -= configSpace.infinTau;
+							U = configSpace.LookUpG0(nodes[j].Site, nodes[wormNodes[i]].Site, dt);
 							u(j, i) = shiftedU - U;
 						}
 						v(i, j) = 0.0;
@@ -626,23 +724,30 @@ class VertexHandler
 		}
 		
 		template<typename M>
+		void SwapRowsCols(M& m, uint_t i, uint_t j)
+		{
+			uint_t k = m.n_rows;
+			M cols = m.submat(0, i, k - 1, i + 1);
+			m.submat(0, i, k - 1, i + 1) = m.submat(0, j, k - 1, j + 1);
+			m.submat(0, j, k - 1, j + 1) = cols;
+			M rows = m.submat(i, 0, i + 1, k - 1);
+			m.submat(i, 0, i + 1, k - 1) = m.submat(j, 0, j + 1, k - 1);
+			m.submat(j, 0, j + 1, k - 1) = rows;
+		}
+		
+		template<typename M>
 		void PermuteProgagatorMatrix(M& m, bool isWorm)
 		{
 			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
 			for (uint_t i = 0; i < n; i+=2)
 			{
-				uint_t j0;
 				if (isWorm)
-					j0 = wormNodes[indexBuffer[n - i - 2]];
-				else
-					 j0 = indexBuffer[n - i - 2];
-				for (uint_t j = j0; j < m.rows() - i - 2; j+=2)
 				{
-					m.row(j).swap(m.row(j+2));
-					m.col(j).swap(m.col(j+2));
-					
-					m.row(j+1).swap(m.row(j+3));
-					m.col(j+1).swap(m.col(j+3));
+					SwapRowsCols(m, wormNodes[indexBuffer[n - i - 2]], m.n_rows - i - 2);
+				}
+				else
+				{
+					SwapRowsCols(m, indexBuffer[n - i - 2], m.n_rows - i - 2);
 				}
 			}
 		}
@@ -653,18 +758,13 @@ class VertexHandler
 			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
 			for (uint_t i = 0; i < n; i+=2)
 			{
-				uint_t j0;
 				if (isWorm)
-					j0 = wormNodes[indexBuffer[i]];
-				else
-					 j0 = indexBuffer[i];
-				for (uint_t j = m.rows() - n + i; j > j0; j-=2)
 				{
-					m.row(j).swap(m.row(j-2));
-					m.col(j).swap(m.col(j-2));
-					
-					m.row(j+1).swap(m.row(j-1));
-					m.col(j+1).swap(m.col(j-1));
+					SwapRowsCols(m, wormNodes[indexBuffer[i]], m.n_rows - n + i);
+				}
+				else
+				{
+					SwapRowsCols(m, indexBuffer[i], m.n_rows - n + i);
 				}
 			}
 		}
