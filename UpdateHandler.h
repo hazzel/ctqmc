@@ -56,6 +56,9 @@ class UpdateHandler
 		template<int_t N>
 		bool AddVertices(value_t preFactor, bool isWorm, bool force = false)
 		{
+			//TODO: remove this line
+			if (vertexHandler.Worms() == 2)
+				return false;
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
 			matrix_t u(k, n), v(n, k), a(n, n);
@@ -78,7 +81,6 @@ class UpdateHandler
 				matrix_t vinvG = v * invG;
 				
 				matrix_t newInvG(k + n, k + n);
-				matrix_t s = -S * vinvG;
 				if (k != 0)
 				{
 					newInvG.submat(k, 0, n + k - 1, k - 1) = -S * vinvG;
@@ -138,17 +140,47 @@ class UpdateHandler
 					matrix_t t = arma::inv(S) * invGp.submat(k - n, 0, k - 1, k - n - 1);
 					invG = invGp.submat(0, 0, k - n - 1, k - n - 1) - invGp.submat(0, k - n, k - n - 1, k - 1) * t;
 				}
+				{
+					std::cout << "k = " << k << ", n = " << n << ", isWorm = " << isWorm << std::endl;
+					vertexHandler.PrintVertices();
+					vertexHandler.PrintWormVertices();
+					vertexHandler.PrintIndexBuffer();
+					std::cout << "---------" << std::endl;
+				}
+				matrix_t g(k, k);
+				vertexHandler.PropagatorMatrix(g);
+				vertexHandler.PermuteProgagatorMatrix(g, isWorm);
 				
-				
-				//std::cout << "k = " << k << ", n = " << n << std::endl;
 				//vertexHandler.RemoveBufferedVertices(isWorm);
 				vertexHandler.RemoveBufferedVertices2(isWorm);
-				//std::cout << "invG" << std::endl;
-				//PrintMatrix(invG);
-				//StabilizeInvG();
-				//std::cout << "stab invG" << std::endl;
-				//PrintMatrix(invG);
-				//std::cin.get();
+
+				
+				if (IsStableInverse() > std::pow(10.0, -6.0))
+				{
+					std::cout << "k - n = " << k - n << ", n = " << n << ", isWorm = " << isWorm << std::endl;
+					vertexHandler.PrintVertices();
+					vertexHandler.PrintWormVertices();
+					vertexHandler.PrintIndexBuffer();
+					std::cout << "g from prop" << std::endl;
+					matrix_t G(invG.n_rows, invG.n_cols);
+					vertexHandler.PropagatorMatrix(G);
+					PrintMatrix(G);
+					std::cout << arma::det(G) << std::endl;
+					std::cout << "g from perm" << std::endl;
+					matrix_t gg = g.submat(0, 0, k - n - 1, k - n - 1);
+					PrintMatrix(gg);
+					std::cout << arma::det(gg) << std::endl;
+					std::cin.get();
+					/*
+					std::cout << "previous g" << std::endl;
+					matrix_t gg = g.submat(0, 0, k - n - 1, k - n - 1);
+					PrintMatrix(gg);
+					std::cout << "g from prop" << std::endl;
+					matrix_t ggg(k - n, k - n);
+					vertexHandler.PropagatorMatrix(ggg);
+					PrintMatrix(ggg);
+					*/
+				}
 				return true;
 			}
 			else
@@ -193,7 +225,6 @@ class UpdateHandler
 		template<int_t W>
 		bool ShiftWorm()
 		{
-			return false;
 			uint_t k = 2 * vertexHandler.Vertices();
 			const uint_t l = 2 * W;
 
@@ -220,14 +251,14 @@ class UpdateHandler
 			if (configSpace.rng() < acceptRatio)
 			{
 				S = arma::inv(shiftedInvS);
-				matrix_t R = -S * shiftedWormV * M;
+				matrix_t vM = shiftedWormV * M;
 				matrix_t Mu = M * shiftedWormU;
-				invG.submat(0, 0, k - 1, k - 1) = M - Mu * R;
+				invG.submat(k, 0, k + l - 1, k - 1) = -S * vM;
+				invG.submat(0, 0, k - 1, k - 1) = M - Mu * invG.submat(k, 0, k + l - 1, k - 1);
 				invG.submat(0, k, k - 1, k + l - 1) = -Mu * S;
-				invG.submat(k, 0, k + l - 1, k - 1) = R;
 				invG.submat(k, k, k + l - 1, k + l - 1) = S;
 				vertexHandler.PermuteBackProgagatorMatrix(invG, true);
-
+				
 				vertexHandler.ApplyWormShift();
 				return true;
 			}
@@ -362,19 +393,30 @@ class UpdateHandler
 			return 0.0;
 		}
 		
-		template<typename Matrix>
-		value_t IsStableInverse(Matrix& M)
+		value_t IsStableInverse()
 		{
 			matrix_t G(invG.n_rows, invG.n_cols);
 			vertexHandler.PropagatorMatrix(G);
-			matrix_t t = G * M;
-			uint_t i = configSpace.rng() * invG.n_rows, j = configSpace.rng()  * invG.n_cols;
+			matrix_t t = G * invG;
+			uint_t i = static_cast<uint_t>(configSpace.rng() * (t.n_rows - 1)), j = static_cast<uint_t>(configSpace.rng()  * (t.n_cols - 1));
 			value_t ref;
 			if (i == j)
 				ref = 1.0;
 			else
 				ref = 0.0;
-			return std::abs(t(i, j) - ref);
+			if (t.n_rows == 0)
+			{
+				return 0.0;
+			}
+			else
+			{
+				value_t err = std::abs(t(i, j) - ref);
+				if (err > std::pow(10.0, -8.0))
+					std::cout << "Warning! Round off error at (" << i << ", " << j << ") of " << err << std::endl;
+				//if (err > std::pow(10.0, -10.0))
+				//	StabilizeInvG();
+				return err;
+			}
 		}
 
 		value_t StabilizeInvG()

@@ -7,7 +7,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from ParseDataOutput import *
 
-color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'b']
 
 L = ["3", "4", "5", "6", "7", "9", "12", "15"]
 for l in range(len(L)):

@@ -340,7 +340,7 @@ bool CLASSNAME::is_thermalized()
 void CLASSNAME::BuildUpdateWeightMatrix()
 {
 	/*
-	//ALL TRANSITIONS
+	//ALL TRANSITIONS LEI
 	proposeProbabilityMatrix <<	2.05 / 10.0	,	1.35 / 10.0	,	1.25 / 10.0,
 											2.05 / 10.0	,	1.35 / 10.0	,	1.25 / 10.0,
 											1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
@@ -380,13 +380,13 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 	*/
 	
 	
-		//ONLY Z
-	proposeProbabilityMatrix <<	1.0 / 10.0	,	2.0 / 10.0	,	0.0 / 10.0,
-											1.0 / 10.0	,	2.0 / 10.0	,	0.0 / 10.0,
-											1.0 / 10.0	,	1.0 / 10.0	,	0.0 / 10.0,
-											1.0 / 10.0	,	1.0 / 10.0	,	0.0 / 10.0,
-											0.5 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-											0.5 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+		//TEST
+	proposeProbabilityMatrix <<	1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+											1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+											1.0 / 10.0	,	0.5 / 10.0	,	0.0 / 10.0,
+											1.0 / 10.0	,	0.5 / 10.0	,	0.0 / 10.0,
+											0.5 / 10.0	,	0.5 / 10.0	,	0.0 / 10.0,
+											0.5 / 10.0	,	0.5 / 10.0	,	0.0 / 10.0,
 											0.5 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 											0.5 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
 											2.0 / 10.0	,	0.0			,	0.0,
@@ -734,16 +734,14 @@ void CLASSNAME::do_update()
 			proposedUpdates(UpdateType::shiftWorm, state) += 1.0;
 		}
 
-		value_t avgError = 0.0;
 		if (rebuildCnt == nRebuild)
 		{
-			double cond = configSpace.updateHandler.StabilizeInvG(avgError);
-			//double cond = configSpace.updateHandler.StabilizeInvG();
+			double err = configSpace.updateHandler.IsStableInverse();
 			#ifdef MCL_PT
-				measure[myrep].add("avgInvGError", avgError);
+				measure[myrep].add("avgInvGError", err);
 			#else
-				measure.add("avgInvGError", avgError);
-				measure.add("condition", cond);
+				measure.add("avgInvGError", err);
+				measure.add("condition", 0.0);
 			#endif
 			rebuildCnt = 0;
 		}
