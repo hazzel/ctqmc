@@ -726,7 +726,7 @@ class VertexHandler
 		template<typename M>
 		void SwapRowsCols(M& m, uint_t i, uint_t j)
 		{
-			uint_t k = m.n_rows;
+			uint_t k = nodes.size();
 			M cols = m.submat(0, i, k - 1, i + 1);
 			m.submat(0, i, k - 1, i + 1) = m.submat(0, j, k - 1, j + 1);
 			m.submat(0, j, k - 1, j + 1) = cols;
@@ -738,16 +738,17 @@ class VertexHandler
 		template<typename M>
 		void PermuteProgagatorMatrix(M& m, bool isWorm)
 		{
+			uint_t k = nodes.size();
 			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
 			for (uint_t i = 0; i < n; i+=2)
 			{
 				if (isWorm)
 				{
-					SwapRowsCols(m, wormNodes[indexBuffer[n - i - 2]], m.n_rows - i - 2);
+					SwapRowsCols(m, wormNodes[indexBuffer[n - i - 2]], k - i - 2);
 				}
 				else
 				{
-					SwapRowsCols(m, indexBuffer[n - i - 2], m.n_rows - i - 2);
+					SwapRowsCols(m, indexBuffer[n - i - 2], k - i - 2);
 				}
 			}
 		}
@@ -755,16 +756,17 @@ class VertexHandler
 		template<typename M>
 		void PermuteBackProgagatorMatrix(M& m, bool isWorm)
 		{
+			uint_t k = nodes.size();
 			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
 			for (uint_t i = 0; i < n; i+=2)
 			{
 				if (isWorm)
 				{
-					SwapRowsCols(m, wormNodes[indexBuffer[i]], m.n_rows - n + i);
+					SwapRowsCols(m, wormNodes[indexBuffer[i]], k - n + i);
 				}
 				else
 				{
-					SwapRowsCols(m, indexBuffer[i], m.n_rows - n + i);
+					SwapRowsCols(m, indexBuffer[i], k - n + i);
 				}
 			}
 		}
