@@ -38,8 +38,8 @@ class UpdateHandler
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
 		{
-			invG.resize(1000, 1000);
-			G.resize(1000, 1000);
+			invG.resize(200, 200);
+			G.resize(200, 200);
 		}
 		
 		void Init()
@@ -61,6 +61,18 @@ class UpdateHandler
 		{
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
+			if (isWorm)
+				return false;
+			
+			if (k + n > invG.n_rows)
+			{
+				matrix_t buf = invG;
+				invG.resize(k + n + 10, k + n + 10);
+				invG.submat(0, 0, buf.n_rows - 1, buf.n_cols - 1) = buf;
+				buf = G;
+				G.resize(k + n + 10, k + n + 10);
+				G.submat(0, 0, buf.n_rows - 1, buf.n_cols - 1) = buf;
+			}
 			matrix_t u(k, n), v(n, k), a(n, n);
 			vertexHandler.WoodburyAddVertices(u, v, a);
 
@@ -197,6 +209,22 @@ class UpdateHandler
 		bool ShiftWorm()
 		{
 			uint_t k = 2 * vertexHandler.Vertices();
+			const uint_t l = 2 * W;
+			
+			//vertexHandler.ShiftWormToBuffer();
+			vertexHandler.RandomSwap();
+			vertexHandler.PermuteVertices(true);
+			vertexHandler.PermuteProgagatorMatrix(invG, true);
+			vertexHandler.PermuteProgagatorMatrix(G, true);
+			PrintMatrix(invG.submat(0, 0, k + l - 1, k + l - 1));
+			std::cout << "#" << std::endl;
+			matrix_t gg = arma::inv(G.submat(0, 0, k + l - 1, k + l - 1));
+			PrintMatrix(gg);
+			std::cout << "---" << std::endl;
+			if(std::abs(invG(0, 0)) > 0.000000001)
+				std::cin.get();
+			/*
+			uint_t k = 2 * vertexHandler.Vertices();
 			if (k == 0)
 				return false;
 			const uint_t l = 2 * W;
@@ -206,9 +234,11 @@ class UpdateHandler
 			matrix_t shiftedWormA(l, l);
 
 			vertexHandler.ShiftWormToBuffer();
+			vertexHandler.PermuteVertices(true);
+			vertexHandler.PermuteProgagatorMatrix(invG, true);
+			vertexHandler.PermuteProgagatorMatrix(G, true);
 			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
 
-			vertexHandler.PermuteProgagatorMatrix(invG, true);
 			matrix_t t = arma::inv(invG.submat(k, k, k + l - 1, k + l - 1)) * invG.submat(k, 0, k + l - 1, k - 1);
 			matrix_t M = invG.submat(0, 0, k - 1, k - 1) - invG.submat(0, k, k - 1, k + l - 1) * t;
 			
@@ -230,30 +260,19 @@ class UpdateHandler
 				invG.submat(0, 0, k - 1, k - 1) = M - Mu * invG.submat(k, 0, k + l - 1, k - 1);
 				invG.submat(0, k, k - 1, k + l - 1) = -Mu * S;
 				invG.submat(k, k, k + l - 1, k + l - 1) = S;
-				//vertexHandler.PermuteBackProgagatorMatrix(invG, true);
 				
-				vertexHandler.PermuteVertices(true);
-				vertexHandler.PermuteProgagatorMatrix(G, true);
 				G.submat(0, k, k - 1, k + l - 1) = shiftedWormU;
 				G.submat(k, 0, k + l - 1, k - 1) = shiftedWormV;
 				G.submat(k, k, k + l - 1, k + l - 1) = shiftedWormA;
-				std::cout << "G inv" << std::endl;
-				matrix_t gg = G.submat(0, 0, k + l - 1, k + l - 1);
-				//PrintMatrix(gg);
-				std::cout << MatrixCondition(gg) << std::endl;
-				//std::cout << "invG" << std::endl;
-				//PrintMatrix(invG.submat(0, 0, k + l - 1, k + l - 1));
-				std::cin.get();
-				//vertexHandler.PermuteBackProgagatorMatrix(G, true);
 				
 				vertexHandler.ApplyWormShift();
 				return true;
 			}
 			else
 			{
-				vertexHandler.PermuteBackProgagatorMatrix(invG, true);
 				return false;
 			}
+			*/
 		}
 		
 		

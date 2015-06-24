@@ -40,7 +40,7 @@ for l in range(len(L)):
 		#Tc = 0.499 #V2.0
 		#Tc = 0.502
 		#Tc = 0.293 #V1.625
-		Tc = 0.25
+		Tc = 0.262
 		#Tc = 0.74 #V2.5
 		#Tc = 0.95 #V3.0
 		x = []
@@ -54,10 +54,10 @@ for l in range(len(L)):
 			plist = ParseParameters(filelist[f][i])
 			elist = ParseEvalables(filelist[f][i])
 			x.append(float(plist["T"]))
-			#exp = eta + z
+			exp = eta + z
 			#exp = 2.*beta/nu
 			#exp = 0.51 #V2.0
-			exp = 0.25 #V1.625
+			#exp = 0.25 #V1.625
 			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**(exp))
 			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**(exp) )
 			yM4.append( ArrangePlot(elist, "M4")[0][0] * float(L[l])**(2. * exp) )
@@ -91,7 +91,7 @@ for l in range(len(L)):
 			#x[i] = float(x[i]-Tc)
 			#x[i] = (x[i] - Tc) / Tc * float(L[l])**(1./nu)
 			#x[i] = x[i] * float(L[l])**(1.)
-			x[i] = (x[i] - Tc) * float(L[l])**(1.)
+			x[i] = (x[i] - Tc) * float(L[l])**(1./nu)
 		plt.plot(np.array(x), np.array(yM2), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM2), yerr=np.array(yM2err), color=color_cycle[l])
 		plt.legend(loc='upper right')

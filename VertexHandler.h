@@ -366,6 +366,14 @@ class VertexHandler
 			std::sort(wormNodes.begin(), wormNodes.end());
 		}
 		
+		void RandomSwap()
+		{
+			uint_t r = configSpace.rng() * (nodes.size() / 2);
+			indexBuffer[0] = 0;
+			indexBuffer[1] = 1;
+			indexBufferEnd = indexBuffer.begin() + 2;
+		}
+		
 		template<int_t N>
 		void AddRandomIndicesToBuffer()
 		{
