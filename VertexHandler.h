@@ -308,6 +308,64 @@ class VertexHandler
 			std::sort(wormNodes.begin(), wormNodes.end());
 		}
 		
+		void PermuteVertices(bool isWorm)
+		{
+			uint_t k = nodes.size();
+			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
+			for (uint_t i = 0; i < n; ++i)
+			{
+				if (isWorm)
+				{
+					if (nodes[k - i - 1].Worm)
+					{
+						auto wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
+						*wit = wormNodes[indexBuffer[n - i - 1]];
+					}
+					std::swap(nodes[wormNodes[indexBuffer[n - i - 1]]], nodes[k - i - 1]);
+					wormNodes[indexBuffer[n - i - 1]] = k - i - 1;
+				}
+				else
+				{
+					if (nodes[k - i - 1].Worm)
+					{
+						auto wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
+						*wit = indexBuffer[n - i - 1];
+					}
+					std::swap(nodes[indexBuffer[n - i - 1]], nodes[k - i - 1]);
+				}
+			}
+			std::sort(wormNodes.begin(), wormNodes.end());
+		}
+		
+		void PermuteBackVertices(bool isWorm)
+		{
+			uint_t k = nodes.size();
+			uint_t n = std::distance(indexBuffer.begin(), indexBufferEnd);
+			for (uint_t i = 0; i < n; ++i)
+			{
+				if (isWorm)
+				{
+					if (nodes[k - i - 1].Worm)
+					{
+						auto wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
+						*wit = wormNodes[indexBuffer[n - i - 1]];
+					}
+					std::swap(nodes[wormNodes[indexBuffer[n - i - 1]]], nodes[k - i - 1]);
+					wormNodes[indexBuffer[n - i - 1]] = k - i - 1;
+				}
+				else
+				{
+					if (nodes[k - i - 1].Worm)
+					{
+						auto wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
+						*wit = indexBuffer[n - i - 1];
+					}
+					std::swap(nodes[indexBuffer[n - i - 1]], nodes[k - i - 1]);
+				}
+			}
+			std::sort(wormNodes.begin(), wormNodes.end());
+		}
+		
 		template<int_t N>
 		void AddRandomIndicesToBuffer()
 		{

@@ -64,8 +64,15 @@ class UpdateHandler
 			matrix_t u(k, n), v(n, k), a(n, n);
 			vertexHandler.WoodburyAddVertices(u, v, a);
 
-			matrix_t invGu = invG.submat(0, 0, k - 1, k - 1) * u;
-			matrix_t invS = a - v * invGu;
+			matrix_t invGu(k, n);
+			matrix_t invS(n, n);
+			if (k > 0)
+			{
+				invGu = invG.submat(0, 0, k - 1, k - 1) * u;
+				invS = a - v * invGu;
+			}
+			else
+				invS = a;
 
 			value_t acceptRatio = preFactor * arma::det(invS);
 			if (print && acceptRatio < 0.0)
@@ -78,10 +85,9 @@ class UpdateHandler
 			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t S = arma::inv(invS);
-				matrix_t vinvG = v * invG.submat(0, 0, k - 1, k - 1);
-				
 				if (k > 0)
 				{
+					matrix_t vinvG = v * invG.submat(0, 0, k - 1, k - 1);
 					invG.submat(k, 0, n + k - 1, k - 1) = -S * vinvG;
 					invG.submat(0, 0, k - 1, k - 1) = invG.submat(0, 0, k - 1, k - 1) - invGu * invG.submat(k, 0, k + n - 1, k - 1);
 					invG.submat(0, k, k - 1, k + n - 1) = -invGu * S;
@@ -109,6 +115,8 @@ class UpdateHandler
 				return false;
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
+			if (k == 0)
+				return false;
 
 			matrix_t S(n, n);
 			vertexHandler.FillSMatrix(S, invG, isWorm);
@@ -188,7 +196,6 @@ class UpdateHandler
 		template<int_t W>
 		bool ShiftWorm()
 		{
-			return false;
 			uint_t k = 2 * vertexHandler.Vertices();
 			if (k == 0)
 				return false;
@@ -205,14 +212,6 @@ class UpdateHandler
 			matrix_t t = arma::inv(invG.submat(k, k, k + l - 1, k + l - 1)) * invG.submat(k, 0, k + l - 1, k - 1);
 			matrix_t M = invG.submat(0, 0, k - 1, k - 1) - invG.submat(0, k, k - 1, k + l - 1) * t;
 			
-			vertexHandler.PermuteProgagatorMatrix(G, true);
-			matrix_t d = arma::inv(G.submat(0, 0, k - 1, k - 1));
-			std::cout << "d" << std::endl;
-			PrintMatrix(d);
-			std::cout << "M" << std::endl;
-			PrintMatrix(M);
-			std::cin.get();
-
 			matrix_t S = invG.submat(k, k, k + l - 1, k + l - 1);
 			matrix_t shiftedInvS = shiftedWormA - shiftedWormV * M * shiftedWormU;
 			value_t detShiftedInvS = arma::det(shiftedInvS);
@@ -231,13 +230,23 @@ class UpdateHandler
 				invG.submat(0, 0, k - 1, k - 1) = M - Mu * invG.submat(k, 0, k + l - 1, k - 1);
 				invG.submat(0, k, k - 1, k + l - 1) = -Mu * S;
 				invG.submat(k, k, k + l - 1, k + l - 1) = S;
-				vertexHandler.PermuteBackProgagatorMatrix(invG, true);
+				//vertexHandler.PermuteBackProgagatorMatrix(invG, true);
 				
+				vertexHandler.PermuteVertices(true);
 				vertexHandler.PermuteProgagatorMatrix(G, true);
 				G.submat(0, k, k - 1, k + l - 1) = shiftedWormU;
 				G.submat(k, 0, k + l - 1, k - 1) = shiftedWormV;
 				G.submat(k, k, k + l - 1, k + l - 1) = shiftedWormA;
-				vertexHandler.PermuteBackProgagatorMatrix(G, true);
+				std::cout << "G inv" << std::endl;
+				matrix_t gg = G.submat(0, 0, k + l - 1, k + l - 1);
+				//PrintMatrix(gg);
+				std::cout << MatrixCondition(gg) << std::endl;
+				//std::cout << "invG" << std::endl;
+				//PrintMatrix(invG.submat(0, 0, k + l - 1, k + l - 1));
+				std::cin.get();
+				//vertexHandler.PermuteBackProgagatorMatrix(G, true);
+				
+				vertexHandler.ApplyWormShift();
 				return true;
 			}
 			else
@@ -374,6 +383,8 @@ class UpdateHandler
 		value_t IsStableInverse()
 		{
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
+			if (k == 0)
+				return 0.0;
 			matrix_t t = G.submat(0, 0, k - 1, k - 1) * invG.submat(0, 0, k - 1, k - 1);
 			uint_t i = static_cast<uint_t>(configSpace.rng() * (t.n_rows - 1)), j = static_cast<uint_t>(configSpace.rng()  * (t.n_cols - 1));
 			value_t ref;
@@ -381,19 +392,15 @@ class UpdateHandler
 				ref = 1.0;
 			else
 				ref = 0.0;
-			if (t.n_rows == 0)
+			value_t err = std::abs(t(i, j) - ref);
+			if (err > std::pow(10.0, -8.0))
+				std::cout << "Warning! Round off error at (" << i << ", " << j << ") of " << err << std::endl;
+			if (err > std::pow(10.0, -10.0))
 			{
-				return 0.0;
+				std::cout << "Warning! Stabilization necessary." << std::endl;
+				StabilizeInvG();
 			}
-			else
-			{
-				value_t err = std::abs(t(i, j) - ref);
-				if (err > std::pow(10.0, -8.0))
-					std::cout << "Warning! Round off error at (" << i << ", " << j << ") of " << err << std::endl;
-				if (err > std::pow(10.0, -10.0))
-					StabilizeInvG();
-				return err;
-			}
+			return err;
 		}
 
 		value_t StabilizeInvG()
