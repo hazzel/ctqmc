@@ -61,8 +61,6 @@ class UpdateHandler
 		{
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			const uint_t n = 2 * N;
-			if (isWorm)
-				return false;
 			
 			if (k + n > invG.n_rows)
 			{
@@ -209,22 +207,6 @@ class UpdateHandler
 		bool ShiftWorm()
 		{
 			uint_t k = 2 * vertexHandler.Vertices();
-			const uint_t l = 2 * W;
-			
-			//vertexHandler.ShiftWormToBuffer();
-			vertexHandler.RandomSwap();
-			vertexHandler.PermuteVertices(true);
-			vertexHandler.PermuteProgagatorMatrix(invG, true);
-			vertexHandler.PermuteProgagatorMatrix(G, true);
-			PrintMatrix(invG.submat(0, 0, k + l - 1, k + l - 1));
-			std::cout << "#" << std::endl;
-			matrix_t gg = arma::inv(G.submat(0, 0, k + l - 1, k + l - 1));
-			PrintMatrix(gg);
-			std::cout << "---" << std::endl;
-			if(std::abs(invG(0, 0)) > 0.000000001)
-				std::cin.get();
-			/*
-			uint_t k = 2 * vertexHandler.Vertices();
 			if (k == 0)
 				return false;
 			const uint_t l = 2 * W;
@@ -234,9 +216,9 @@ class UpdateHandler
 			matrix_t shiftedWormA(l, l);
 
 			vertexHandler.ShiftWormToBuffer();
-			vertexHandler.PermuteVertices(true);
 			vertexHandler.PermuteProgagatorMatrix(invG, true);
 			vertexHandler.PermuteProgagatorMatrix(G, true);
+			vertexHandler.PermuteVertices(true);
 			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
 
 			matrix_t t = arma::inv(invG.submat(k, k, k + l - 1, k + l - 1)) * invG.submat(k, 0, k + l - 1, k - 1);
@@ -272,9 +254,7 @@ class UpdateHandler
 			{
 				return false;
 			}
-			*/
 		}
-		
 		
 		/*
 		template<int_t W>
@@ -341,12 +321,6 @@ class UpdateHandler
 		}
 		*/
 		
-		template<int_t W>
-		bool ReplaceWorm()
-		{
-			return vertexHandler.ReplaceWorm<W>();
-		}
-		
 		/*
 		template<int_t W>
 		bool ShiftWorm()
@@ -383,6 +357,12 @@ class UpdateHandler
 		}
 		*/
 		
+		template<int_t W>
+		bool ReplaceWorm()
+		{
+			return vertexHandler.ReplaceWorm<W>();
+		}
+		
 		value_t GetWeight()
 		{
 			return 1.0;
@@ -413,8 +393,12 @@ class UpdateHandler
 				ref = 0.0;
 			value_t err = std::abs(t(i, j) - ref);
 			if (err > std::pow(10.0, -8.0))
+			{
 				std::cout << "Warning! Round off error at (" << i << ", " << j << ") of " << err << std::endl;
-			if (err > std::pow(10.0, -10.0))
+				std::cout << "Stabilization necessary." << std::endl;
+				StabilizeInvG();
+			}
+			else if (err > std::pow(10.0, -10.0))
 			{
 				std::cout << "Warning! Stabilization necessary." << std::endl;
 				StabilizeInvG();

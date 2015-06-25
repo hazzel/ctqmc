@@ -211,7 +211,7 @@ void CLASSNAME::write(const std::string& dir)
 	odump d(dir+"dump");
 	random_write(d);
 	d.write(sweep);
-	std::cout << "write sweep: " << sweep << std::endl;
+	//std::cout << "write sweep: " << sweep << std::endl;
 	d.write(rebuildCnt);
 	for (uint_t i = 0; i < nUpdateType; ++i)
 	{
@@ -255,7 +255,7 @@ void CLASSNAME::write_state(const std::string& dir)
 }
 bool CLASSNAME::read(const std::string& dir)
 {
-	std::cout << "read " << dir <<  std::endl;
+	//std::cout << "read " << dir <<  std::endl;
 	idump d(dir+"dump");
 	if (!d)
 	{
@@ -278,7 +278,7 @@ bool CLASSNAME::read(const std::string& dir)
 		}
 		configSpace.Serialize(d);
 		d.close();
-		std::cout << "read sweep: " << sweep << " , pertorder:" << configSpace.updateHandler.GetVertexHandler().Vertices() << std::endl;
+		//std::cout << "read sweep: " << sweep << " , pertorder:" << configSpace.updateHandler.GetVertexHandler().Vertices() << std::endl;
 		return true;
 	}
 }
@@ -291,7 +291,7 @@ bool CLASSNAME::read_state(const std::string& dir)
 	{
 		configSpace.Serialize(d);
 		d.close();
-		std::cout << "read sweep: " << sweep << " , pertorder:" << configSpace.updateHandler.GetVertexHandler().Vertices() << std::endl;
+		//std::cout << "read sweep: " << sweep << " , pertorder:" << configSpace.updateHandler.GetVertexHandler().Vertices() << std::endl;
 		return true;
 	}
 }
@@ -359,7 +359,7 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	2.0 / 10.0	,	1.6 / 10.0;
 	*/
 	
-	/*
+	
 		//ALL TRANSITIONS
 	proposeProbabilityMatrix <<	1.05 / 10.0	,	0.8 / 10.0	,	0.7 / 10.0,
 											3.05 / 10.0	,	2.4 / 10.0	,	2.3 / 10.0,
@@ -377,9 +377,9 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	0.0			,	1.2 / 10.0,
 											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
 											0.0			,	2.0 / 10.0	,	1.6 / 10.0;
-	*/
 	
 	
+	/*
 		//TEST
 	proposeProbabilityMatrix <<	1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
 											1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
@@ -397,7 +397,7 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	0.0			,	2.0 / 10.0,
 											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
 											0.0			,	2.0 / 10.0	,	0.0 / 10.0;
-	
+	*/
 /*
 	//ALL TRANSITIONS
 	proposeProbabilityMatrix <<	1.0 / 10.0	,	0.7 / 10.0	,	0.7 / 10.0,
@@ -747,6 +747,8 @@ void CLASSNAME::do_update()
 		}
 	}
 	++sweep;
+	if (sweep % 50000)
+		std::cout << "sweep : " << sweep << " , ( " << static_cast<double>(sweep - nThermalize) / static_cast<double>(nMeasurements) << " )" << std::endl;
 
 	if (nZetaOptimization < nOptimizationSteps)
 	{
