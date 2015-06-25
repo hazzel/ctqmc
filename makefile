@@ -40,19 +40,13 @@ ifeq ($(MODE),PT)
 endif
 
 MCLL  = $(HOME)/mc/load_leveller/trunk
-APPMCLL = $(HOME)/mc/ctqmc/
-USE_MKL = FALSE
+APPMCLL = $(CURDIR)
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DNDEBUG $(DEFINES)
 	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-4.650.4/include -I$(HOME)/gperftools-2.4/install/include
 	LDFLAGS = $(FLAGS_MATH_LINKER)
 	SUPERLP = 
-	ifeq ($(USE_MKL), TRUE)
-		CFLAGS += -DEIGEN_USE_MKL_ALL
-		INCLUDE += $(FLAGS_MATH_INCLUDE)
-		LDFLAGS += $(FLAGS_MATH_LINKER)
-	endif
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -pipe $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/ -I$(HOME)/armadillo-5.200.1/include

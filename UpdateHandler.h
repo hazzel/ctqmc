@@ -97,7 +97,11 @@ class UpdateHandler
 				matrix_t S = arma::inv(invS);
 				if (k > 0)
 				{
-					matrix_t vinvG = v * invG.submat(0, 0, k - 1, k - 1);
+					//matrix_t vinvG = v * invG.submat(0, 0, k - 1, k - 1);
+					matrix_t vt = v.t();
+					matrix_t gt = invG.submat(0, 0, k - 1, k - 1).t();
+					matrix_t vinvG = gt * vt;
+					arma::inplace_trans(vinvG);
 					invG.submat(k, 0, n + k - 1, k - 1) = -S * vinvG;
 					invG.submat(0, 0, k - 1, k - 1) = invG.submat(0, 0, k - 1, k - 1) - invGu * invG.submat(k, 0, k + n - 1, k - 1);
 					invG.submat(0, k, k - 1, k + n - 1) = -invGu * S;
@@ -139,27 +143,21 @@ class UpdateHandler
 			if (configSpace.rng() < acceptRatio)
 			{
 				if (k != n)
-				/*
-				{
-					arma::vec perm(k);
-					vertexHandler.PermutationMatrix(perm, isWorm);
-					matrix_t invGp(k, k);
-					
-					for (uint_t i = 0; i < k; ++i)
-						for (uint_t j = 0; j < k; ++j)
-							invGp(i, j) = invG(perm(i), perm(j));
-						
-					matrix_t t = arma::inv(S) * invGp.submat(k - n, 0, k - 1, k - n - 1);
-					invG = invGp.submat(0, 0, k - n - 1, k - n - 1) - invGp.submat(0, k - n, k - n - 1, k - 1) * t;
-				}
-				*/
 				{
 					vertexHandler.PermuteProgagatorMatrix(invG, isWorm);
+					
+					arma::inplace_trans(S);
+					matrix_t gt = invG.submat(k - n, 0, k - 1, k - n - 1).t();
+					matrix_t t = gt * arma::inv(S);
+					arma::inplace_trans(t);
+					invG.submat(0, 0, k - n - 1, k - n - 1) -= invG.submat(0, k - n, k - n - 1, k - 1) * t;
+					
+					/*
 					matrix_t t = arma::inv(S) * invG.submat(k - n, 0, k - 1, k - n - 1);
 					invG.submat(0, 0, k - n - 1, k - n - 1) -= invG.submat(0, k - n, k - n - 1, k - 1) * t;
+					*/
 					vertexHandler.PermuteProgagatorMatrix(G, isWorm);
 				}
-				//vertexHandler.RemoveBufferedVertices(isWorm);
 				vertexHandler.RemoveBufferedVertices2(isWorm);
 				return true;
 			}
@@ -255,71 +253,6 @@ class UpdateHandler
 				return false;
 			}
 		}
-		
-		/*
-		template<int_t W>
-		bool ShiftWorm()
-		{
-			//return false;
-			uint_t k = 2 * vertexHandler.Vertices();
-			const uint_t l = 2 * W;
-			
-			vertexHandler.ShiftWormToBuffer();
-			matrix_t U_1(k + l, l);
-			matrix_t V_2(l, k + l);
-			vertexHandler.WoodburyShiftRowsCols(U_1, V_2);
-			matrix_t I = arma::eye<matrix_t>(l, l);
-			matrix_t invGu1 = invG * U_1;
-			matrix_t invGv1(l, k + l);
-			matrix_t invGu2(k + l, l);
-			for (uint_t i = 0; i < l; i+=2)
-			{
-				uint_t pos = vertexHandler.WormPositions()[i];
-				invGv1.submat(i, 0, i + 1, k + l - 1) = invG.submat(pos, 0, pos + 1, k + l - 1);
-				invGu2.submat(0, i, k + l - 1, i + 1) = invG.submat(0, pos, k + l - 1, pos + 1);
-			}
-			
-			matrix_t w1 = I + invGv1 * U_1;
-			matrix_t w2 = I + V_2 * invGu2;
-			matrix_t w3(l, l);
-			for (uint_t i = 0; i < l; i+=2)
-			{
-				uint_t pos = vertexHandler.WormPositions()[i];
-				w3.submat(i, 0, i + 1, l - 1) = invGu2.submat(pos, 0, pos + 1, l - 1);
-			}
-			matrix_t w4 = invGu1 * arma::inv(w1);
-			matrix_t w5 = V_2 * w4 * w3;
-			
-			value_t acceptRatio = arma::det(w1) * arma::det(w2 - w5) * vertexHandler.WormShiftParity();
-			if (print && acceptRatio < 0.0)
-			{
-				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
-			}
-			if (configSpace.rng() < acceptRatio)
-			{
-				//update columns
-				invG -= w4 * invGv1;
-				
-				//update rows
-				matrix_t invGv2 = V_2 * invG;
-				matrix_t w6(l, l);
-				for (uint_t i = 0; i < l; i+=2)
-				{
-					uint_t pos = vertexHandler.WormPositions()[i];
-					invGu2.submat(0, i, k + l - 1, i + 1) = invG.submat(0, pos, k + l - 1, pos + 1);
-					w6.submat(0, i, l - 1, i + 1) = invGv2.submat(0, pos, l - 1, pos + 1);
-				}
-				invG -= invGu2 * arma::inv(I + w6) * invGv2;
-				vertexHandler.ApplyWormShift();
-				
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-		*/
 		
 		/*
 		template<int_t W>
