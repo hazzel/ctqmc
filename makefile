@@ -44,10 +44,8 @@ APPMCLL = $(CURDIR)
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DNDEBUG -pipe $(DEFINES)
-	#INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
-	#LDFLAGS = $(FLAGS_MATH_LINKER) -L$(HOME)/armadillo-5.200.2/lib -lblas -llapack
-	LDFLAGS = -L$(HOME)/armadillo-5.200.2/lib -lblas -llapack
+	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
+	LDFLAGS = $(FLAGS_MATH_LINKER) -L$(HOME)/armadillo-5.200.2/lib -lblas -llapack
 	SUPERLP = 
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -pipe $(DEFINES)
