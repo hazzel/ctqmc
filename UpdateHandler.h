@@ -364,6 +364,11 @@ class UpdateHandler
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			matrix_t g(k, k);
 			vertexHandler.PropagatorMatrix(g);
+			if (k > G.n_rows)
+			{
+				G.resize(k, k);
+				invG.resize(k, k);
+			}
 			G.submat(0, 0, k - 1, k - 1) = g;
 			StabilizeInvG();
 		}

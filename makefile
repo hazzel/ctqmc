@@ -43,9 +43,11 @@ MCLL  = $(HOME)/mc/load_leveller/trunk
 APPMCLL = $(CURDIR)
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
-	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DNDEBUG $(DEFINES)
-	INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-4.650.4/include -I$(HOME)/gperftools-2.4/install/include
-	LDFLAGS = $(FLAGS_MATH_LINKER)
+	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 -DNDEBUG -pipe $(DEFINES)
+	#INCLUDE = $(FLAGS_MATH_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
+	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
+	#LDFLAGS = $(FLAGS_MATH_LINKER) -L$(HOME)/armadillo-5.200.2/lib -lblas -llapack
+	LDFLAGS = -L$(HOME)/armadillo-5.200.2/lib -lblas -llapack
 	SUPERLP = 
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -pipe $(DEFINES)
@@ -54,8 +56,9 @@ else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	SUPERLP =
 else
 	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-4.650.4/include -I$(HOME)/gperftools-2.4/install/include
-	LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -L$(HOME)/armadillo-4.650.4/lib -lblas -llapack -lprofiler
+	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
+	LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -L$(HOME)/armadillo-5.200.2/lib -lblas -llapack -lprofiler
+	#LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -lblas -llapack -lprofiler
 	SUPERLP =
 endif
 
