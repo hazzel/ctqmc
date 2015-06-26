@@ -97,10 +97,7 @@ class UpdateHandler
 				matrix_t S = arma::inv(invS);
 				if (k > 0)
 				{
-					//matrix_t vinvG = v * invG.submat(0, 0, k - 1, k - 1);
-					matrix_t vt = v.t();
-					matrix_t gt = invG.submat(0, 0, k - 1, k - 1).t();
-					matrix_t vinvG = gt * vt;
+					matrix_t vinvG = invG.submat(0, 0, k - 1, k - 1).t() * v.t();
 					arma::inplace_trans(vinvG);
 					invG.submat(k, 0, n + k - 1, k - 1) = -S * vinvG;
 					invG.submat(0, 0, k - 1, k - 1) = invG.submat(0, 0, k - 1, k - 1) - invGu * invG.submat(k, 0, k + n - 1, k - 1);
@@ -218,9 +215,11 @@ class UpdateHandler
 			matrix_t t = invG.submat(k, 0, k + l - 1, k - 1).t() * arma::inv(invG.submat(k, k, k + l - 1, k + l - 1)).t();
 			arma::inplace_trans(t);
 			matrix_t M = invG.submat(0, 0, k - 1, k - 1) - invG.submat(0, k, k - 1, k + l - 1) * t;
+			matrix_t Mt = M.t();
 			
 			matrix_t S = invG.submat(k, k, k + l - 1, k + l - 1);
-			matrix_t shiftedInvS = shiftedWormA - shiftedWormV * M * shiftedWormU;
+			arma::inplace_trans(shiftedWormV);
+			matrix_t shiftedInvS = shiftedWormA - (shiftedWormU.t() * Mt * shiftedWormV).t();
 			value_t detShiftedInvS = arma::det(shiftedInvS);
 
 			value_t acceptRatio = detShiftedInvS * arma::det(S) * vertexHandler.WormShiftParity();
@@ -231,7 +230,8 @@ class UpdateHandler
 			if (configSpace.rng() < acceptRatio)
 			{
 				S = arma::inv(shiftedInvS);
-				matrix_t vM = shiftedWormV * M;
+				matrix_t vM = Mt * shiftedWormV;
+				arma::inplace_trans(vM);
 				matrix_t Mu = M * shiftedWormU;
 				invG.submat(k, 0, k + l - 1, k - 1) = -S * vM;
 				invG.submat(0, 0, k - 1, k - 1) = M - Mu * invG.submat(k, 0, k + l - 1, k - 1);
@@ -239,7 +239,7 @@ class UpdateHandler
 				invG.submat(k, k, k + l - 1, k + l - 1) = S;
 				
 				G.submat(0, k, k - 1, k + l - 1) = shiftedWormU;
-				G.submat(k, 0, k + l - 1, k - 1) = shiftedWormV;
+				G.submat(k, 0, k + l - 1, k - 1) = shiftedWormV.t();
 				G.submat(k, k, k + l - 1, k + l - 1) = shiftedWormA;
 				
 				vertexHandler.ApplyWormShift();
