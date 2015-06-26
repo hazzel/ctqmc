@@ -152,10 +152,6 @@ class UpdateHandler
 					arma::inplace_trans(t);
 					invG.submat(0, 0, k - n - 1, k - n - 1) -= invG.submat(0, k - n, k - n - 1, k - 1) * t;
 					
-					/*
-					matrix_t t = arma::inv(S) * invG.submat(k - n, 0, k - 1, k - n - 1);
-					invG.submat(0, 0, k - n - 1, k - n - 1) -= invG.submat(0, k - n, k - n - 1, k - 1) * t;
-					*/
 					vertexHandler.PermuteProgagatorMatrix(G, isWorm);
 				}
 				vertexHandler.RemoveBufferedVertices2(isWorm);
@@ -219,7 +215,8 @@ class UpdateHandler
 			vertexHandler.PermuteVertices(true);
 			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
 
-			matrix_t t = arma::inv(invG.submat(k, k, k + l - 1, k + l - 1)) * invG.submat(k, 0, k + l - 1, k - 1);
+			matrix_t t = invG.submat(k, 0, k + l - 1, k - 1).t() * arma::inv(invG.submat(k, k, k + l - 1, k + l - 1)).t();
+			arma::inplace_trans(t);
 			matrix_t M = invG.submat(0, 0, k - 1, k - 1) - invG.submat(0, k, k - 1, k + l - 1) * t;
 			
 			matrix_t S = invG.submat(k, k, k + l - 1, k + l - 1);
