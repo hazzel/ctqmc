@@ -44,8 +44,8 @@ APPMCLL = $(CURDIR)
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	CFLAGS  = -O3 -ip -axCORE-AVX2,AVX,SSE4.2,SSE4.1 -fp-model fast=2 -Wno-deprecated -std=c++11 -DNDEBUG -pipe $(DEFINES)
-	INCLUDE = $(FLAGS_MKL_INCLUDE) -openmp -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
-	LDFLAGS = $(FLAGS_MKL_LINKER) -openmp
+	INCLUDE = $(FLAGS_MKL_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
+	LDFLAGS = $(FLAGS_MKL_LINKER)
 	SUPERLP = 
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -pipe $(DEFINES)
