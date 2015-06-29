@@ -61,8 +61,13 @@ else
 	SUPERLP =
 endif
 
-CCLN = g++
-LDLN = g++
+ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
+	CCLN = icc
+	LDLN = icc
+else
+	CCLN = g++
+	LDLN = g++
+endif
 CFLAGSLN  = $(CFLAGS) -DMCL_SINGLE
 INCLUDELN = $(INCLUDE)
 LDFLAGSLN = $(LDFLAGS)

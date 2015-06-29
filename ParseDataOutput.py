@@ -19,9 +19,15 @@ RebinBins = 'Bins\s+=\s' + fpn + '\s+'
 RebinMean = 'Mean\s+=\s' + fpn + '\s+'
 RebinError = 'Error\s+=\s' + fpn + '\s+'
 
+Parameterset = 'Parameters'
 QuantityBlock = NameLine + BinsLine + BinLengthLine + MeanLine + ErrorLine + VarianceLine + AutocorrelationtimeLine
 EvalableBlock = NameLine + BinsLine + BinLengthLine + MeanLine + ErrorLine + VarianceLine
 RebinLine = RebinLength# + RebinBins + RebinMean + RebinError
+
+def ParseParameterBlocks(filename):
+	with open(filename) as inputFile:
+		data = inputFile.read()
+		return data.split("PARAMETERS\n")[1:]
 
 def ParseQuantityValue(block, lineexp):
 	value = ''
@@ -31,41 +37,45 @@ def ParseQuantityValue(block, lineexp):
 	return value
 
 def ParseParameters(filename):
-	with open(filename) as inputFile:
-		plist = {}
-		data = inputFile.read()
-		for line in data.split("\n"):
+	plist = []
+	data = ParseParameterBlocks(filename)
+	for block in data:
+		p = {}
+		for line in block.split("\n"):
 			if "=" in line:
 				name = line.split("=")[0].strip()
 				if name == "Name":
-					return plist
+					plist.append(p)
+					break
 				value = line.split("=")[1].strip()
-				plist[name] = value
-		return plist
+				p[name] = value
+	return plist
 	
 def ParseQuantities(filename):
-	with open(filename) as inputFile:
-		data = inputFile.read()
-		blockList = re.findall(QuantityBlock, data)
-		#rebinblock = re.findall(RebinLine, data)
-		#print (rebinblock)
+	plist = []
+	data = ParseParameterBlocks(filename)
+	for block in data:
+		subblockList = re.findall(QuantityBlock, block)
 		quantities = []
-		for i in range(len(blockList)):
+		for i in range(len(subblockList)):
 			q = Quantity()
-			q.Parse(blockList[i])
+			q.Parse(subblockList[i])
 			quantities.append(q)
-	return quantities
+		qlist.append(quantities)
+	return qlist
 
 def ParseEvalables(filename):
-	with open(filename) as inputFile:
-		data = inputFile.read()
-		blockList = re.findall(EvalableBlock, data)
+	elist = []
+	data = ParseParameterBlocks(filename)
+	for block in data:
+		subblockList = re.findall(EvalableBlock, block)
 		evalables = []
-		for i in range(len(blockList)):
+		for i in range(len(subblockList)):
 			q = Evalable()
-			q.Parse(blockList[i])
+			q.Parse(subblockList[i])
 			evalables.append(q)
-	return evalables
+		elist.append(evalables)
+	return elist
 	
 class BinningAnalysis:
 	Rebinlength = []
