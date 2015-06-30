@@ -40,7 +40,7 @@ for l in range(len(L)):
 		#Tc = 0.499 #V2.0
 		#Tc = 0.502
 		#Tc = 0.293 #V1.625
-		Tc = 0.287
+		Tc = 0.262
 		#Tc = 0.74 #V2.5
 		#Tc = 0.95 #V3.0
 		x = []
@@ -51,8 +51,8 @@ for l in range(len(L)):
 		for i in range(len(filelist[f])):
 			if (not os.path.exists(filelist[f][i])):
 				continue
-			plist = ParseParameters(filelist[f][i])
-			elist = ParseEvalables(filelist[f][i])
+			plist = ParseParameters(filelist[f][i])[0]
+			elist = ParseEvalables(filelist[f][i])[0]
 			x.append(float(plist["T"]))
 			exp = eta + z
 			#exp = 2.*beta/nu

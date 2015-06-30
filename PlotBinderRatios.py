@@ -41,8 +41,8 @@ for l in range(len(L)):
 		for i in range(len(filelist[f])):
 			if (not os.path.exists(filelist[f][i])):
 				continue
-			plist = ParseParameters(filelist[f][i])
-			elist = ParseEvalables(filelist[f][i])
+			plist = ParseParameters(filelist[f][i])[0]
+			elist = ParseEvalables(filelist[f][i])[0]
 			x.append(float(plist["T"]))
 			y.append( ArrangePlot(elist, "Binder")[0][0] )
 			yerr.append( ArrangePlot(elist, "Binder")[1][0] )
