@@ -73,11 +73,12 @@ class UpdateHandler
 				G.resize(k + n + 10, k + n + 10);
 				G.topLeftCorner(buf.rows(), buf.cols()) = buf;
 			}
-			dmatrix_t u(k, n), v(n, k), a(n, n);
+			dmatrix_t u(k, n), v(n, k);
+			matrix_t<n, n> a(n, n);
 			vertexHandler.WoodburyAddVertices(u, v, a);
 
 			dmatrix_t invGu(k, n);
-			dmatrix_t invS(n, n);
+			matrix_t<n, n> invS(n, n);
 			if (k > 0)
 			{
 				invGu = invG.topLeftCorner(k, k) * u;
@@ -130,7 +131,7 @@ class UpdateHandler
 			if (k == 0)
 				return false;
 
-			dmatrix_t S(n, n);
+			matrix_t<n, n> S(n, n);
 			vertexHandler.FillSMatrix(S, invG, isWorm);
 			value_t acceptRatio = preFactor * S.determinant();
 			if (print && acceptRatio < 0.0)
@@ -196,7 +197,6 @@ class UpdateHandler
 		template<int_t W>
 		bool ShiftWorm()
 		{
-			return false;
 			uint_t k = 2 * vertexHandler.Vertices();
 			if (k == 0)
 				return false;
@@ -225,7 +225,7 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				dmatrix_t S = shiftedInvS.inverse();
+				matrix_t<l, l> S = shiftedInvS.inverse();
 				dmatrix_t vM = shiftedWormV * M;
 				dmatrix_t Mu = M * shiftedWormU;
 				invG.block(k, 0, l, k) = -S * vM;
