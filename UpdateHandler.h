@@ -144,8 +144,7 @@ class UpdateHandler
 					vertexHandler.PermuteProgagatorMatrix(invG, isWorm);
 					
 					arma::inplace_trans(S);
-					matrix_t gt = invG.submat(k - n, 0, k - 1, k - n - 1).t();
-					matrix_t t = gt * arma::inv(S);
+					matrix_t t = invG.submat(k - n, 0, k - 1, k - n - 1).t() * arma::inv(S);
 					arma::inplace_trans(t);
 					invG.submat(0, 0, k - n - 1, k - n - 1) -= invG.submat(0, k - n, k - n - 1, k - 1) * t;
 					
@@ -217,19 +216,18 @@ class UpdateHandler
 			matrix_t M = invG.submat(0, 0, k - 1, k - 1) - invG.submat(0, k, k - 1, k + l - 1) * t;
 			matrix_t Mt = M.t();
 			
-			matrix_t S = invG.submat(k, k, k + l - 1, k + l - 1);
 			arma::inplace_trans(shiftedWormV);
 			matrix_t shiftedInvS = shiftedWormA - (shiftedWormU.t() * Mt * shiftedWormV).t();
 			value_t detShiftedInvS = arma::det(shiftedInvS);
 
-			value_t acceptRatio = detShiftedInvS * arma::det(S) * vertexHandler.WormShiftParity();
+			value_t acceptRatio = detShiftedInvS * arma::det(invG.submat(k, k, k + l - 1, k + l - 1)) * vertexHandler.WormShiftParity();
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				S = arma::inv(shiftedInvS);
+				matrix_t S = arma::inv(shiftedInvS);
 				matrix_t vM = Mt * shiftedWormV;
 				arma::inplace_trans(vM);
 				matrix_t Mu = M * shiftedWormU;
@@ -365,9 +363,9 @@ class UpdateHandler
 			{
 				G.resize(k, k);
 				invG.resize(k, k);
+				G.submat(0, 0, k - 1, k - 1) = g;
+				StabilizeInvG();
 			}
-			G.submat(0, 0, k - 1, k - 1) = g;
-			StabilizeInvG();
 		}
 		
 		template<typename Map>
