@@ -89,6 +89,7 @@ class UpdateHandler
 			{
 				std::cout << "AddVertices(" << N << "): AcceptRatio: " << acceptRatio << std::endl;
 				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
+				StabilizeInvG();
 			}
 			if (force)
 				acceptRatio = 1.0;
@@ -136,6 +137,7 @@ class UpdateHandler
 			{
 				std::cout << "RemoveVertices(" << N << "): AcceptRatio" << acceptRatio << std::endl;
 				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
+				StabilizeInvG();
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
@@ -224,6 +226,7 @@ class UpdateHandler
 			if (print && acceptRatio < 0.0)
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
+				StabilizeInvG();
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
