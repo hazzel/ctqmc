@@ -12,7 +12,6 @@
 #include "Random.h"
 #include "HexagonalHoneycomb.h"
 #include "RhombicHoneycomb.h"
-//#define EIGEN_USE_MKL_ALL
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
 #include "measurements.h"
@@ -20,8 +19,11 @@
 #include "parser.h"
 #include "types.h"
 
-//#include <qd/qd_real.h>
-//#include <qd/fpu.h>
+#ifdef MCL_PT
+	#define CLASSNAME mc_pt
+#else
+	#define CLASSNAME mc
+#endif
 
 class make_string
 {
@@ -59,43 +61,10 @@ struct Measure
 	}
 };
 
-template<typename RNG>
-class Zeta
-{
-public:
-	Zeta(RNG& rng)
-		: rng(rng)
-	{
-		NextConfig();
-	}
-
-	double Zeta2()
-	{
-		return zeta2;
-	}
-	double Zeta4()
-	{
-		return zeta4;
-	}
-	void NextConfig()
-	{
-		zeta2 = zeta2Min + (zeta2Max - zeta2Min) * rng();
-		zeta4 = zeta4Min + (zeta4Max - zeta4Min) * rng();
-	}
-private:
-	RNG& rng;
-	double zeta2Min = 0.001;
-	double zeta2Max = 2.0;
-	double zeta4Min = 0.001;
-	double zeta4Max = 2.0;
-	double zeta2;
-	double zeta4;
-};
-
-class mc
+class CLASSNAME
 {
 	public:
-		using uint_t = std::uint_fast32_t;
+		using uint_t = std::int_fast32_t;
 		using int_t = std::int_fast32_t;
 		using value_t = double;
 		using matrix_t = Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic>;
@@ -103,8 +72,8 @@ class mc
 		using Rhom_t = RhombicHoneycomb<Random, int_t>;
 		using ConfigSpace_t = ConfigSpace<GeometryBase<Random, int_t>, Random, value_t, matrix_t>;
 
-		mc(const std::string& dir);
-		~mc();
+		CLASSNAME(const std::string& dir);
+		~CLASSNAME();
 
 		void random_write(odump& d);
 		void seed_write(const std::string& fn);
@@ -112,9 +81,27 @@ class mc
 		void init();
 		void write(const std::string& dir);
 		bool read(const std::string& dir);
-		void write_output(const std::string& dir);
+		void write_state(const std::string& dir);
+		bool read_state(const std::string& dir);
+		#ifdef MCL_PT
+			void write_output(const std::string& dir, int para);
+		#else
+			void write_output(const std::string& dir);
+		#endif
 		bool is_thermalized();
-		measurements measure;
+		#ifdef MCL_PT
+			vector<measurements> measure;
+		#else
+			measurements measure;
+		#endif
+		
+		#ifdef MCL_PT
+			bool request_global_update();
+			void change_parameter(int);
+			void change_to(int);
+			double get_weight(int);
+			int get_label();
+		#endif
 		
 	public:
 		void do_update();
@@ -130,9 +117,20 @@ class mc
 		{
 			auto it = map.find( key );
 			if (it == map.end())
-				map[key] = 0;
+				map[key] = defval;
 			return map[key];
 		}
+		
+		value_t ThermalizationTemp()
+		{
+			value_t T = finalT + (nThermalize - sweep) / nThermalize * (startT - finalT);
+			configSpace.SetTemperature(T);
+			evalableParameters[0] = configSpace.beta;
+			configSpace.BuildG0LookUpTable();
+		}
+		
+		void ClearExpOrderHist();
+		void MeasureExpOrder();
 		
 	private:
 		Random rng;
@@ -142,25 +140,41 @@ class mc
 		uint_t nRebuild;
 		uint_t nThermStep;
 		uint_t nPrebins;
-		int nUpdateType = 11;
+		int nUpdateType = 16;
 		int nStateType = 3;
 		matrix_t updateWeightMatrix = matrix_t(nUpdateType, nStateType);
+		matrix_t proposeProbabilityMatrix = matrix_t(nUpdateType, nStateType);
 		matrix_t acceptedUpdates = matrix_t(nUpdateType, nStateType);
 		matrix_t proposedUpdates = matrix_t(nUpdateType, nStateType);
 		parser param;
 		uint_t sweep = 0;
 		uint_t rebuildCnt = 0;
+		int myrep;
+		uint_t pt_spacing;
+		int label;
+		std::vector< value_t > pt_var;
 		std::vector< value_t > corrVector;
-		std::map<uint_t, uint_t> exporderHistZ;
-		std::map<uint_t, uint_t> exporderHistW2;
+		#ifdef MCL_PT
+			std::vector< std::map<uint_t, uint_t> > exporderHistZ;
+			std::vector< std::map<uint_t, uint_t> > exporderHistW2;
+			std::vector< std::map<uint_t, uint_t> > exporderHistW4;
+		#else
+			std::map<uint_t, uint_t> exporderHistZ;
+			std::map<uint_t, uint_t> exporderHistW2;
+			std::map<uint_t, uint_t> exporderHistW4;
+		#endif
 		double* evalableParameters;
 		uint_t L;
 		bool isInitialized = false;
 		std::string path;
-		unsigned int old_cw;
+		std::string therm_path;
 		Measure therm;
-		Zeta<Random> zeta;
 		std::map< value_t, std::pair<value_t, value_t> > zetaOptimization;
-		uint_t nZetaOptimization = 0;
-		uint_t nOptimizationSteps = 10;
+		uint_t nZetaOptimization;
+		uint_t nOptimizationSteps = 0;
+		uint_t nOptimizationTherm;
+		std::vector< std::pair<value_t, value_t> > prevZeta;
+		bool annealing = false;
+		value_t startT = 5.0;
+		value_t finalT;
 };

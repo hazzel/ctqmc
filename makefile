@@ -2,8 +2,8 @@ DEFINES+= -DMCL_DUMP_BUFFER=0
 DEFINES+= -DMCL_MEASUREMENTS_APPEND
 DEFINES+= -DMCL_MCL_RNG_MT
 
-MODE=MPI
-#MODE=SINGLE
+#MODE=MPI
+MODE=SINGLE
 #MODE=PT
 
 OBJS = dump.o parser.o measurements.o evalable.o observable.o random.o mc.o main.o
@@ -29,37 +29,45 @@ ifeq ($(MODE),SINGLE)
 endif
 
 ifeq ($(MODE),PT)
-	OBJS+=runner.o
+	OBJS+=runner_pt.o
 	DEFINES+= -DMCL_PT
+	ifeq ($(MPICC),)
+		MPICC = /usr/lib64/mpi/gcc/openmpi/bin/mpiCC
+		#MPICC = /usr/lib64/openmpi/bin/mpiCC
+	endif
+	CC=$(MPICC)
+	LD=$(MPICC)
 endif
 
 MCLL  = $(HOME)/mc/load_leveller/trunk
-APPMCLL = $(HOME)/mc/ctqmc/
-#USE_MKL = -DEIGEN_USE_MKL_ALL
-USE_HPC = FALSE
+APPMCLL = $(CURDIR)
 
 ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
-	ifeq ($(USE_HPC), TRUE)
-		APPMCLL = $(HPCWORK)/ctqmc/
-	endif
-	CFLAGS  = $(FLAGS_FAST) -Wno-deprecated -std=c++11 $(USE_MKL) -DNDEBUG $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-	LDFLAGS = 
+	CFLAGS  = -O3 -ip -axCORE-AVX2,AVX,SSE4.2,SSE4.1 -fp-model fast=2 -Wno-deprecated -std=c++11 -DNDEBUG -pipe $(DEFINES)
+	INCLUDE = $(FLAGS_MKL_INCLUDE) -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
+	LDFLAGS = $(FLAGS_MKL_LINKER)
 	SUPERLP = 
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
-	CFLAGS  = -O3 -Wno-deprecated -std=c++11 $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/
-	LDFLAGS = 
+	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -pipe $(DEFINES)
+	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/ -I$(HOME)/armadillo-5.200.1/include
+	LDFLAGS = -L/usr/lib64/atlas -latlas -lf77blas -llapack
 	SUPERLP =
 else
-	CFLAGS  = -O3 -Wno-deprecated -std=c++11 $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/
-	LDFLAGS = 
+	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 -g $(DEFINES)
+	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
+	#LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -L$(HOME)/armadillo-5.200.2/lib -lblas -llapack -lprofiler
+	LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -L$(HOME)/armadillo-5.200.2/lib -lblas -llapack -lprofiler
+	#LDFLAGS = -L$(HOME)/gperftools-2.4/install/lib -Wl,-rpath=$(HOME)/OpenBLAS/lib/ -L$(HOME)/OpenBLAS/lib/ -lblas -llapack -lprofiler
 	SUPERLP =
 endif
 
-CCLN = g++
-LDLN = g++
+ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
+	CCLN = icc
+	LDLN = icc
+else
+	CCLN = g++
+	LDLN = g++
+endif
 CFLAGSLN  = $(CFLAGS) -DMCL_SINGLE
 INCLUDELN = $(INCLUDE)
 LDFLAGSLN = $(LDFLAGS)
@@ -93,6 +101,5 @@ clean:
 
 cleano:
 	$(RM) $(OBJS) $(OBJSLN)
-
 
 

@@ -7,9 +7,9 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
+#include <fstream>
 #include "LookUpTable.h"
 #include <sys/stat.h>
-#include <mpi.h>
 
 inline bool FileExists(const std::string& name)
 {
@@ -23,9 +23,10 @@ class GeometryBase
 	public:
 		typedef Int_t int_t;
 		using site_t = std::tuple < int_t, int_t, int_t >;
-		using lookup_t = LookUpTable < int_t, int_t, 2 >;
+		using lookup_t = LookUpTable < int_t, 2 >;
 		using vector_t = std::vector< int_t >;
 		enum SublatticeType {A, B};
+		using sub_lat_vector_t = std::vector< SublatticeType >;
 		
 	public:
 		GeometryBase()
@@ -38,36 +39,45 @@ class GeometryBase
 		}
 		
 		virtual void Resize(int_t l, RNG& rng) = 0;
-		virtual SublatticeType Sublattice(int_t site) = 0;
 		
-		int_t Distance(int_t s1, int_t s2)
+		inline SublatticeType Sublattice(int_t site)
 		{
-			return distanceMap[s1][s2];
+			return sublatVector[site];
+		}
+		
+		inline int_t Distance(int_t s1, int_t s2)
+		{
+			return distanceMap(s1, s2);
 		}
 
-		int_t DistanceHistogram(int_t distance)
+		inline int_t DistanceHistogram(int_t distance)
 		{
 			return distanceHistogram[distance];
 		}
 
-		bool IsNeighbor(int_t s1, int_t s2)
+		inline bool IsNeighbor(int_t s1, int_t s2)
 		{
 			return Distance(s1, s2) == 1;
 		}
 
-		int_t Sites()
+		inline int_t Sites()
 		{
 			return nSites;
 		}
 
-		int_t Bonds()
+		inline int_t Bonds()
 		{
 			return nBonds;
 		}
 		
-		int_t MaxDistance()
+		inline int_t MaxDistance()
 		{
 			return maxDistance;
+		}
+
+		inline int_t RandomDirection(RNG& rng)
+		{
+			return static_cast<int_t>(rng() * nDirections);
 		}
 
 		int_t ShiftSite(int_t siteIndex, int_t direction, int_t distance = 1)
@@ -97,12 +107,12 @@ class GeometryBase
 			return s;
 		}
 		
-		int_t NeighborhoodCount(int_t distance)
+		inline int_t NeighborhoodCount(int_t distance)
 		{
 			return numNeighborhood[distance];
 		}
 
-		int_t RandomSite(RNG& rng)
+		inline int_t RandomSite(RNG& rng)
 		{
 			return static_cast<int_t>(rng() * nSites);
 		}
@@ -118,7 +128,7 @@ class GeometryBase
 			{
 				for (int_t j = 0; j < nSites; ++j)
 				{
-					os.write((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
+					os.write((char*)&distanceMap(i, j), sizeof(distanceMap(i, j)));
 				}
 				for (int_t j = 0; j < nDirections; ++j)
 				{
@@ -148,7 +158,7 @@ class GeometryBase
 					{
 						for (int_t j = 0; j < nSites; ++j)
 						{
-							is.read((char*)&distanceMap[i][j], sizeof(distanceMap[i][j]));
+							is.read((char*)&distanceMap(i, j), sizeof(distanceMap(i, j)));
 						}
 						for (int_t j = 0; j < nDirections; ++j)
 						{
@@ -163,30 +173,6 @@ class GeometryBase
 					is.close();
 				}
 			}
-		}
-
-		void SyncMPI(const std::string& filename, const std::string& type)
-		{
-			int file_free = 0;
-			int np;
-			int proc_id;
-			MPI_Comm_size(MPI_COMM_WORLD, &np);
-			MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
-			MPI_Status status;
-
-			if (proc_id == 1)
-				file_free = 1;
-			else
-				MPI_Recv(&file_free, 1, MPI_INT, proc_id-1, 1, MPI_COMM_WORLD, &status);
-			if (file_free == 1)
-			{
-				if (type == "save")
-					SaveToFile(filename);
-				else if (type == "read")
-					ReadFromFile(filename);
-			}
-			if (proc_id != np-1)
-				MPI_Send(&file_free, 1, MPI_INT, proc_id+1, 1, MPI_COMM_WORLD);
 		}
 	protected:
 		void AllocateNeighborList()
@@ -246,8 +232,10 @@ class GeometryBase
 		int_t nBonds;
 		int_t nDirections;
 		int_t maxDistance;
+		sub_lat_vector_t sublatVector;
 		lookup_t distanceMap;
 		vector_t distanceHistogram;
 		int_t** neighborList;
 		vector_t numNeighborhood;
+		bool fileIO;
 };

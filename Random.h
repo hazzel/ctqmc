@@ -24,7 +24,7 @@ class Random
 			delete rng;
 		}
 
-		double operator()()
+		inline double operator()()
 		{
 			return rng->d();
 		}

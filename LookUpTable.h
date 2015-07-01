@@ -1,18 +1,23 @@
 #pragma once
 #include <cstdint>
 
-template<typename T, typename uint_t, std::uint_fast8_t N>
+template<typename T, std::uint_fast8_t N>
 class LookUpTable
 {
 	public:
+		typedef std::size_t uint_t;
+		
 		LookUpTable(uint_t dim)
 		{}
 };
 
-template<typename T, typename uint_t>
-class LookUpTable<T, uint_t, 2>
+/*
+template<typename T>
+class LookUpTable<T, 2>
 {
 public:
+	typedef std::size_t uint_t;
+	
 	LookUpTable()
 		: dimX(0), dimY(0)
 	{
@@ -23,7 +28,7 @@ public:
 	{
 		AllocateTable(dimX, dimY);
 	}
-	virtual ~LookUpTable()
+	~LookUpTable()
 	{
 		DeallocateTable();
 	}
@@ -88,11 +93,114 @@ private:
 	uint_t dimX;
 	uint_t dimY;
 };
+*/
 
-template<typename T, typename uint_t>
-class LookUpTable<T, uint_t, 3>
+template<typename T>
+class LookUpTable<T, 2>
+{
+public:
+	typedef std::size_t uint_t;
+	
+	LookUpTable()
+		: dimX(0), dimY(0)
+	{
+		table = 0;
+	}
+
+	LookUpTable(uint_t dimX, uint_t dimY)
+	{
+		AllocateTable(dimX, dimY);
+	}
+	LookUpTable(uint_t dimX, uint_t dimY, T value)
+	{
+		AllocateTable(dimX, dimY, value);
+	}
+	~LookUpTable()
+	{
+		DeallocateTable();
+	}
+
+	LookUpTable(const LookUpTable& rhs)
+	{
+		AllocateTable(rhs.dimX, rhs.dimY);
+		for (uint_t i = 0; i < dimX; ++i)
+		{
+			for (uint_t j = 0; j < dimY; ++j)
+			{
+				table[i*dimY + j] = rhs.table[i];
+			}
+		}
+	}
+	LookUpTable& operator=(const LookUpTable& rhs)
+	{
+		if (*this == rhs)
+			return *this;
+		if (dimX != rhs.dimX || dimY != rhs.dimY)
+		{
+			DeallocateTable();
+			AllocateTable(rhs.dimX, rhs.dimY);
+		}
+		for (uint_t i = 0; i < dimX; ++i)
+		{
+			for (uint_t j = 0; j < dimY; ++j)
+			{
+				table[i*dimY + j] = rhs.table[i];
+			}
+		}
+		return *this;
+	}
+
+	inline T& operator()(uint_t i1, uint_t i2)
+	{
+		return table[i1*dimY + i2];
+	}
+
+	inline const T& operator()(uint_t i1, uint_t i2) const
+	{
+		return table[i1*dimY + i2];
+	}
+	
+	inline uint_t DimX() const
+	{
+		return dimX;
+	}
+	
+	inline uint_t DimY() const
+	{
+		return dimY;
+	}
+
+	void AllocateTable(uint_t dimX, uint_t dimY)
+	{
+		this->dimX = dimX;
+		this->dimY = dimY;
+		table = new T[dimX*dimY];
+	}
+	
+	void AllocateTable(uint_t dimX, uint_t dimY, T value)
+	{
+		AllocateTable(dimX, dimY);
+		for (uint_t i = 0; i < dimX; ++i)
+			for (uint_t j = 0; j < dimY; ++j)
+				table[i*dimY + j] = T(value);
+	}
+
+	void DeallocateTable()
+	{
+		delete[] table;
+	}
+private:
+	T* table;
+	uint_t dimX;
+	uint_t dimY;
+};
+
+template<typename T>
+class LookUpTable<T, 3>
 {
 	public:
+		typedef std::size_t uint_t;
+		
 		LookUpTable()
 			: dimX(0), dimY(0), dimZ(0)
 		{
@@ -103,7 +211,7 @@ class LookUpTable<T, uint_t, 3>
 		{
 			AllocateTable(dimX, dimY, dimZ);
 		}
-		virtual ~LookUpTable()
+		~LookUpTable()
 		{
 			DeallocateTable();
 		}
@@ -144,12 +252,12 @@ class LookUpTable<T, uint_t, 3>
 			return *this;
 		}
 
-		T**& operator[](uint_t index)
+		inline T**& operator[](uint_t index)
 		{
 			return table[index];
 		}
 		
-		const T**& operator[](uint_t index) const
+		inline const T**& operator[](uint_t index) const
 		{
 			return table[index];
 		}

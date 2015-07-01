@@ -22,10 +22,7 @@
 #include "VertexHandler.h"
 #include "GeometryBase.h"
 
-//#include <unsupported/Eigen/MPRealSupport>
-//using namespace mpfr;
-
-enum UpdateType {AddVertex, RemoveVertex, AddTwoVertices, RemoveTwoVertices, ZtoW2, W2toZ, ZtoW4, W4toZ, W2toW4, W4toW2, shiftWorm};
+enum UpdateType {AddVertex, RemoveVertex, Add2Vertices, Remove2Vertices, Add5Vertices, Remove5Vertices, Add8Vertices, Remove8Vertices, ZtoW2, W2toZ, ZtoW4, W4toZ, W2toW4, W4toW2, replaceWorm, shiftWorm};
 enum StateType {Z, W2, W4};
 
 template<typename T>
@@ -65,60 +62,109 @@ class ConfigSpace
 			delete lattice;
 		}
 		
-		template<int_t N, int_t W>
-		bool AddRandomVertices()
+		template<int_t N>
+		bool AddRandomVertices(value_t preFactor, bool isWorm)
 		{
-			updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
-			if (updateHandler.GetVertexHandler().Worms() == 0)
+			if (isWorm)
 			{
-				return updateHandler.template AddVertices<N>();
+				updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>(nhoodDist);
+				preFactor *= updateHandler.GetVertexHandler().VertexBufferParity();
+			}
+			else
+				updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
+			return updateHandler.template AddVertices<N>(preFactor, isWorm);
+		}
+		
+		template<int_t N>
+		bool RemoveRandomVertices(value_t preFactor, bool isWorm)
+		{
+			if (isWorm)
+			{
+				if (updateHandler.GetVertexHandler().Worms() < N)
+					return false;
+				else
+				{
+					updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
+					preFactor *= updateHandler.GetVertexHandler().WormIndexBufferParity();
+					if (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>())
+						return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
+					else
+						return false;
+				}
 			}
 			else
 			{
-				return updateHandler.template AddVerticesWithWorms<N, W>();
+				if (updateHandler.GetVertexHandler().Vertices() < N)
+					return false;
+				else
+					updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
 			}
+			return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
 		}
-		
-		template<int_t N, int_t W>
-		bool RemoveRandomVertices()
-		{
-			if (updateHandler.GetVertexHandler().Vertices() < N)
-				return false;
-			updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
-			if (updateHandler.GetVertexHandler().Worms() == 0)
-			{
-				return updateHandler.template RemoveVertices<N>();
-			}
-			else
-			{
-				return updateHandler.template RemoveVerticesWithWorms<N, W>();
-			}
-		}
-		
-		template<int_t N, int_t W>
-		bool AddRandomWorms(value_t preFactor)
-		{
-			updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>();
-			return updateHandler.template AddWorms<N, W>(preFactor);
-		}
-		
-		template<int_t N, int_t W>
-		bool RemoveRandomWorms(value_t preFactor)
-		{
-			if (updateHandler.GetVertexHandler().Worms() < N)
-				return false;
-			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 
-			if (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N, W>())
-				return updateHandler.template RemoveWorms<N, W>(preFactor);
+		template<int_t N>
+		bool OpenUpdate(value_t preFactor)
+		{
+			if ((state == StateType::Z) && (updateHandler.GetVertexHandler().Vertices() > 0))
+			{
+				updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
+				if (N == 1)
+					preFactor *= 2.0 * zeta2 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V;
+				else if (N == 2)
+					preFactor *= 4.0 * zeta4 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V*V;
+				return updateHandler.OpenUpdate(preFactor);
+			}
 			else
 				return false;
 		}
+		
+		template<int_t N>
+		bool CloseUpdate(value_t preFactor)
+		{
+			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
+			if ((state != StateType::Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
+			{
+				preFactor *= V / (2.0 * zeta2 * (updateHandler.GetVertexHandler().Vertices() + 1.0));
+				return updateHandler.CloseUpdate(preFactor);
+			}
+			else
+				return false;
+		}
+/*
+		template<int_t N>
+		bool CloseUpdate()
+		{
+			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
+			if ((state != StateType::Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
+			{
+				value_t preFactor;
+				if (N == 1)
+					preFactor = AdditionFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) * V / (2.0 * zeta2);
+				else if (N == 2)
+					preFactor = AdditionFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) * V*V / (4.0 * zeta4);
+				return updateHandler.CloseUpdate(preFactor);
+			}
+			else
+				return false;
+		}
+		*/
 		
 		template<int_t W>
 		bool ShiftWorm()
 		{
-			return updateHandler.ShiftWorm<W>();
+			return updateHandler.template ShiftWorm<W>();
+		}
+		
+		template<int_t W>
+		bool ReplaceWorm()
+		{
+			return updateHandler.template ReplaceWorm<W>();
+		}
+
+		void Clear()
+		{
+			updateHandler.Clear();
+			state = StateType::Z;
 		}
 		
 		void PrintMatrix(const matrix_t& m)
@@ -136,24 +182,50 @@ class ConfigSpace
 			return state;
 		}
 		
-		value_t LookUpG0(uint_t i1, uint_t i2, value_t tau)
+		/*
+		inline value_t LookUpG0(uint_t i1, uint_t i2, value_t tau)
 		{
-			uint_t i = static_cast<uint_t>(std::abs(tau) / dtau);
-			value_t tau_i = i * dtau;
-			uint_t dist = lattice->Distance(i1, i2);
-			value_t g = lookUpTableG0[dist][i] + (std::abs(tau) - tau_i) * lookUpTableDtG0[dist][i];
-			if (tau >= 0.0)
-			{
-				return g;
-			}
+			value_t tau_p;
+			if (std::abs(tau) > beta/2.0)
+				tau_p = beta - std::abs(tau);
 			else
-			{
-				if (lattice->Sublattice(i1) == lattice->Sublattice(i2))
-					return -g;
-				else
-					return g;
-			}
+				tau_p = std::abs(tau);
+			uint_t t = static_cast<uint_t>(std::abs(tau_p) / dtau);
+			uint_t i = std::min({i1, i2}), j = std::max({i1, i2});
+			uint_t x = i * lattice->Sites() - (i + i*i) / 2 + j;
+			value_t tau_t = t * dtau, G_t = lookUpTableG0(x, t), G_tt = lookUpTableG0(x, t+1);
+			value_t g = G_t + (tau_p - tau_t) * (G_tt - G_t) / dtau;
+			value_t sign = 1.0;
+			bool sameSublattice = lattice->Sublattice(i1) == lattice->Sublattice(i2);
+			if (std::abs(tau) > beta/2.0 && (!sameSublattice))
+				sign *= -1.0;
+			if (tau < 0.0 && sameSublattice)
+				sign *= -1.0;
+			return sign * g;
 		}
+		*/
+		
+		
+		inline value_t LookUpG0(uint_t i1, uint_t i2, value_t tau)
+		{
+			value_t tau_p;
+			if (std::abs(tau) > beta/2.0)
+				tau_p = beta - std::abs(tau);
+			else
+				tau_p = std::abs(tau);
+			uint_t t = static_cast<uint_t>(std::abs(tau_p) / dtau);
+			uint_t x = lookUpIndex(i1, i2);
+			value_t tau_t = t * dtau, G_t = lookUpTableG0(x, t), G_tt = lookUpTableG0(x, t + 1);
+			value_t g = G_t + (tau_p - tau_t) * (G_tt - G_t) / dtau;
+			value_t sign = 1.0;
+			bool sameSublattice = lattice->Sublattice(i1) == lattice->Sublattice(i2);
+			if (std::abs(tau) > beta/2.0 && (!sameSublattice))
+				sign *= -1.0;
+			if (tau < 0.0 && sameSublattice)
+				sign *= -1.0;
+			return sign * g;
+		}
+		
 
 		void EvaluateG0(value_t tau, matrix_t& g0)
 		{
@@ -165,49 +237,65 @@ class ConfigSpace
 			g0 = hopEV * hopDiag * hopEVT;
 		}
 		
-		void BuildG0LookUpTable(const std::string& filename)
+		void BuildG0LookUpTable()
 		{
-			if (fileIO && FileExists(filename))
+			uint_t nValues = BuildG0IndexTable();
+			matrix_t G0(hopDiag.rows(), hopDiag.cols());
+			for (uint_t t = 0; t <= nTimeBins; ++t)
 			{
-				std::cout << "...";
-				std::cout.flush();
-				ReadFromFile(filename);
-			}
-			else
-			{
-				uint_t i = lattice->RandomSite(rng);
-				std::vector<uint_t> sites;
-				for (uint_t r = 0; r <= lattice->MaxDistance(); ++r)
+				EvaluateG0(dtau * t, G0);
+				std::vector<value_t> cnt(nValues, 0.0);
+				for (uint_t i = 0; i < lattice->Sites(); ++i)
 				{
-					for (int_t j = 0; j < lattice->Sites(); ++j)
+					for (uint_t j = i; j < lattice->Sites(); ++j)
 					{
-						if (lattice->Distance(i, j) == r)
+						uint_t index = lookUpIndex(i, j);
+						lookUpTableG0(index, t) = (G0(i, j) + cnt[index] * lookUpTableG0(index, t)) / (1.0 + cnt[index]);
+						++cnt[index];
+					}
+				}
+				if (t % (nTimeBins / 10) == 0)
+				{
+					std::cout << ".";
+					std::cout.flush();
+				}
+			}
+		}
+		
+		uint_t BuildG0IndexTable()
+		{
+			uint_t N = lattice->Sites();
+			lookUpIndex.AllocateTable(N, N, -1);
+			matrix_t G0(hopDiag.rows(), hopDiag.cols());
+			value_t threshold = std::pow(10.0, -13.0);
+			uint_t t = 10;
+			std::vector<value_t> nValues;
+			
+			EvaluateG0(dtau * t, G0);
+			for (uint_t i = 0; i < lattice->Sites(); ++i)
+			{
+				for (uint_t j = i; j < lattice->Sites(); ++j)
+				{
+					bool isStored = false;
+					for (uint_t k = 0; k < nValues.size(); ++k)
+					{
+						if (std::abs(nValues[k] - G0(i, j)) < threshold)
 						{
-							sites.push_back(j);
-							break;
+							isStored = true;
+							lookUpIndex(i, j) = k;
+							lookUpIndex(j, i) = k;
 						}
 					}
-				}
-				matrix_t G0(hopDiag.rows(), hopDiag.cols());
-				for (uint_t t = 0; t <= nTimeBins; ++t)
-				{
-					EvaluateG0(dtau * t, G0);
-					for (uint_t r = 0; r < sites.size(); ++r)
-						lookUpTableG0[r][t] = G0(i, sites[r]);
-					if (t % (nTimeBins / 10) == 0)
+					if (!isStored)
 					{
-						std::cout << ".";
-						std::cout.flush();
+						nValues.push_back(G0(i, j));
+						lookUpIndex(i, j) = nValues.size() - 1;
+						lookUpIndex(j, i) = nValues.size() - 1;
 					}
-					//std::cout << t << std::endl;
 				}
-
-				for (uint_t t = 0; t < nTimeBins; ++t)
-					for (uint_t r = 0; r < sites.size(); ++r)
-						lookUpTableDtG0[r][t] = (lookUpTableG0[r][t + 1] - lookUpTableG0[r][t]) / dtau;
-				if (fileIO)
-					SaveToFile(filename);
 			}
+			lookUpTableG0.AllocateTable(nValues.size(), nTimeBins + 1, 0.0);
+			return nValues.size();
 		}
 
 		void BuildHoppingMatrix()
@@ -233,15 +321,13 @@ class ConfigSpace
 			L = l;
 			lattice->Resize(l, rng);
 			hoppingMatrix.resize(lattice->Sites(), lattice->Sites());
-			lookUpTableG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins + 1);
-			lookUpTableDtG0.AllocateTable(lattice->MaxDistance() + 1, nTimeBins);
 		}
 		
 		void SetTemperature(value_t T)
 		{
 			beta = 1.0 / T;
-			dtau = beta / static_cast<value_t>(nTimeBins);
-			infinTau = dtau / 1000.0;
+			dtau = beta / (2 * static_cast<value_t>(nTimeBins));
+			infinTau = dtau / 1000000000.0;
 		}
 		
 		void Serialize(odump& d)
@@ -275,83 +361,6 @@ class ConfigSpace
 				result *= k - n + i;
 			return result;
 		}
-
-		void SaveToFile(const std::string& filename)
-		{
-			std::ofstream os(filename, std::ofstream::binary);
-			if (!os.is_open())
-			{
-				std::cout << "Error opening file: " << filename << std::endl;
-			}
-			for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
-			{
-				//std::ofstream os_txt(filename + "-R" + std::to_string(i) + ".txt");
-				//os_txt.precision(16);
-				for (uint_t j = 0; j < nTimeBins + 1; ++j)
-				{
-					os.write((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-					//os_txt << lookUpTableG0[i][j] << "\t";
-					if (j < nTimeBins)
-					{
-						os.write((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
-						//os_txt << lookUpTableDtG0[i][j] << std::endl;
-					}
-					//else
-						//os_txt << 0.0 << std::endl;
-				}
-				//os_txt.close();
-			}
-			os.close();
-			std::cout << "File " << filename << " written: " << FileExists(filename) << std::endl;
-		}
-
-		void ReadFromFile(const std::string& filename)
-		{
-			std::ifstream is(filename, std::ofstream::binary);
-			
-			if (is.is_open())
-			{
-				while(is.good())
-				{
-					for (uint_t i = 0; i < lattice->MaxDistance() + 1; ++i)
-					{
-						for (uint_t j = 0; j < nTimeBins + 1; ++j)
-						{
-							is.read((char*)&lookUpTableG0[i][j], sizeof(lookUpTableG0[i][j]));
-							if (j < nTimeBins)
-								is.read((char*)&lookUpTableDtG0[i][j], sizeof(lookUpTableDtG0[i][j]));
-						}
-					}
-				}
-				is.close();
-			}
-			else
-				std::cout << "Error reading g0 look up file." << std::endl;
-		}
-
-		void SyncMPI(const std::string& filename, const std::string& type)
-		{
-			int file_free = 0;
-			int np;
-			int proc_id;
-			MPI_Comm_size(MPI_COMM_WORLD, &np);
-			MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
-			MPI_Status status;
-
-			if (proc_id == 1)
-				file_free = 1;
-			else
-				MPI_Recv(&file_free, 1, MPI_INT, proc_id-1, 1, MPI_COMM_WORLD, &status);
-			if (file_free == 1)
-			{
-				if (type == "save")
-					SaveToFile(filename);
-				else if (type == "read")
-					ReadFromFile(filename);
-			}
-			if (proc_id != np-1)
-				MPI_Send(&file_free, 1, MPI_INT, proc_id+1, 1, MPI_COMM_WORLD);
-		}
 	public:
 		RNG& rng;
 		uint_t L;
@@ -365,8 +374,8 @@ class ConfigSpace
 		value_t zeta4;
 		uint_t nTimeBins;
 		uint_t maxWorms = 4;
-		LookUpTable<value_t, uint_t, 2> lookUpTableG0;
-		LookUpTable<value_t, uint_t, 2> lookUpTableDtG0;
+		LookUpTable<value_t, 2> lookUpTableG0;
+		LookUpTable<int_t, 2> lookUpIndex;
 		value_t dtau;
 		StateType state = StateType::Z;
 		matrix_t hoppingMatrix;
