@@ -366,6 +366,9 @@ class UpdateHandler
 			{
 				G.resize(k, k);
 				invG.resize(k, k);
+			}
+			if (k > 0)
+			{
 				G.submat(0, 0, k - 1, k - 1) = g;
 				StabilizeInvG();
 			}
