@@ -142,9 +142,10 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	evalableParameters[3] = configSpace.lattice->Sites();
 	corrVector.resize(configSpace.lattice->MaxDistance() + 1, 0.0);
 	
+	bool do_therm = param.value_or_default<uint_t>("THERMALIZE", 1);
 	//Read thermalized state if it exists
 	therm_path = path + "thermalization/therm-" + "L" + ToString(L) + "-V" + ToString(configSpace.V) + "-T" + ToString(T) + "-" + geometry;
-	if (FileExists(therm_path) && nOptimizationSteps == 0)
+	if (do_therm && FileExists(therm_path) && nOptimizationSteps == 0)
 	{
 		read_state(therm_path);
 		sweep = nThermalize;
@@ -605,7 +606,7 @@ void CLASSNAME::do_update()
 			value_t preFactor = configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2;
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2) / proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z);
 			bool result;
-			if (configSpace.rng() < 0.1)
+			if (configSpace.rng() < 0.05)
 				result = configSpace.AddRandomVertices<1>(preFactor * proposeRatio, true);
 			else
 				result = configSpace.OpenUpdate<1>(proposeRatio);
@@ -623,7 +624,7 @@ void CLASSNAME::do_update()
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z) / proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2);
 			bool result;
-			if (configSpace.rng() < 0.1)
+			if (configSpace.rng() < 0.05)
 				result = configSpace.RemoveRandomVertices<1>(preFactor * proposeRatio, true);
 			else
 				result = configSpace.CloseUpdate<1>(proposeRatio);
@@ -640,12 +641,7 @@ void CLASSNAME::do_update()
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W4toZ, StateType::W4) / proposeProbabilityMatrix(UpdateType::ZtoW4, StateType::Z);
-			bool result;
-			if (configSpace.rng() < 1.0)
-				result = configSpace.AddRandomVertices<2>(preFactor * proposeRatio, true);
-			else
-				result = configSpace.OpenUpdate<2>(proposeRatio);
-			if (result)
+			if (configSpace.AddRandomVertices<2>(preFactor * proposeRatio, true))
 			{
 				acceptedUpdates(UpdateType::ZtoW4, state) += 1.0;
 				configSpace.state = StateType::W4;
@@ -658,12 +654,7 @@ void CLASSNAME::do_update()
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::ZtoW4, StateType::Z) / proposeProbabilityMatrix(UpdateType::W4toZ, StateType::W4);
-			bool result;
-			if (configSpace.rng() < 1.0)
-				result = configSpace.RemoveRandomVertices<2>(preFactor * proposeRatio, true);
-			else
-				result = configSpace.CloseUpdate<2>(proposeRatio);
-			if (result)
+			if (configSpace.RemoveRandomVertices<2>(preFactor * proposeRatio, true))
 			{
 				acceptedUpdates(UpdateType::W4toZ, state) += 1.0;
 				configSpace.state = StateType::Z;

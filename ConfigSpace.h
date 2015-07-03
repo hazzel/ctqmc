@@ -108,10 +108,7 @@ class ConfigSpace
 			if ((state == StateType::Z) && (updateHandler.GetVertexHandler().Vertices() > 0))
 			{
 				updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
-				if (N == 1)
-					preFactor *= 2.0 * zeta2 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V;
-				else if (N == 2)
-					preFactor *= 4.0 * zeta4 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V*V;
+				preFactor *= 2.0 * zeta2 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V;
 				return updateHandler.OpenUpdate(preFactor);
 			}
 			else
@@ -124,7 +121,7 @@ class ConfigSpace
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 			if ((state != StateType::Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
 			{
-				preFactor *= V / (2.0 * zeta2 * (updateHandler.GetVertexHandler().Vertices() + 1.0));
+				preFactor *= V * AdditionFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / (2.0 * zeta2);
 				return updateHandler.CloseUpdate(preFactor);
 			}
 			else
