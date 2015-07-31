@@ -228,6 +228,7 @@ class UpdateHandler
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
 				StabilizeInvG();
 			}
+			//if (configSpace.rng() < std::abs(p1) && configSpace.rng() < std::abs(p2))
 			if (configSpace.rng() < acceptRatio)
 			{
 				matrix_t S = arma::inv(shiftedInvS);
@@ -252,6 +253,7 @@ class UpdateHandler
 			}
 		}
 		
+		
 		/*
 		template<int_t W>
 		bool ShiftWorm()
@@ -269,8 +271,8 @@ class UpdateHandler
 				preFactorRem = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
 				preFactorAdd = 1.0 / preFactorRem;
 			}
-			preFactorRem = 1.0;
-			preFactorAdd = 1.0;
+			//preFactorRem = 1.0;
+			//preFactorAdd = 1.0;
 			if (RemoveVertices<W>(preFactorRem * vertexHandler.WormIndexBufferParity(), true))
 			{
 				if (AddVertices<W>(preFactorAdd * vertexHandler.VertexBufferParity(), true))
@@ -287,6 +289,11 @@ class UpdateHandler
 			return false;
 		}
 		*/
+		
+		value_t MeasureM2()
+		{
+			return 0.;
+		}
 		
 		template<int_t W>
 		bool ReplaceWorm()

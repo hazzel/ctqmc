@@ -5,7 +5,7 @@
 #include <limits>
 #include <functional>
 #include <omp.h>
-//#include <gperftools/profiler.h>
+#include <gperftools/profiler.h>
 
 void M2Function(double& out, std::vector< std::valarray<double>* >& o, double* p)
 {
@@ -120,9 +120,11 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	configSpace.nhoodDist = std::min({nhd, configSpace.lattice->MaxDistance()});
 	configSpace.zeta2 = param.value_or_default<value_t>("zeta2", 1.0);
 	value_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-	configSpace.zeta2 /= m / T;
+	//configSpace.zeta2 /= m / T;
+	configSpace.zeta2 /= std::pow(L, 4.) / T;
 	configSpace.zeta4 = param.value_or_default<value_t>("zeta4", 1.0);
-	configSpace.zeta4 /= m * m * m / T;
+	//configSpace.zeta4 /= m * m * m / T;
+	configSpace.zeta4 /= std::pow(L, 8.)  / T;
 
 	nOptimizationSteps = param.value_or_default<value_t>("ZETA_OPTIMIZATION", 0.0);
 	nOptimizationTherm = param.value_or_default<value_t>("ZETA_THERM", 10000.0);
@@ -145,7 +147,7 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	bool do_therm = param.value_or_default<uint_t>("THERMALIZE", 1);
 	//Read thermalized state if it exists
 	therm_path = path + "thermalization/therm-" + "L" + ToString(L) + "-V" + ToString(configSpace.V) + "-T" + ToString(T) + "-" + geometry;
-	if (do_therm && FileExists(therm_path) && nOptimizationSteps == 0)
+	if (sweep == 0 && do_therm && FileExists(therm_path) && nOptimizationSteps == 0)
 	{
 		read_state(therm_path);
 		sweep = nThermalize;
@@ -340,27 +342,47 @@ bool CLASSNAME::is_thermalized()
 
 void CLASSNAME::BuildUpdateWeightMatrix()
 {
+	
+
+	//ALL TRANSITIONS LEI
+	proposeProbabilityMatrix <<	2.05 / 10.0	,	1.30 / 10.0	,	1.25 / 10.0,
+															2.05 / 10.0	,	1.30 / 10.0	,	1.25 / 10.0,
+															1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+															1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+															0.4 / 10.0	,	0.25 / 10.0	,	0.5 / 10.0,
+															0.4 / 10.0	,	0.25 / 10.0	,	0.5 / 10.0,
+															0.4 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
+															0.4 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
+															1.2 / 10.0	,	0.0					,	0.0,
+															0.0					,	1.8 / 10.0	,	0.0, 
+															0.1 / 10.0	,	0.0					,	0.0,
+															0.0					,	0.0					,	1.2 / 10.0,
+															0.0					,	0.6 / 10.0	,	0.0,
+															0.0					,	0.0					,	1.2 / 10.0,
+															0.0					,	0.0 / 10.0	,	0.0 / 10.0,
+															0.0					,	2.0 / 10.0	,	1.6 / 10.0;
+
+	
 	/*
 	//ALL TRANSITIONS LEI
-	proposeProbabilityMatrix <<	2.05 / 10.0	,	1.35 / 10.0	,	1.25 / 10.0,
-											2.05 / 10.0	,	1.35 / 10.0	,	1.25 / 10.0,
-											1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
-											1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											0.5 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
-											0.5 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
-											0.8 / 10.0	,	0.0			,	0.0,
-											0.0			,	1.2 / 10.0	,	0.0, 
-											0.1 / 10.0	,	0.0			,	0.0,
-											0.0			,	0.0			,	1.2 / 10.0,
-											0.0			,	0.6 / 10.0	,	0.0,
-											0.0			,	0.0			,	1.2 / 10.0,
-											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
-											0.0			,	2.0 / 10.0	,	1.6 / 10.0;
+	proposeProbabilityMatrix <<	1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+															1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+															0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+															0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+															0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+															0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+															0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+															0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
+															4.0 / 10.0	,	0.0					,	0.0,
+															0.0					,	3.0 / 10.0	,	0.0, 
+															4.0 / 10.0	,	0.0					,	0.0,
+															0.0					,	0.0					,	3.0 / 10.0,
+															0.0					,	3.0 / 10.0	,	0.0,
+															0.0					,	0.0					,	3.0 / 10.0,
+															0.0					,	0.0 / 10.0	,	0.0 / 10.0,
+															0.0					,	2.0 / 10.0	,	2.0 / 10.0;
 	*/
-	
-	
+	/*
 		//ALL TRANSITIONS
 	proposeProbabilityMatrix <<	1.05 / 10.0	,	0.8 / 10.0	,	0.7 / 10.0,
 											3.05 / 10.0	,	2.4 / 10.0	,	2.3 / 10.0,
@@ -378,7 +400,27 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	0.0			,	1.2 / 10.0,
 											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
 											0.0			,	2.0 / 10.0	,	1.6 / 10.0;
+	*/
 	
+	/*
+	//ALL TRANSITIONS
+	proposeProbabilityMatrix <<	1.0 / 10.0,	1. / 10.0,	1. / 10.0,
+															1.0 / 10.0,	1. / 10.0,	1. / 10.0,
+															0.25 / 10.0,	0.25 / 10.0,	0.25 / 10.0,
+															0.25 / 10.0,	0.25 / 10.0,	0.25 / 10.0,
+															0.25 / 10.0,	0.25 / 10.0,	0.25 / 10.0,
+															0.25 / 10.0,	0.25 / 10.0,	0.25 / 10.0,
+															0.25 / 10.0,	0.25 / 10.0,	0.25 / 10.0,
+															0.25 / 10.0,	0.25 / 10.0,	0.25 / 10.0,
+															3.25 / 10.0,	0.0				,	0.0,
+															0.0				,	2.75 / 10.0,	0.0, 
+															3.25 / 10.0,	0.0				,	0.0,
+															0.0				,	0.0				,	2.75 / 10.0,
+															0.0				,	2.75 / 10.0,	0.0,
+															0.0				,	0.0				,	2.75 / 10.0,
+															0.0				,	0.0 / 10.0,	0.0 / 10.0,
+															0.0				,	1.0 / 10.0,	1.0 / 10.0;
+*/
 	
 	/*
 		//TEST
@@ -399,61 +441,6 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
 											0.0			,	2.0 / 10.0	,	0.0 / 10.0;
 	*/
-/*
-	//ALL TRANSITIONS
-	proposeProbabilityMatrix <<	1.0 / 10.0	,	0.7 / 10.0	,	0.7 / 10.0,
-											3.0 / 10.0	,	2.3 / 10.0	,	2.3 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											1.5 / 10.0	,	1.5 / 10.0	,	1.5 / 10.0,
-											0.5 / 10.0	,	0.25 / 10.0,	0.25 / 10.0,
-											1.5 / 10.0	,	0.75 / 10.0,	0.75 / 10.0,
-											0.25 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
-											0.75 / 10.0	,	0.75 / 10.0	,	0.75 / 10.0,
-											0.5 / 10.0	,	0.0			,	0.0,
-											0.0			,	0.5 / 10.0	,	0.0, 
-											0.5 / 10.0	,	0.0			,	0.0,
-											0.0			,	0.0			,	0.5 / 10.0,
-											0.0			,	0.5 / 10.0	,	0.0,
-											0.0			,	0.0			,	0.5 / 10.0,
-											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
-											0.0			,	2.0 / 10.0	,	2.0 / 10.0;
-	*/
-/*
-	//ALL TRANSITIONS
-	proposeProbabilityMatrix <<				0.625 / 10.0,	0.6 / 10.0	,	0.6 / 10.0,
-											4.375 / 10.0,	3.4 / 10.0	,	3.4 / 10.0,
-											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											1.5 / 10.0	,	0.0			,	0.0,
-											0.0			,	1.5 / 10.0	,	0.0, 
-											1.5 / 10.0	,	0.0			,	0.0,
-											0.0			,	0.0			,	1.5 / 10.0,
-											0.0			,	1.5 / 10.0	,	0.0,
-											0.0			,	0.0			,	1.5 / 10.0,
-											0.0			,	1.0 / 10.0	,	1.0 / 10.0;
-*/
-/*
-	//ALL TRANSITIONS
-	proposeProbabilityMatrix <<				2.5 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
-											2.5 / 10.0	,	2.0 / 10.0	,	2.0 / 10.0,
-											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-											0.0 / 10.0	,	0.0 / 10.0	,	0.0 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											0.5 / 10.0	,	0.5 / 10.0	,	0.5 / 10.0,
-											1.5 / 10.0	,	0.0			,	0.0,
-											0.0			,	1.5 / 10.0	,	0.0, 
-											1.5 / 10.0	,	0.0			,	0.0,
-											0.0			,	0.0			,	1.5 / 10.0,
-											0.0			,	1.5 / 10.0	,	0.0,
-											0.0			,	0.0			,	1.5 / 10.0,
-											0.0			,	1.0 / 10.0	,	1.0 / 10.0;
-*/
 	updateWeightMatrix.setZero();
 	for (uint_t i = 0; i < nUpdateType; ++i)
 	{
@@ -606,7 +593,7 @@ void CLASSNAME::do_update()
 			value_t preFactor = configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2;
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2) / proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z);
 			bool result;
-			if (configSpace.rng() < 0.05)
+			if (configSpace.rng() < 0.1)
 				result = configSpace.AddRandomVertices<1>(preFactor * proposeRatio, true);
 			else
 				result = configSpace.OpenUpdate<1>(proposeRatio);
@@ -621,10 +608,11 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::W2toZ, state) && state == StateType::W2)
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+			//uint_t m = configSpace.lattice->Sites();
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z) / proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2);
 			bool result;
-			if (configSpace.rng() < 0.05)
+			if (configSpace.rng() < 0.1)
 				result = configSpace.RemoveRandomVertices<1>(preFactor * proposeRatio, true);
 			else
 				result = configSpace.CloseUpdate<1>(proposeRatio);
@@ -652,6 +640,7 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::W4toZ, state) && state == StateType::W4)
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+			//uint_t m = configSpace.lattice->Sites();
 			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::ZtoW4, StateType::Z) / proposeProbabilityMatrix(UpdateType::W4toZ, StateType::W4);
 			if (configSpace.RemoveRandomVertices<2>(preFactor * proposeRatio, true))
@@ -678,6 +667,7 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::W4toW2, state) && state == StateType::W4)
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
+			//uint_t m = configSpace.lattice->Sites();
 			value_t preFactor = configSpace.zeta2 / (configSpace.lattice->Sites() * m * configSpace.zeta4);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W2toW4, StateType::W2) / proposeProbabilityMatrix(UpdateType::W4toW2, StateType::W4);
 			if (configSpace.RemoveRandomVertices<1>(preFactor * proposeRatio, true))
@@ -865,8 +855,8 @@ void CLASSNAME::OptimizeZeta()
 				evalableParameters[1] = configSpace.zeta2;
 				evalableParameters[2] = configSpace.zeta4;
 			}
-			std::cout << "Zeta2(T=" << 1./configSpace.beta << ",V=" << configSpace.V << ") = " << configSpace.zeta2 * m * configSpace.beta << std::endl;
-			std::cout << "Zeta4(T=" << 1./configSpace.beta << ",V=" << configSpace.V << ") = " << configSpace.zeta4 * m * m * m * configSpace.beta << std::endl;
+			std::cout << "Zeta2(T=" << 1./configSpace.beta << ",V=" << configSpace.V << ") = " << configSpace.zeta2 * std::pow(configSpace.L, 4.) * configSpace.beta << std::endl;
+			std::cout << "Zeta4(T=" << 1./configSpace.beta << ",V=" << configSpace.V << ") = " << configSpace.zeta4 * std::pow(configSpace.L, 8.) * configSpace.beta << std::endl;
 		}
 	}
 }

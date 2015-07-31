@@ -9,7 +9,7 @@ from ParseDataOutput import *
 
 color_cycle = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-L = ["3", "4", "5", "6", "7", "9", "12"]
+L = ["6", "7", "9", "12", "15"]
 for l in range(len(L)):
 	filelist = []
 	#filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
@@ -19,14 +19,8 @@ for l in range(len(L)):
 	#filelist.append(glob.glob("plot_hex_V2.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V3.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.625/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot_rhom_V1.625/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V1.5/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V1.355/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V2.0/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V2.25/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V2.5/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V3.0*/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V3.5*/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot/plot_rhom_V1.625/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot/plot_rhom_V1.75/*L" + L[l] + "*.out"))
 
 	for f in range(len(filelist)):
 		if len(filelist[f]) == 0:
@@ -40,7 +34,7 @@ for l in range(len(L)):
 		#Tc = 0.499 #V2.0
 		#Tc = 0.502
 		#Tc = 0.293 #V1.625
-		Tc = 0.262
+		Tc = 0.315
 		#Tc = 0.74 #V2.5
 		#Tc = 0.95 #V3.0
 		x = []
@@ -62,6 +56,8 @@ for l in range(len(L)):
 			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**(exp) )
 			yM4.append( ArrangePlot(elist, "M4")[0][0] * float(L[l])**(2. * exp) )
 			yM4err.append( ArrangePlot(elist, "M4")[1][0] * float(L[l])**(2. * exp) )
+			#yM4.append( ArrangePlot(elist, "Binder")[0][0])
+			#yM4err.append( ArrangePlot(elist, "Binder")[1][0])
 		
 		print(exp)
 		plt.figure(f)
@@ -91,7 +87,7 @@ for l in range(len(L)):
 			#x[i] = float(x[i]-Tc)
 			#x[i] = (x[i] - Tc) / Tc * float(L[l])**(1./nu)
 			#x[i] = x[i] * float(L[l])**(1.)
-			x[i] = (x[i] - Tc) * float(L[l])**(1./nu)
+			x[i] = (x[i] - Tc) / Tc * float(L[l])**(1./nu)
 		plt.plot(np.array(x), np.array(yM2), "-", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l])
 		plt.errorbar(np.array(x), np.array(yM2), yerr=np.array(yM2err), color=color_cycle[l])
 		plt.legend(loc='upper right')

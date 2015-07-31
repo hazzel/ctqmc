@@ -426,11 +426,12 @@ class VertexHandler
 			wormShiftParity = 1.0;
 			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			
-			nodeBuffer[r].Site = configSpace.lattice->RandomWalk(nodeBuffer[r].Site, 1, configSpace.rng);
+			//nodeBuffer[r].Site = configSpace.lattice->RandomWalk(nodeBuffer[r].Site, 1, configSpace.rng);
+			nodeBuffer[r].Site = configSpace.lattice->FromNeighborhood(nodeBuffer[r].Site, configSpace.nhoodDist, configSpace.rng);
 			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			
 			
-			value_t tau = nodeBuffer[0].Tau - 0.1 * configSpace.beta + configSpace.rng() * 0.2 * configSpace.beta;
+			value_t tau = nodeBuffer[0].Tau - 0.05 * configSpace.beta + configSpace.rng() * 0.1 * configSpace.beta;
 			if (tau > configSpace.beta)
 				tau -= configSpace.beta;
 			else if (tau < 0.0)

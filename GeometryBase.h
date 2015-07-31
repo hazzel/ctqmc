@@ -104,6 +104,10 @@ class GeometryBase
 			int_t s = RandomSite(rng);
 			while (Distance(s, site) > distance)
 				s = RandomSite(rng);
+			//int_t d = (distance + 1) * rng();
+			//int_t s = RandomSite(rng);
+			//while (Distance(s, site) != d)
+			//	s = RandomSite(rng);
 			return s;
 		}
 		
