@@ -343,6 +343,26 @@ bool CLASSNAME::is_thermalized()
 void CLASSNAME::BuildUpdateWeightMatrix()
 {
 	
+	/*
+	//Z<->W2 LEI
+	proposeProbabilityMatrix <<	2.05 / 10.0	,	1.30 / 10.0	,	1.65 / 10.0,
+															2.05 / 10.0	,	1.30 / 10.0	,	1.65 / 10.0,
+															1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+															1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+															0.4 / 10.0	,	0.25 / 10.0	,	0.5 / 10.0,
+															0.4 / 10.0	,	0.25 / 10.0	,	0.5 / 10.0,
+															0.4 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
+															0.4 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
+															1.3 / 10.0	,	0.0					,	0.0,
+															0.0					,	1.8 / 10.0	,	0.0, 
+															0.0 / 10.0	,	0.0					,	0.0,
+															0.0					,	0.0					,	0.0 / 10.0,
+															0.0					,	0.6 / 10.0	,	0.0,
+															0.0					,	0.0					,	1.2 / 10.0,
+															0.0					,	0.0 / 10.0	,	0.0 / 10.0,
+															0.0					,	2.0 / 10.0	,	2.0 / 10.0;
+			*/
+
 
 	//ALL TRANSITIONS LEI
 	proposeProbabilityMatrix <<	2.05 / 10.0	,	1.30 / 10.0	,	1.25 / 10.0,
@@ -361,6 +381,7 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 															0.0					,	0.0					,	1.2 / 10.0,
 															0.0					,	0.0 / 10.0	,	0.0 / 10.0,
 															0.0					,	2.0 / 10.0	,	1.6 / 10.0;
+
 
 	
 	/*
@@ -424,8 +445,8 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 	
 	/*
 		//TEST
-	proposeProbabilityMatrix <<	1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
-											1.0 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
+	proposeProbabilityMatrix <<	5.0 / 10.0	,	5.0 / 10.0	,	5.0 / 10.0,
+											10.0 / 10.0	,	10.0 / 10.0	,	10.0 / 10.0,
 											1.0 / 10.0	,	0.5 / 10.0	,	0.0 / 10.0,
 											1.0 / 10.0	,	0.5 / 10.0	,	0.0 / 10.0,
 											0.5 / 10.0	,	0.5 / 10.0	,	0.0 / 10.0,
@@ -441,6 +462,7 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 											0.0			,	0.0 / 10.0	,	0.0 / 10.0,
 											0.0			,	2.0 / 10.0	,	0.0 / 10.0;
 	*/
+	
 	updateWeightMatrix.setZero();
 	for (uint_t i = 0; i < nUpdateType; ++i)
 	{
@@ -493,10 +515,9 @@ void CLASSNAME::do_update()
 		
 		if (r < updateWeightMatrix(UpdateType::AddVertex, state))
 		{
-			const uint_t N = 1;
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
+			const int_t N = 1;
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::RemoveVertex, state) / proposeProbabilityMatrix(UpdateType::AddVertex, state);
-			if (configSpace.AddRandomVertices<N>(preFactor * proposeRatio, false))
+			if (configSpace.AddRandomVertices<N>(proposeRatio, false))
 			{
 				acceptedUpdates(UpdateType::AddVertex, state) += 1.0;
 				++rebuildCnt;
@@ -506,9 +527,8 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::RemoveVertex, state))
 		{
 			const int_t N = 1;
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::AddVertex, state) / proposeProbabilityMatrix(UpdateType::RemoveVertex, state);
-			if (configSpace.RemoveRandomVertices<N>(preFactor * proposeRatio, false))
+			if (configSpace.RemoveRandomVertices<N>(proposeRatio, false))
 			{
 				acceptedUpdates(UpdateType::RemoveVertex, state) += 1.0;
 				++rebuildCnt;
@@ -518,9 +538,8 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::Add2Vertices, state))
 		{
 			const int_t N = 2;
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::Remove2Vertices, state) / proposeProbabilityMatrix(UpdateType::Add2Vertices, state);
-			if (configSpace.AddRandomVertices<N>(preFactor * proposeRatio, false))
+			if (configSpace.AddRandomVertices<N>(proposeRatio, false))
 			{
 				acceptedUpdates(UpdateType::Add2Vertices, state) += 1.0;
 				++rebuildCnt;
@@ -530,9 +549,8 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::Remove2Vertices, state))
 		{
 			const int_t N = 2;
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::Add2Vertices, state) / proposeProbabilityMatrix(UpdateType::Remove2Vertices, state);
-			if (configSpace.RemoveRandomVertices<N>(preFactor * proposeRatio, false))
+			if (configSpace.RemoveRandomVertices<N>(proposeRatio, false))
 			{
 				acceptedUpdates(UpdateType::Remove2Vertices, state) += 1.0;
 				++rebuildCnt;
@@ -542,9 +560,8 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::Add5Vertices, state))
 		{
 			const int_t N = 3;
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::Remove5Vertices, state) / proposeProbabilityMatrix(UpdateType::Add5Vertices, state);
-			if (configSpace.AddRandomVertices<N>(preFactor * proposeRatio, false))
+			if (configSpace.AddRandomVertices<N>(proposeRatio, false))
 			{
 				acceptedUpdates(UpdateType::Add5Vertices, state) += 1.0;
 				++rebuildCnt;
@@ -554,9 +571,8 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::Remove5Vertices, state))
 		{
 			const int_t N = 3;
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::Add5Vertices, state) / proposeProbabilityMatrix(UpdateType::Remove5Vertices, state);
-			if (configSpace.RemoveRandomVertices<N>(preFactor * proposeRatio, false))
+			if (configSpace.RemoveRandomVertices<N>(proposeRatio, false))
 			{
 				acceptedUpdates(UpdateType::Remove5Vertices, state) += 1.0;
 				++rebuildCnt;
@@ -566,9 +582,8 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::Add8Vertices, state))
 		{
 			const int_t N = 4;
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), N) * configSpace.AdditionFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::Remove8Vertices, state) / proposeProbabilityMatrix(UpdateType::Add8Vertices, state);
-			if (configSpace.AddRandomVertices<N>(preFactor * proposeRatio, false))
+			if (configSpace.AddRandomVertices<N>(proposeRatio, false))
 			{
 				acceptedUpdates(UpdateType::Add8Vertices, state) += 1.0;
 				++rebuildCnt;
@@ -578,9 +593,8 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::Remove8Vertices, state))
 		{
 			const int_t N = 4;
-			value_t preFactor = std::pow(-configSpace.beta * configSpace.V * configSpace.lattice->Bonds(), -N) * configSpace.RemovalFactorialRatio(configSpace.updateHandler.GetVertexHandler().Vertices(), N);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::Add8Vertices, state) / proposeProbabilityMatrix(UpdateType::Remove8Vertices, state);
-			if (configSpace.RemoveRandomVertices<N>(preFactor * proposeRatio, false))
+			if (configSpace.RemoveRandomVertices<N>(proposeRatio, false))
 			{
 				acceptedUpdates(UpdateType::Remove8Vertices, state) += 1.0;
 				++rebuildCnt;
@@ -589,12 +603,10 @@ void CLASSNAME::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW2, state) && state == StateType::Z)
 		{
-			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-			value_t preFactor = configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2;
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2) / proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z);
 			bool result;
-			if (configSpace.rng() < 0.1)
-				result = configSpace.AddRandomVertices<1>(preFactor * proposeRatio, true);
+			if (configSpace.rng() < 1.1)
+				result = configSpace.AddRandomVertices<1>(proposeRatio, true);
 			else
 				result = configSpace.OpenUpdate<1>(proposeRatio);
 			if (result)
@@ -607,13 +619,10 @@ void CLASSNAME::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W2toZ, state) && state == StateType::W2)
 		{
-			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-			//uint_t m = configSpace.lattice->Sites();
-			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * configSpace.beta * configSpace.zeta2);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z) / proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2);
 			bool result;
-			if (configSpace.rng() < 0.1)
-				result = configSpace.RemoveRandomVertices<1>(preFactor * proposeRatio, true);
+			if (configSpace.rng() < 1.1)
+				result = configSpace.RemoveRandomVertices<1>(proposeRatio, true);
 			else
 				result = configSpace.CloseUpdate<1>(proposeRatio);
 			if (result)
@@ -626,10 +635,8 @@ void CLASSNAME::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::ZtoW4, state) && state == StateType::Z)
 		{
-			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-			value_t preFactor = configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4;
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W4toZ, StateType::W4) / proposeProbabilityMatrix(UpdateType::ZtoW4, StateType::Z);
-			if (configSpace.AddRandomVertices<2>(preFactor * proposeRatio, true))
+			if (configSpace.AddRandomVertices<2>(proposeRatio, true))
 			{
 				acceptedUpdates(UpdateType::ZtoW4, state) += 1.0;
 				configSpace.state = StateType::W4;
@@ -640,10 +647,8 @@ void CLASSNAME::do_update()
 		else if (r < updateWeightMatrix(UpdateType::W4toZ, state) && state == StateType::W4)
 		{
 			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-			//uint_t m = configSpace.lattice->Sites();
-			value_t preFactor = 1.0 / (configSpace.lattice->Sites() * m * m * m * configSpace.beta * configSpace.zeta4);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::ZtoW4, StateType::Z) / proposeProbabilityMatrix(UpdateType::W4toZ, StateType::W4);
-			if (configSpace.RemoveRandomVertices<2>(preFactor * proposeRatio, true))
+			if (configSpace.RemoveRandomVertices<2>(proposeRatio, true))
 			{
 				acceptedUpdates(UpdateType::W4toZ, state) += 1.0;
 				configSpace.state = StateType::Z;
@@ -653,10 +658,8 @@ void CLASSNAME::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W2toW4, state) && state == StateType::W2)
 		{
-			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-			value_t preFactor = (configSpace.lattice->Sites() * m * configSpace.zeta4) / configSpace.zeta2;
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W4toW2, StateType::W4) / proposeProbabilityMatrix(UpdateType::W2toW4, StateType::W2);
-			if (configSpace.AddRandomVertices<1>(preFactor * proposeRatio, true))
+			if (configSpace.AddRandomVertices<1>(proposeRatio, true))
 			{
 				acceptedUpdates(UpdateType::W2toW4, state) += 1.0;
 				configSpace.state = StateType::W4;
@@ -666,11 +669,8 @@ void CLASSNAME::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W4toW2, state) && state == StateType::W4)
 		{
-			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
-			//uint_t m = configSpace.lattice->Sites();
-			value_t preFactor = configSpace.zeta2 / (configSpace.lattice->Sites() * m * configSpace.zeta4);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W2toW4, StateType::W2) / proposeProbabilityMatrix(UpdateType::W4toW2, StateType::W4);
-			if (configSpace.RemoveRandomVertices<1>(preFactor * proposeRatio, true))
+			if (configSpace.RemoveRandomVertices<1>(proposeRatio, true))
 			{
 				acceptedUpdates(UpdateType::W4toW2, state) += 1.0;
 				configSpace.state = StateType::W2;

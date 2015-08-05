@@ -48,6 +48,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 				this->BuildLookUpTable(rng);
 				this->GenerateDistanceHistogram();
 				this->numNeighborhood.resize(this->maxDistance + 1, 0);
+				this->numDistance.resize(this->maxDistance + 1, 0);
 				this->CountNeighborhood();
 				if (this->fileIO)
 					this->SaveToFile(filename);
@@ -163,7 +164,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 					cnt += 2;
 				}
 			}
-			for (int_t k = 0; k < 10000000; ++k)
+			for (int_t k = 0; k < 100000; ++k)
 			{
 				int_t dir = this->RandomDirection(rng);
 				int_t dist = 1;
