@@ -605,7 +605,7 @@ void CLASSNAME::do_update()
 		{
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2) / proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z);
 			bool result;
-			if (configSpace.rng() < 1.1)
+			if (configSpace.rng() < 0.5)
 				result = configSpace.AddRandomVertices<1>(proposeRatio, true);
 			else
 				result = configSpace.OpenUpdate<1>(proposeRatio);
@@ -621,7 +621,7 @@ void CLASSNAME::do_update()
 		{
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z) / proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2);
 			bool result;
-			if (configSpace.rng() < 1.1)
+			if (configSpace.rng() < 0.5)
 				result = configSpace.RemoveRandomVertices<1>(proposeRatio, true);
 			else
 				result = configSpace.CloseUpdate<1>(proposeRatio);
@@ -646,7 +646,6 @@ void CLASSNAME::do_update()
 		}
 		else if (r < updateWeightMatrix(UpdateType::W4toZ, state) && state == StateType::W4)
 		{
-			uint_t m = configSpace.lattice->NeighborhoodCount(configSpace.nhoodDist);
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::ZtoW4, StateType::Z) / proposeProbabilityMatrix(UpdateType::W4toZ, StateType::W4);
 			if (configSpace.RemoveRandomVertices<2>(proposeRatio, true))
 			{
@@ -839,7 +838,7 @@ void CLASSNAME::OptimizeZeta()
 		sweep = 0;
 		std::cout << nZetaOptimization << std::endl;
 
-		if (nZetaOptimization > 10)
+		if (nZetaOptimization > 0)
 		{
 			value_t zeta2mean = 0.0, zeta4mean = 0.0;
 			for (uint_t i = prevZeta.size() * 3 / 4; i < prevZeta.size(); ++i)

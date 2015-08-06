@@ -72,7 +72,7 @@ for l in range(len(L)):
 		plt.legend(loc=2)
 		plt.subplot(1, 2, 2)
 		plt.xlabel("T")
-		plt.ylabel("B")
+		plt.ylabel("M_2 * L^0.25")
 		plt.plot(np.array(x), np.array(yM2), "o", color=color_cycle[l], linewidth=2.0, label=r'L='+L[l], markersize=5)
 		plt.errorbar(np.array(x), np.array(yM2), yerr=np.array(yM2err), color=color_cycle[l], markersize=5)
 		plt.legend(loc=1)
