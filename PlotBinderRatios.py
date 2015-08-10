@@ -31,11 +31,11 @@ for l in range(len(L)):
 	filelist.append(glob.glob("plot/plot_rhom_V1.625/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot/plot_rhom_V1.75/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot/plot_rhom_V1.875/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot/plot_hex_V1.75/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot/plot_rhom_V2.0/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot/plot_rhom_V2.125/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot/plot_rhom_V2.5/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot/plot_rhom_V3.0/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot/plot_rhom_V1.355/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot/plot_rhom_V1.355/*L" + L[l] + "*.out"))
 	for f in range(len(filelist)):
 		if len(filelist[f]) == 0:
 			continue
