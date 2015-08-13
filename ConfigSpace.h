@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <stack>
 #include <array>
 #include <list>
 #include <utility>
@@ -81,9 +82,13 @@ class ConfigSpace
 				}
 				else if (state == StateType::Z && N == 2)
 				{
-					uint_t m1 = lattice->DistanceCount(dist);
-					uint_t m2 = lattice->NeighborhoodCount(dist);
-					preFactor *= (lattice->MaxDistance() + 1.) * lattice->Sites() * m1 * m2 * m2 * beta * zeta4;
+					//uint_t m1 = lattice->DistanceCount(dist);
+					//uint_t m2 = lattice->NeighborhoodCount(dist);
+					//preFactor *= (lattice->MaxDistance() + 1.) * lattice->Sites() * m1 * m2 * m2 * beta * zeta4;
+
+					//dist = nhoodDist;
+					uint_t m = lattice->NeighborhoodCount(dist);
+					preFactor *= lattice->Sites() * m * m * m * beta * zeta4;
 				}
 				updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>(dist);
 				preFactor *= updateHandler.GetVertexHandler().VertexBufferParity();
@@ -119,9 +124,16 @@ class ConfigSpace
 				}
 				else if (state == StateType::W4 && N == 2)
 				{
-					uint_t m1 = lattice->DistanceCount(dist);
-					uint_t m2 = lattice->NeighborhoodCount(dist);
-					preFactor *= 1.0 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m1 * m2 * m2 * beta * zeta4);
+					//uint_t m1 = lattice->DistanceCount(dist);
+					//uint_t m2 = lattice->NeighborhoodCount(dist);
+					//preFactor *= 1.0 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m1 * m2 * m2 * beta * zeta4);
+					int_t d = rng() * (lattice->MaxDistance() + 1);
+					uint_t m = lattice->NeighborhoodCount(d);
+					preFactor /= lattice->Sites() * m * m * m * beta * zeta4;
+					if (dist <= d)
+						return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
+					else
+						return false;
 				}
 			}
 			else
