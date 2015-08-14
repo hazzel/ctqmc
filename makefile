@@ -48,7 +48,7 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	LDFLAGS = -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -openmp
 	SUPERLP = 
 else ifeq ($(MCLL_SYSTEM_INFO), juqueen)
-	CFLAGS  = -Ofast -ffast-math -march=native -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 $(DEFINES)
+	CFLAGS  = -Ofast -ffast-math -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/libs/eigen/ -I$(HOME)/armadillo-5.200.2/include
 	LDFLAGS = -L$(HOME)/armadillo-5.200.2/lib -lblas -llapack
 	SUPERLP =
