@@ -168,6 +168,8 @@ class CLASSNAME
 		bool isInitialized = false;
 		std::string path;
 		std::string therm_path;
+		std::string therm_name;
+		std::string therm_name_depr;
 		Measure therm;
 		std::map< value_t, std::pair<value_t, value_t> > zetaOptimization;
 		uint_t nZetaOptimization;

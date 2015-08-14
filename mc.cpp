@@ -6,6 +6,20 @@
 #include <functional>
 #include <omp.h>
 #include <gperftools/profiler.h>
+#include "glob.h"
+
+std::vector<string> GlobFile(const string& pattern)
+{
+	glob_t glob_result;
+	glob(pattern.c_str(),GLOB_TILDE,NULL,&glob_result);
+	std::vector<string> files;
+	for(unsigned int i=0;i<glob_result.gl_pathc;++i)
+	{
+		files.push_back(string(glob_result.gl_pathv[i]));
+	}
+	globfree(&glob_result);
+	return files;
+}
 
 void M2Function(double& out, std::vector< std::valarray<double>* >& o, double* p)
 {
@@ -144,12 +158,17 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	evalableParameters[3] = configSpace.lattice->Sites();
 	corrVector.resize(configSpace.lattice->MaxDistance() + 1, 0.0);
 	
-	bool do_therm = param.value_or_default<uint_t>("THERMALIZE", 1);
+	bool do_therm = param.value_or_default<uint_t>("THERMALIZE", 0);
 	//Read thermalized state if it exists
-	therm_path = path + "thermalization/therm-" + "L" + ToString(L) + "-V" + ToString(configSpace.V) + "-T" + ToString(T) + "-" + geometry;
-	if (sweep == 0 && do_therm && FileExists(therm_path) && nOptimizationSteps == 0)
+	therm_name_depr = "therm-L" + ToString(L) + "-V" + ToString(configSpace.V) + "-T" + ToString(T) + "-" + geometry;
+	therm_name = therm_name_depr + "-N" + ToString(nThermalize);
+	therm_path = path + "thermalization/";
+	std::vector<std::string> files = GlobFile(therm_path + therm_name + "/*");
+	if (FileExists(therm_path + therm_name_depr) && (!DirExists(therm_path + therm_name)))
+		files.push_back(therm_path + therm_name_depr);
+	if (sweep == 0 && (!do_therm) && files.size() > 0 && nOptimizationSteps == 0)
 	{
-		read_state(therm_path);
+		read_state(files[rng() * files.size()]);
 		sweep = nThermalize;
 		std::cout << "Thermalization...Done" << std::endl;
 	}
@@ -740,8 +759,11 @@ void CLASSNAME::do_update()
 		{
 			std::cout << "Done" << std::endl;
 			ClearExpOrderHist();
-			if (!FileExists(therm_path))
-				write_state(therm_path);
+			if (!DirExists(therm_path + therm_name))
+				if (mkdir((therm_path + therm_name).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0)
+					std::cout << "Could not create directory." << std::endl;
+			std::vector<std::string> files = GlobFile(therm_path + therm_name + "/*");
+			write_state(therm_path + therm_name + "/" + therm_name + "-" + ToString(files.size()));
 		}
 	}
 	if (annealing && !is_thermalized() && (sweep % (nThermalize / 25)) == 0)

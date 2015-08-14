@@ -13,8 +13,20 @@
 
 inline bool FileExists(const std::string& name)
 {
-  struct stat buffer;   
+  struct stat buffer;
   return (stat (name.c_str(), &buffer) == 0); 
+}
+
+inline bool DirExists(const std::string& name)
+{
+	struct stat buffer;
+
+	if(stat (name.c_str(), &buffer) != 0)
+		return 0;
+	else if(buffer.st_mode & S_IFDIR)
+		return 1;
+	else
+		return 0;
 }
 
 template<typename RNG, typename Int_t = std::int_fast32_t>
