@@ -50,7 +50,8 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 else ifeq ($(MCLL_SYSTEM_INFO), juqueen)
 	CFLAGS  = -Ofast -ffast-math -flto -fwhole-program -Wno-deprecated -pipe -std=c++11 $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
-	LDFLAGS = -L$(HOME)/armadillo-5.200.2/lib -Wl,-allow-multiple-definition -L$(LAPACK_LIB) -L/bgsys/local/lib -lesslbg -llapack -lesslbg
+	#LDFLAGS = -L$(HOME)/armadillo-5.200.2/lib -Wl,-allow-multiple-definition -L$(LAPACK_LIB) -L/bgsys/local/lib -lesslbg -llapack -lesslbg
+	LDFLAGS = -L/usr/lib64/atlas -latlas -lf77blas -llapack
 	SUPERLP =
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
 	CFLAGS  = -O3 -Wno-deprecated -std=c++11 -pipe $(DEFINES)
