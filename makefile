@@ -48,8 +48,8 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	LDFLAGS = -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -openmp
 	SUPERLP = 
 else ifeq ($(MCLL_SYSTEM_INFO), juqueen)
-	CFLAGS  = -O3 -ffast-math -fwhole-program -Wno-deprecated -pipe -std=c++0x $(DEFINES)
-	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/armadillo-5.200.2/include -I$(HOME)/gperftools-2.4/install/include
+	CFLAGS  = -O3 -std=c++0x $(DEFINES)
+	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/gperftools-2.4/install/include
 	LDFLAGS = 
 	SUPERLP =
 else ifeq ($(MCLL_SYSTEM_INFO), desktop_home)
