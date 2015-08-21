@@ -181,17 +181,17 @@ class VertexHandler
 		}
 
 		template<int_t N>
-		bool WormIndexBufferDistance()
+		int_t WormIndexBufferDistance()
 		{
 			if (N == 1)
-				return configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[0]]].Site, nodes[wormNodes[indexBuffer[1]]].Site) <= configSpace.nhoodDist;
+				return configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[0]]].Site, nodes[wormNodes[indexBuffer[1]]].Site);
 			else if(N == 2)
 			{			
 				uint_t dist[4];
 				uint_t r = configSpace.rng() * 2;
 				for (uint_t i = 0; i < 4; ++i)
 					dist[i] = configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[2*r]]].Site, nodes[wormNodes[indexBuffer[i]]].Site);
-				return (*std::max_element(dist, dist+4)) <= configSpace.nhoodDist;
+				return *std::max_element(dist, dist+4);
 			}
 		}
 		
@@ -231,9 +231,23 @@ class VertexHandler
 			else
 				tau = configSpace.rng() * configSpace.beta;
 			nodeBuffer[0] = node_t(site, tau, true);
+			int_t r = configSpace.rng() * (2 * N - 1) + 1;
 			for (uint_t i = 1; i < 2 * N; ++i)
 			{
-				uint_t nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
+				uint_t nsite;
+				if (N == 1)
+				{
+					nsite = configSpace.lattice->FromDistance(site, nhoodDist, configSpace.rng);
+				}
+				else if(N == 2)
+				{
+					//if (i == r)
+					//	nsite = configSpace.lattice->FromDistance(site, nhoodDist, configSpace.rng);
+					//else
+					//	nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
+					//nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
+					nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
+				}
 				nodeBuffer[i] = node_t(nsite, tau, true);
 			}
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
@@ -426,11 +440,12 @@ class VertexHandler
 			wormShiftParity = 1.0;
 			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			
-			nodeBuffer[r].Site = configSpace.lattice->RandomWalk(nodeBuffer[r].Site, 1, configSpace.rng);
+			//nodeBuffer[r].Site = configSpace.lattice->RandomWalk(nodeBuffer[r].Site, 1, configSpace.rng);
+			nodeBuffer[r].Site = configSpace.lattice->FromNeighborhood(nodeBuffer[r].Site, configSpace.nhoodDist, configSpace.rng);
 			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
 			
 			
-			value_t tau = nodeBuffer[0].Tau - 0.1 * configSpace.beta + configSpace.rng() * 0.2 * configSpace.beta;
+			value_t tau = nodeBuffer[0].Tau - 0.05 * configSpace.beta + configSpace.rng() * 0.1 * configSpace.beta;
 			if (tau > configSpace.beta)
 				tau -= configSpace.beta;
 			else if (tau < 0.0)

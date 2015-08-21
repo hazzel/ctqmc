@@ -13,8 +13,20 @@
 
 inline bool FileExists(const std::string& name)
 {
-  struct stat buffer;   
+  struct stat buffer;
   return (stat (name.c_str(), &buffer) == 0); 
+}
+
+inline bool DirExists(const std::string& name)
+{
+	struct stat buffer;
+
+	if(stat (name.c_str(), &buffer) != 0)
+		return 0;
+	else if(buffer.st_mode & S_IFDIR)
+		return 1;
+	else
+		return 0;
 }
 
 template<typename RNG, typename Int_t = std::int_fast32_t>
@@ -106,10 +118,23 @@ class GeometryBase
 				s = RandomSite(rng);
 			return s;
 		}
+
+		int_t FromDistance(int_t site, int_t distance, RNG& rng)
+		{
+			int_t s = RandomSite(rng);
+			while (Distance(s, site) != distance)
+				s = RandomSite(rng);
+			return s;
+		}
 		
 		inline int_t NeighborhoodCount(int_t distance)
 		{
 			return numNeighborhood[distance];
+		}
+
+		inline int_t DistanceCount(int_t distance)
+		{
+			return numDistance[distance];
 		}
 
 		inline int_t RandomSite(RNG& rng)
@@ -140,6 +165,10 @@ class GeometryBase
 			{
 				os.write((char*)&numNeighborhood[i], sizeof(numNeighborhood[i]));
 			}
+			for (int_t i = 0; i <= maxDistance; ++i)
+			{
+				os.write((char*)&numDistance[i], sizeof(numDistance[i]));
+			}
 			os.close();
 		}
 
@@ -153,6 +182,7 @@ class GeometryBase
 					is.read((char*)&maxDistance, sizeof(maxDistance));
 					is.read((char*)&nSites, sizeof(nSites));
 					this->numNeighborhood.resize(this->maxDistance + 1, 0);
+					this->numDistance.resize(this->maxDistance + 1, 0);
 					
 					for (int_t i = 0; i < nSites; ++i)
 					{
@@ -170,7 +200,12 @@ class GeometryBase
 					{
 						is.read((char*)&numNeighborhood[i], sizeof(numNeighborhood[i]));
 					}
+					for (int_t i = 0; i <= maxDistance; ++i)
+					{
+						is.read((char*)&numDistance[i], sizeof(numDistance[i]));
+					}
 					is.close();
+					CountNeighborhood();
 				}
 			}
 		}
@@ -220,8 +255,16 @@ class GeometryBase
 		void CountNeighborhood()
 		{
 			int_t i = 0;
+			for (int_t j = 0; j <= maxDistance; ++j)
+			{
+				numNeighborhood[j] = 0;
+				numDistance[j] = 0;
+			}
 			for (int_t j = 0; j < nSites; ++j)
+			{
 				numNeighborhood[Distance(i, j)] += 1;
+				numDistance[Distance(i, j)] += 1;
+			}
 			for (int_t j = 1; j <= maxDistance; ++j)
 				numNeighborhood[j] += numNeighborhood[j-1];
 		}
@@ -237,5 +280,6 @@ class GeometryBase
 		vector_t distanceHistogram;
 		int_t** neighborList;
 		vector_t numNeighborhood;
+		vector_t numDistance;
 		bool fileIO;
 };

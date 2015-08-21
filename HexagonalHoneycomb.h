@@ -38,6 +38,7 @@ class HexagonalHoneycomb : public GeometryBase<RNG, Int_t>
 			this->BuildLookUpTable();
 			this->GenerateDistanceHistogram();
 			this->numNeighborhood.resize(this->maxDistance + 1, 0);
+			this->numDistance.resize(this->maxDistance + 1, 0);
 			this->CountNeighborhood();
 			this->sublatVector.resize(this->nSites);
 			for (int_t i = 0; i < this->nSites; ++i)

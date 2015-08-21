@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <stack>
 #include <array>
 #include <list>
 #include <utility>
@@ -63,30 +64,73 @@ class ConfigSpace
 		}
 		
 		template<int_t N>
-		bool AddRandomVertices(value_t preFactor, bool isWorm)
+		bool AddRandomVertices(value_t proposeRatio, bool isWorm)
 		{
+			value_t preFactor = proposeRatio;
 			if (isWorm)
 			{
-				updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>(nhoodDist);
+				int_t dist = rng() * (lattice->MaxDistance() + 1);
+				if (state == StateType::Z && N == 1)
+				{
+					uint_t m = lattice->DistanceCount(dist);
+					preFactor *= (lattice->MaxDistance() + 1.) * zeta2 * lattice->Sites() * m * beta;
+				}
+				else if (state == StateType::W2 && N == 1)
+				{
+					uint_t m = lattice->DistanceCount(dist);
+					preFactor *= (lattice->MaxDistance() + 1.) * lattice->Sites() * m * zeta4 / zeta2;
+				}
+				else if (state == StateType::Z && N == 2)
+				{
+					//uint_t m1 = lattice->DistanceCount(dist);
+					//uint_t m2 = lattice->NeighborhoodCount(dist);
+					//preFactor *= (lattice->MaxDistance() + 1.) * lattice->Sites() * m1 * m2 * m2 * beta * zeta4;
+
+					//dist = nhoodDist;
+					uint_t m = lattice->NeighborhoodCount(dist);
+					preFactor *= lattice->Sites() * m * m * m * beta * zeta4;
+				}
+				updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>(dist);
 				preFactor *= updateHandler.GetVertexHandler().VertexBufferParity();
 			}
 			else
+			{
+				preFactor *= std::pow(-beta * V * lattice->Bonds(), N) * AdditionFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N);
 				updateHandler.GetVertexHandler().template AddRandomVerticesToBuffer<N>();
+			}
 			return updateHandler.template AddVertices<N>(preFactor, isWorm);
 		}
 		
 		template<int_t N>
-		bool RemoveRandomVertices(value_t preFactor, bool isWorm)
+		bool RemoveRandomVertices(value_t proposeRatio, bool isWorm)
 		{
+			value_t preFactor = proposeRatio;
 			if (isWorm)
 			{
 				if (updateHandler.GetVertexHandler().Worms() < N)
 					return false;
-				else
+				updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
+				preFactor *= updateHandler.GetVertexHandler().WormIndexBufferParity();
+				int_t dist = updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>();
+				if (state == StateType::W2 && N == 1)
 				{
-					updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
-					preFactor *= updateHandler.GetVertexHandler().WormIndexBufferParity();
-					if (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>())
+					uint_t m = lattice->DistanceCount(dist);
+					preFactor *= 1.0 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m * beta * zeta2);
+				}
+				else if (state == StateType::W4 && N == 1)
+				{
+					uint_t m = lattice->DistanceCount(dist);
+					preFactor *= zeta2 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m * zeta4);
+				}
+				else if (state == StateType::W4 && N == 2)
+				{
+					//uint_t m1 = lattice->DistanceCount(dist);
+					//uint_t m2 = lattice->NeighborhoodCount(dist);
+					//preFactor *= 1.0 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m1 * m2 * m2 * beta * zeta4);
+					int_t d = rng() * (lattice->MaxDistance() + 1);
+					uint_t m = lattice->NeighborhoodCount(d);
+					preFactor /= lattice->Sites() * m * m * m * beta * zeta4;
+					if (dist <= d)
 						return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
 					else
 						return false;
@@ -94,6 +138,7 @@ class ConfigSpace
 			}
 			else
 			{
+				preFactor *= std::pow(-beta * V * lattice->Bonds(), -N) * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N);
 				if (updateHandler.GetVertexHandler().Vertices() < N)
 					return false;
 				else
@@ -108,10 +153,7 @@ class ConfigSpace
 			if ((state == StateType::Z) && (updateHandler.GetVertexHandler().Vertices() > 0))
 			{
 				updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
-				if (N == 1)
-					preFactor *= 2.0 * zeta2 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V;
-				else if (N == 2)
-					preFactor *= 4.0 * zeta4 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V*V;
+				preFactor *= 2.0 * zeta2 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V;
 				return updateHandler.OpenUpdate(preFactor);
 			}
 			else
@@ -124,7 +166,7 @@ class ConfigSpace
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 			if ((state != StateType::Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
 			{
-				preFactor *= V / (2.0 * zeta2 * (updateHandler.GetVertexHandler().Vertices() + 1.0));
+				preFactor *= V * AdditionFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / (2.0 * zeta2);
 				return updateHandler.CloseUpdate(preFactor);
 			}
 			else

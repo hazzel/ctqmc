@@ -145,8 +145,18 @@ class UpdateHandler
 				{
 					vertexHandler.PermuteProgagatorMatrix(invG, isWorm);
 					
-					dmatrix_t t = S.inverse() * invG.block(k - n, 0, n, k - n);
+					//dmatrix_t t = S.inverse() * invG.block(k - n, 0, n, k - n);
+					//invG.topLeftCorner(k - n, k - n) -= invG.block(0, k - n, k - n, n) * t;
+					
+					S.transposeInPlace();
+					dmatrix_t t = invG.block(k - n, 0, n, k - n).transpose() * S.inverse();
+					t.transposeInPlace();
 					invG.topLeftCorner(k - n, k - n) -= invG.block(0, k - n, k - n, n) * t;
+					
+					//arma::inplace_trans(S);
+					//matrix_t t = invG.submat(k - n, 0, k - 1, k - n - 1).t() * arma::inv(S);
+					//arma::inplace_trans(t);
+					//invG.submat(0, 0, k - n - 1, k - n - 1) -= invG.submat(0, k - n, k - n - 1, k - 1) * t;
 					
 					vertexHandler.PermuteProgagatorMatrix(G, isWorm);
 				}
