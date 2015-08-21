@@ -6,11 +6,9 @@
 #include <cmath>
 #include <numeric>
 #include <string>
-#include <cstdint>
 #include <map>
 #include "ConfigSpace.h"
 #include "Random.h"
-#include "HexagonalHoneycomb.h"
 #include "RhombicHoneycomb.h"
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
@@ -64,13 +62,20 @@ struct Measure
 class CLASSNAME
 {
 	public:
-		using uint_t = std::int_fast32_t;
-		using int_t = std::int_fast32_t;
-		using value_t = double;
-		using matrix_t = Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic>;
-		using Hex_t = HexagonalHoneycomb<Random, int_t>;
-		using Rhom_t = RhombicHoneycomb<Random, int_t>;
-		using ConfigSpace_t = ConfigSpace<GeometryBase<Random, int_t>, Random, value_t, matrix_t>;
+		//using uint_t = std::int_fast32_t;
+		//using int_t = std::int_fast32_t;
+		//using value_t = double;
+		//using matrix_t = Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic>;
+		//using Hex_t = HexagonalHoneycomb<Random, int_t>;
+		//using Rhom_t = RhombicHoneycomb<Random, int_t>;
+		//using ConfigSpace_t = ConfigSpace<GeometryBase<Random, int_t>, Random, value_t, matrix_t>;
+
+		typedef int32_t uint_t;
+		typedef int32_t int_t;
+		typedef double value_t;
+		typedef Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
+		typedef RhombicHoneycomb<Random, int_t> Rhom_t;
+		typedef ConfigSpace<GeometryBase<Random, int_t>, Random, value_t, matrix_t> ConfigSpace_t;
 
 		CLASSNAME(const std::string& dir);
 		~CLASSNAME();
@@ -115,7 +120,7 @@ class CLASSNAME
 	private:
 		uint_t& GetWithDef(std::map<uint_t, uint_t>& map, uint_t key, uint_t defval)
 		{
-			auto it = map.find( key );
+			std::map<uint_t, uint_t>::iterator it = map.find( key );
 			if (it == map.end())
 				map[key] = defval;
 			return map[key];
@@ -140,15 +145,15 @@ class CLASSNAME
 		uint_t nRebuild;
 		uint_t nThermStep;
 		uint_t nPrebins;
-		int nUpdateType = 16;
-		int nStateType = 3;
-		matrix_t updateWeightMatrix = matrix_t(nUpdateType, nStateType);
-		matrix_t proposeProbabilityMatrix = matrix_t(nUpdateType, nStateType);
-		matrix_t acceptedUpdates = matrix_t(nUpdateType, nStateType);
-		matrix_t proposedUpdates = matrix_t(nUpdateType, nStateType);
+		int nUpdateType;
+		int nStateType;
+		matrix_t updateWeightMatrix;
+		matrix_t proposeProbabilityMatrix;
+		matrix_t acceptedUpdates;
+		matrix_t proposedUpdates;
 		parser param;
-		uint_t sweep = 0;
-		uint_t rebuildCnt = 0;
+		uint_t sweep;
+		uint_t rebuildCnt;
 		int myrep;
 		uint_t pt_spacing;
 		int label;
@@ -165,7 +170,7 @@ class CLASSNAME
 		#endif
 		double* evalableParameters;
 		uint_t L;
-		bool isInitialized = false;
+		bool isInitialized;
 		std::string path;
 		std::string therm_path;
 		std::string therm_name;
@@ -173,10 +178,10 @@ class CLASSNAME
 		Measure therm;
 		std::map< value_t, std::pair<value_t, value_t> > zetaOptimization;
 		uint_t nZetaOptimization;
-		uint_t nOptimizationSteps = 0;
+		uint_t nOptimizationSteps;
 		uint_t nOptimizationTherm;
 		std::vector< std::pair<value_t, value_t> > prevZeta;
-		bool annealing = false;
-		value_t startT = 5.0;
+		bool annealing;
+		value_t startT;
 		value_t finalT;
 };

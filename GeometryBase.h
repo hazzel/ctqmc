@@ -3,7 +3,6 @@
 #include <cmath>
 #include <array>
 #include <map>
-#include <tuple>
 #include <iostream>
 #include <vector>
 #include <cstdint>
@@ -29,16 +28,21 @@ inline bool DirExists(const std::string& name)
 		return 0;
 }
 
-template<typename RNG, typename Int_t = std::int_fast32_t>
+template<typename RNG, typename Int_t = int32_t>
 class GeometryBase
 {
 	public:
 		typedef Int_t int_t;
-		using site_t = std::tuple < int_t, int_t, int_t >;
-		using lookup_t = LookUpTable < int_t, 2 >;
-		using vector_t = std::vector< int_t >;
+		typedef LookUpTable < int_t, 2 > lookup_t;
+		typedef std::vector< int_t > vector_t;
 		enum SublatticeType {A, B};
-		using sub_lat_vector_t = std::vector< SublatticeType >;
+		typedef std::vector< SublatticeType > sub_lat_vector_t;
+
+		//using site_t = std::tuple < int_t, int_t, int_t >;
+		//using lookup_t = LookUpTable < int_t, 2 >;
+		//using vector_t = std::vector< int_t >;
+		//enum SublatticeType {A, B};
+		//using sub_lat_vector_t = std::vector< SublatticeType >;
 		
 	public:
 		GeometryBase()
@@ -146,7 +150,7 @@ class GeometryBase
 		{
 			if (FileExists(filename))
 				return;
-			std::ofstream os(filename, std::ofstream::binary);
+			std::ofstream os(filename.c_str(), std::ofstream::binary);
 			os.write((char*)&maxDistance, sizeof(maxDistance));
 			os.write((char*)&nSites, sizeof(nSites));
 			for (int_t i = 0; i < nSites; ++i)
@@ -174,7 +178,7 @@ class GeometryBase
 
 		void ReadFromFile(const std::string& filename)
 		{
-			std::ifstream is(filename, std::ofstream::binary);
+			std::ifstream is(filename.c_str(), std::ifstream::binary);
 			if (is.is_open())
 			{
 				while(is.good())

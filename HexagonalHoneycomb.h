@@ -15,9 +15,9 @@ class HexagonalHoneycomb : public GeometryBase<RNG, Int_t>
 {
 	public:
 		typedef Int_t int_t;
-		using site_t = std::tuple < int_t, int_t, int_t >;
-		using index_map_t = std::map < int_t, site_t >;
-		using reverse_map_t = std::map < site_t, int_t >;
+		typedef std::tuple < int_t, int_t, int_t > site_t;
+		typedef std::map < int_t, site_t > index_map_t;
+		typedef std::map < site_t, int_t > reverse_map_t;
 		typedef typename GeometryBase<RNG, Int_t>::SublatticeType SublatticeType;
 		
 	public:

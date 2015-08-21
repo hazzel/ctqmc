@@ -4,8 +4,8 @@
 class Random
 {
 	public:
-		using generator_t = randomnumbergenerator;
-		using seed_t = std::size_t;
+		typedef randomnumbergenerator generator_t;
+		typedef std::size_t seed_t;
 
 		Random()
 		{

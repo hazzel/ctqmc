@@ -33,13 +33,16 @@ class UpdateHandler
 		typedef typename ConfigSpace_t::int_t int_t;
 		typedef typename ConfigSpace_t::value_t value_t;
 		typedef VertexHandler<ConfigSpace_t> VertexHandler_t;
-		template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M, Eigen::ColMajor>;
-		template<int_t N> using inv_solver_t = Eigen::FullPivLU< matrix_t<N, N> >;
-		using dmatrix_t = matrix_t<Eigen::Dynamic, Eigen::Dynamic>;
+		//template<int_t N, int_t M> using matrix_t = Eigen::Matrix<value_t, N, M, Eigen::ColMajor>;
+		//template<int_t N> using inv_solver_t = Eigen::FullPivLU< matrix_t<N, N> >;
+		typedef typename Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> dmatrix_t;
 		
 		UpdateHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace), vertexHandler(VertexHandler_t(configSpace))
 		{
+			matSize = 0;
+			maxWorms = 2;
+			print = true;
 			invG.resize(200, 200);
 			G.resize(200, 200);
 		}
@@ -74,11 +77,11 @@ class UpdateHandler
 				G.topLeftCorner(buf.rows(), buf.cols()) = buf;
 			}
 			dmatrix_t u(k, n), v(n, k);
-			matrix_t<n, n> a(n, n);
+			Eigen::Matrix<value_t, n, n, Eigen::ColMajor> a(n, n);
 			vertexHandler.WoodburyAddVertices(u, v, a);
 
 			dmatrix_t invGu(k, n);
-			matrix_t<n, n> invS(n, n);
+			Eigen::Matrix<value_t, n, n, Eigen::ColMajor> invS(n, n);
 			if (k > 0)
 			{
 				invGu = invG.topLeftCorner(k, k) * u;
@@ -131,7 +134,7 @@ class UpdateHandler
 			if (k == 0)
 				return false;
 
-			matrix_t<n, n> S(n, n);
+			Eigen::Matrix<value_t, n, n, Eigen::ColMajor> S(n, n);
 			vertexHandler.FillSMatrix(S, invG, isWorm);
 			value_t acceptRatio = preFactor * S.determinant();
 			if (print && acceptRatio < 0.0)
@@ -235,7 +238,7 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
-				matrix_t<l, l> S = shiftedInvS.inverse();
+				Eigen::Matrix<value_t, l, l, Eigen::ColMajor> S = shiftedInvS.inverse();
 				dmatrix_t vM = shiftedWormV * M;
 				dmatrix_t Mu = M * shiftedWormU;
 				invG.block(k, 0, l, k) = -S * vM;
@@ -378,7 +381,7 @@ class UpdateHandler
 		template<typename Map>
 		typename Map::mapped_type& GetWithDef(Map& map, typename Map::key_type key, typename Map::mapped_type defval)
 		{
-			auto it = map.find( key );
+			typename Map::iterator it = map.find( key );
 			if (it == map.end())
 				map[key] = defval;
 			return map[key];
@@ -389,7 +392,7 @@ class UpdateHandler
 		VertexHandler_t vertexHandler;
 		dmatrix_t invG;
 		dmatrix_t G;
-		uint_t matSize = 0;
-		uint_t maxWorms = 2;
-		bool print = true;
+		uint_t matSize;
+		uint_t maxWorms;
+		bool print;
 };

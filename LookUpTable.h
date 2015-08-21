@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-template<typename T, std::uint_fast8_t N>
+template<typename T, unsigned int N>
 class LookUpTable
 {
 	public:

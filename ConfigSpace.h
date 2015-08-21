@@ -56,7 +56,10 @@ class ConfigSpace
 		
 		ConfigSpace(RNG& rng)
 			:rng(rng), updateHandler(UpdateHandler_t(*this))
-		{}
+		{
+			state = Z;
+			maxWorms = 4;
+		}
 
 		~ConfigSpace()
 		{
@@ -70,17 +73,17 @@ class ConfigSpace
 			if (isWorm)
 			{
 				int_t dist = rng() * (lattice->MaxDistance() + 1);
-				if (state == StateType::Z && N == 1)
+				if (state == Z && N == 1)
 				{
 					uint_t m = lattice->DistanceCount(dist);
 					preFactor *= (lattice->MaxDistance() + 1.) * zeta2 * lattice->Sites() * m * beta;
 				}
-				else if (state == StateType::W2 && N == 1)
+				else if (state == W2 && N == 1)
 				{
 					uint_t m = lattice->DistanceCount(dist);
 					preFactor *= (lattice->MaxDistance() + 1.) * lattice->Sites() * m * zeta4 / zeta2;
 				}
-				else if (state == StateType::Z && N == 2)
+				else if (state == Z && N == 2)
 				{
 					//uint_t m1 = lattice->DistanceCount(dist);
 					//uint_t m2 = lattice->NeighborhoodCount(dist);
@@ -112,17 +115,17 @@ class ConfigSpace
 				updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
 				preFactor *= updateHandler.GetVertexHandler().WormIndexBufferParity();
 				int_t dist = updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>();
-				if (state == StateType::W2 && N == 1)
+				if (state == W2 && N == 1)
 				{
 					uint_t m = lattice->DistanceCount(dist);
 					preFactor *= 1.0 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m * beta * zeta2);
 				}
-				else if (state == StateType::W4 && N == 1)
+				else if (state == W4 && N == 1)
 				{
 					uint_t m = lattice->DistanceCount(dist);
 					preFactor *= zeta2 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m * zeta4);
 				}
-				else if (state == StateType::W4 && N == 2)
+				else if (state == W4 && N == 2)
 				{
 					//uint_t m1 = lattice->DistanceCount(dist);
 					//uint_t m2 = lattice->NeighborhoodCount(dist);
@@ -150,7 +153,7 @@ class ConfigSpace
 		template<int_t N>
 		bool OpenUpdate(value_t preFactor)
 		{
-			if ((state == StateType::Z) && (updateHandler.GetVertexHandler().Vertices() > 0))
+			if ((state == Z) && (updateHandler.GetVertexHandler().Vertices() > 0))
 			{
 				updateHandler.GetVertexHandler().template AddRandomIndicesToBuffer<N>();
 				preFactor *= 2.0 * zeta2 * RemovalFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / V;
@@ -164,7 +167,7 @@ class ConfigSpace
 		bool CloseUpdate(value_t preFactor)
 		{
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
-			if ((state != StateType::Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
+			if ((state != Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
 			{
 				preFactor *= V * AdditionFactorialRatio(updateHandler.GetVertexHandler().Vertices(), N) / (2.0 * zeta2);
 				return updateHandler.CloseUpdate(preFactor);
@@ -177,7 +180,7 @@ class ConfigSpace
 		bool CloseUpdate()
 		{
 			updateHandler.GetVertexHandler().template AddRandomWormIndicesToBuffer<N>();
-			if ((state != StateType::Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
+			if ((state != Z) && (updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>(1)))
 			{
 				value_t preFactor;
 				if (N == 1)
@@ -206,7 +209,7 @@ class ConfigSpace
 		void Clear()
 		{
 			updateHandler.Clear();
-			state = StateType::Z;
+			state = Z;
 		}
 		
 		void PrintMatrix(const matrix_t& m)
@@ -415,11 +418,11 @@ class ConfigSpace
 		value_t zeta2;
 		value_t zeta4;
 		uint_t nTimeBins;
-		uint_t maxWorms = 4;
+		uint_t maxWorms;
 		LookUpTable<value_t, 2> lookUpTableG0;
 		LookUpTable<int_t, 2> lookUpIndex;
 		value_t dtau;
-		StateType state = StateType::Z;
+		StateType state;
 		matrix_t hoppingMatrix;
 		matrix_t hopDiag;
 		matrix_t hopEV;

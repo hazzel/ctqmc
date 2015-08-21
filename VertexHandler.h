@@ -39,6 +39,8 @@ class VertexHandler
 		typedef typename ConfigSpace_t::int_t int_t;
 		typedef typename ConfigSpace_t::value_t value_t;
 		typedef Node<uint_t, value_t> node_t;
+		typedef typename std::vector<node_t>::iterator node_it;
+		typedef typename std::vector<std::size_t>::iterator index_it;
 		
 		VertexHandler(ConfigSpace_t& configSpace)
 			: configSpace(configSpace)
@@ -70,11 +72,11 @@ class VertexHandler
 
 		void PrintWormVertices()
 		{
-			for (auto node : wormNodes)
-				std::cout << node << " , ";
+			for (uint_t i = 0; i < wormNodes.size(); ++i)
+				std::cout << wormNodes[i] << " , ";
 			std::cout << " -> ";
-			for (auto node : wormNodes)
-				std::cout << "(" << nodes[node].Site << " , " << nodes[node].Tau << ") ";
+			for (uint_t i = 0; i < wormNodes.size(); ++i)
+				std::cout << "(" << nodes[wormNodes[i]].Site << " , " << nodes[wormNodes[i]].Tau << ") ";
 			std::cout << std::endl;
 		}
 		
@@ -87,14 +89,14 @@ class VertexHandler
 		
 		void PrintIndexBuffer()
 		{
-			for (auto index : indexBuffer)
-				std::cout << index << " ";
+			for (uint_t i = 0; i < indexBuffer.size(); ++i)
+				std::cout << indexBuffer[i] << " ";
 			std::cout << std::endl;
 		}
 		
 		void AddBufferedVertices(bool isWorm)
 		{
-			for (auto it = nodeBuffer.begin(); it != nodeBufferEnd; ++it)
+			for (node_it it = nodeBuffer.begin(); it != nodeBufferEnd; ++it)
 				it->Worm = isWorm;
 			nodes.insert(nodes.end(), nodeBuffer.begin(), nodeBufferEnd);
 			if (isWorm)
@@ -107,7 +109,7 @@ class VertexHandler
 
 		void OpenUpdate()
 		{
-			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+			for (index_it it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 			{
 				nodes[*it].Worm = true;
 				wormNodes.push_back(*it);
@@ -116,11 +118,11 @@ class VertexHandler
 
 		void CloseUpdate()
 		{
-			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+			for (index_it it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 				nodes[wormNodes[*it]].Worm = false;
 			wormNodes.clear();
 			/*
-			for (auto it = indexBufferEnd; it != indexBuffer.begin();)
+			for (index_it it = indexBufferEnd; it != indexBuffer.begin();)
 			{
 				--it;
 				wormNodes.erase(it);
@@ -149,24 +151,24 @@ class VertexHandler
 		value_t VertexBufferParity()
 		{
 			value_t parity = 1.0;
-			for (auto it = nodeBuffer.begin(); it != nodeBufferEnd; ++it)
-				parity *= (configSpace.lattice->Sublattice(it->Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			for (node_it it =  nodeBuffer.begin(); it != nodeBufferEnd; ++it)
+				parity *= (configSpace.lattice->Sublattice(it->Site) == ConfigSpace_t::Geometry_t::A ? 1.0 : -1.0);
 			return parity;
 		}
 
 		value_t WormParity()
 		{
 			value_t parity = 1.0;
-			for (auto node : wormNodes)
-				parity *= (configSpace.lattice->Sublattice(nodes[node].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			for (uint_t i = 0; i < wormNodes.size(); ++i)
+				parity *= (configSpace.lattice->Sublattice(nodes[wormNodes[i]].Site) == ConfigSpace_t::Geometry_t::A ? 1.0 : -1.0);
 			return parity;
 		}
 	
 		value_t WormIndexBufferParity()
 		{
 			value_t parity = 1.0;
-			for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
-				parity *= (configSpace.lattice->Sublattice(nodes[wormNodes[*it]].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			for (index_it it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+				parity *= (configSpace.lattice->Sublattice(nodes[wormNodes[*it]].Site) == ConfigSpace_t::Geometry_t::A ? 1.0 : -1.0);
 			return parity;
 		}
 		
@@ -258,11 +260,11 @@ class VertexHandler
 		{
 			if (isWorm)
 			{
-				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
+				for (index_it it = indexBufferEnd; it != indexBuffer.begin(); --it)
 				{
 					nodes.erase(nodes.begin() + wormNodes[*(it-1)]);
 				}
-				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
+				for (index_it it = indexBufferEnd; it != indexBuffer.begin(); --it)
 				{
 					for (uint_t i = 0; i < wormNodes.size(); ++i)
 					{
@@ -270,12 +272,12 @@ class VertexHandler
 							--wormNodes[i];
 					}
 				}
-				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
+				for (index_it it = indexBufferEnd; it != indexBuffer.begin(); --it)
 					wormNodes.erase(wormNodes.begin() + *(it-1));
 			}
 			else
 			{
-				for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
+				for (index_it it = indexBufferEnd; it != indexBuffer.begin(); --it)
 				{
 					for (uint_t i = 0; i < wormNodes.size(); ++i)
 					{
@@ -297,7 +299,7 @@ class VertexHandler
 				{
 					if (nodes[k - i - 1].Worm)
 					{
-						auto wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
+						index_it wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
 						*wit = wormNodes[indexBuffer[n - i - 1]];
 					}
 					std::swap(nodes[wormNodes[indexBuffer[n - i - 1]]], nodes[k - i - 1]);
@@ -306,7 +308,7 @@ class VertexHandler
 				{
 					if (nodes[k - i - 1].Worm)
 					{
-						auto wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
+						index_it wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
 						*wit = indexBuffer[n - i - 1];
 					}
 					std::swap(nodes[indexBuffer[n - i - 1]], nodes[k - i - 1]);
@@ -314,7 +316,7 @@ class VertexHandler
 			}
 			for (uint_t i = 0; i < n; ++i)
 				nodes.erase(nodes.end() - 1);
-			for (auto it = indexBufferEnd; it != indexBuffer.begin(); --it)
+			for (index_it it = indexBufferEnd; it != indexBuffer.begin(); --it)
 			{
 				if (isWorm)
 					wormNodes.erase(wormNodes.begin() + *(it-1));
@@ -332,7 +334,7 @@ class VertexHandler
 				{
 					if (nodes[k - i - 1].Worm)
 					{
-						auto wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
+						index_it wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
 						*wit = wormNodes[indexBuffer[n - i - 1]];
 					}
 					std::swap(nodes[wormNodes[indexBuffer[n - i - 1]]], nodes[k - i - 1]);
@@ -342,13 +344,13 @@ class VertexHandler
 				{
 					if (nodes[k - i - 1].Worm)
 					{
-						auto wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
+						index_it wit = std::find(wormNodes.begin(), wormNodes.end(), k - i - 1);
 						*wit = indexBuffer[n - i - 1];
 					}
 					std::swap(nodes[indexBuffer[n - i - 1]], nodes[k - i - 1]);
 					if (nodes[k - i - 1].Worm)
 					{
-						auto wit = std::find(wormNodes.begin(), wormNodes.end(), indexBuffer[n - i - 1]);
+						index_it wit = std::find(wormNodes.begin(), wormNodes.end(), indexBuffer[n - i - 1]);
 						*wit = k - i - 1;
 					}
 				}
@@ -429,20 +431,20 @@ class VertexHandler
 			{
 				uint_t r = static_cast<uint_t>(configSpace.rng() * 2);
 				wormShiftParity = 1.0;
-				wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[i+r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+				wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[i+r].Site) == ConfigSpace_t::Geometry_t::A ? 1.0 : -1.0);
 			
 				nodeBuffer[i+r].Site = configSpace.lattice->RandomWalk(nodeBuffer[i+r].Site, 1, configSpace.rng);
-				wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[i+r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+				wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[i+r].Site) == ConfigSpace_t::Geometry_t::A ? 1.0 : -1.0);
 			}
 			*/
 			
 			uint_t r = static_cast<uint_t>(configSpace.rng() * l);
 			wormShiftParity = 1.0;
-			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::A ? 1.0 : -1.0);
 			
 			//nodeBuffer[r].Site = configSpace.lattice->RandomWalk(nodeBuffer[r].Site, 1, configSpace.rng);
 			nodeBuffer[r].Site = configSpace.lattice->FromNeighborhood(nodeBuffer[r].Site, configSpace.nhoodDist, configSpace.rng);
-			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::SublatticeType::A ? 1.0 : -1.0);
+			wormShiftParity *= (configSpace.lattice->Sublattice(nodeBuffer[r].Site) == ConfigSpace_t::Geometry_t::A ? 1.0 : -1.0);
 			
 			
 			value_t tau = nodeBuffer[0].Tau - 0.05 * configSpace.beta + configSpace.rng() * 0.1 * configSpace.beta;
@@ -864,7 +866,7 @@ class VertexHandler
 			if (isWorm)
 			{
 				std::vector<std::size_t> buf;
-				for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+				for (index_it it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 					buf.push_back(wormNodes[*it]);
 
 				for (uint_t i = 0; i < perm.size(); ++i)
@@ -876,7 +878,7 @@ class VertexHandler
 					}
 				}
 				int i = 0;
-				for (auto it = buf.begin(); it != buf.end(); ++it)
+				for (index_it it = buf.begin(); it != buf.end(); ++it)
 				{
 					perm[cnt + i] = *it;
 					++i;
@@ -893,7 +895,7 @@ class VertexHandler
 					}
 				}
 				int i = 0;
-				for (auto it = indexBuffer.begin(); it != indexBufferEnd; ++it)
+				for (index_it it = indexBuffer.begin(); it != indexBufferEnd; ++it)
 				{
 					perm[cnt + i] = *it;
 					++i;
@@ -921,5 +923,4 @@ class VertexHandler
 		std::vector<std::size_t> indexBuffer;
 		typename std::vector<std::size_t>::iterator indexBufferEnd;
 		value_t wormShiftParity;
-		uint_t sum = 0;
 };

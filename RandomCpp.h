@@ -4,9 +4,9 @@
 class RandomCpp
 {
 	public:
-		using generator_t = std::mt19937_64;
-		using dist_t = std::uniform_real_distribution<double>;
-		using seed_t = generator_t::result_type;
+		typedef std::mt19937_64 generator_t;
+		typedef std::uniform_real_distribution<double> dist_t;
+		typedef generator_t::result_type seed_t;
 
 		RandomCpp(seed_t seed = generator_t::default_seed)
 			: rng(generator_t(seed)), dist(dist_t(0.0, 1.0)), seed(seed)

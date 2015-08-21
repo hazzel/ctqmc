@@ -8,7 +8,7 @@
 #include "LookUpTable.h"
 #include "GeometryBase.h"
 
-template<typename RNG, typename Int_t = std::int_fast32_t>
+template<typename RNG, typename Int_t = int32_t>
 class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 {
 	public:
@@ -69,7 +69,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 	private:
 		SublatticeType GetSublattice(int_t site)
 		{
-			return ((site % 2) == 0 ? SublatticeType::A : SublatticeType::B);
+			return ((site % 2) == 0 ? GeometryBase<RNG, Int_t>::A : GeometryBase<RNG, Int_t>::B);
 		}
 		
 		int_t ShiftSiteHardCode(int_t site, int_t direction, int_t distance = 1)
@@ -77,7 +77,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 			int_t newSite = site;
 			for (int_t i = 0; i < distance; ++i)
 			{
-				if (GetSublattice(newSite) == SublatticeType::B)
+				if (GetSublattice(newSite) == GeometryBase<RNG, Int_t>::B)
 				{
 					if ((newSite + 1) % (2*this->L) == 0)
 					{
