@@ -8,7 +8,7 @@
 #include "LookUpTable.h"
 #include "GeometryBase.h"
 
-template<typename RNG, typename Int_t = int32_t>
+template<typename RNG, typename Int_t = int64_t>
 class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 {
 	public:

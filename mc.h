@@ -70,8 +70,8 @@ class CLASSNAME
 		//using Rhom_t = RhombicHoneycomb<Random, int_t>;
 		//using ConfigSpace_t = ConfigSpace<GeometryBase<Random, int_t>, Random, value_t, matrix_t>;
 
-		typedef int32_t uint_t;
-		typedef int32_t int_t;
+		typedef int64_t uint_t;
+		typedef int64_t int_t;
 		typedef double value_t;
 		typedef Eigen::Matrix<value_t, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
 		typedef RhombicHoneycomb<Random, int_t> Rhom_t;

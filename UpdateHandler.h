@@ -103,10 +103,19 @@ class UpdateHandler
 				dmatrix_t S = invS.inverse();
 				if (k > 0)
 				{
+					//dmatrix_t vinvG = invG.topLeftCorner(k, k).transpose() * v.transpose();
+					//vinvG.transposeInPlace();
 					dmatrix_t vinvG = v * invG.topLeftCorner(k, k);
 					invG.block(k, 0, n, k) = -S * vinvG;
 					invG.topLeftCorner(k, k) -= invGu * invG.block(k, 0, n, k);
 					invG.block(0, k, k, n) = -invGu * S;
+					
+					/*
+					dmatrix_t vinvG = v * invG.topLeftCorner(k, k);
+					invG.block(k, 0, n, k) = -S * vinvG;
+					invG.topLeftCorner(k, k) -= invGu * invG.block(k, 0, n, k);
+					invG.block(0, k, k, n) = -invGu * S;
+					*/
 				}
 				invG.template block<n, n>(k, k) = S;
 				if (k > 0)

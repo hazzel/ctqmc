@@ -28,7 +28,7 @@ inline bool DirExists(const std::string& name)
 		return 0;
 }
 
-template<typename RNG, typename Int_t = int32_t>
+template<typename RNG, typename Int_t = int64_t>
 class GeometryBase
 {
 	public:
