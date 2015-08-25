@@ -103,9 +103,9 @@ class UpdateHandler
 				dmatrix_t S = invS.inverse();
 				if (k > 0)
 				{
-					//dmatrix_t vinvG = invG.topLeftCorner(k, k).transpose() * v.transpose();
-					//vinvG.transposeInPlace();
-					dmatrix_t vinvG = v * invG.topLeftCorner(k, k);
+					dmatrix_t vinvG = invG.topLeftCorner(k, k).transpose() * v.transpose();
+					vinvG.transposeInPlace();
+					//dmatrix_t vinvG = v * invG.topLeftCorner(k, k);
 					invG.block(k, 0, n, k) = -S * vinvG;
 					invG.topLeftCorner(k, k) -= invGu * invG.block(k, 0, n, k);
 					invG.block(0, k, k, n) = -invGu * S;
@@ -234,12 +234,23 @@ class UpdateHandler
 			vertexHandler.PermuteVertices(true);
 			vertexHandler.WoodburyShiftWorm(shiftedWormU, shiftedWormV, shiftedWormA);
 
+			/*
 			dmatrix_t t = invG.template block<l, l>(k, k).inverse() * invG.block(k, 0, l, k);
 			dmatrix_t M = invG.topLeftCorner(k, k) - invG.block(0, k, k, l) * t;
 			
 			dmatrix_t shiftedInvS = shiftedWormA - shiftedWormV * M * shiftedWormU;
 			value_t detShiftedInvS = shiftedInvS.determinant();
-
+			*/
+			dmatrix_t gi = invG.template block<l, l>(k, k).inverse();
+			dmatrix_t t = invG.block(k, 0, l, k).transpose() * gi.transpose();
+			t.transposeInPlace();
+			dmatrix_t M = invG.topLeftCorner(k, k) - invG.block(0, k, k, l) * t;
+			dmatrix_t Mt = M.transpose();
+			
+			shiftedWormV.transposeInPlace();
+			dmatrix_t shiftedInvS = shiftedWormA - (shiftedWormU.transpose() * Mt * shiftedWormV).transpose();
+			value_t detShiftedInvS = shiftedInvS.determinant();
+			
 			value_t acceptRatio = detShiftedInvS * invG.template block<l, l>(k, k).determinant() * vertexHandler.WormShiftParity();
 			if (print && acceptRatio < 0.0)
 			{
@@ -247,6 +258,7 @@ class UpdateHandler
 			}
 			if (configSpace.rng() < acceptRatio)
 			{
+				/*
 				Eigen::Matrix<value_t, l, l, Eigen::ColMajor> S = shiftedInvS.inverse();
 				dmatrix_t vM = shiftedWormV * M;
 				dmatrix_t Mu = M * shiftedWormU;
@@ -257,6 +269,20 @@ class UpdateHandler
 				
 				G.block(0, k, k, l) = shiftedWormU;
 				G.block(k, 0, l, k) = shiftedWormV;
+				G.template block<l, l>(k, k) = shiftedWormA;
+				*/
+				
+				Eigen::Matrix<value_t, l, l, Eigen::ColMajor> S = shiftedInvS.inverse();
+				dmatrix_t vM = Mt * shiftedWormV;
+				vM.transposeInPlace();
+				dmatrix_t Mu = M * shiftedWormU;
+				invG.block(k, 0, l, k) = -S * vM;
+				invG.topLeftCorner(k, k) = M - Mu * invG.block(k, 0, l, k);
+				invG.block(0, k, k, l) = -Mu * S;
+				invG.template block<l, l>(k, k) = S;
+				
+				G.block(0, k, k, l) = shiftedWormU;
+				G.block(k, 0, l, k) = shiftedWormV.transpose();
 				G.template block<l, l>(k, k) = shiftedWormA;
 				
 				vertexHandler.ApplyWormShift();
