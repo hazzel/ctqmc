@@ -319,16 +319,10 @@ bool CLASSNAME::read(const std::string& dir)
 }
 bool CLASSNAME::read_state(const std::string& dir)
 {
-	idump d(dir);
-	if (!d) 
-		return false;
-	else
-	{
-		configSpace.Serialize(d);
-		d.close();
-		//std::cout << "read sweep: " << sweep << " , pertorder:" << configSpace.updateHandler.GetVertexHandler().Vertices() << std::endl;
-		return true;
-	}
+	std::ifstream is(dir);
+	configSpace.SerializeTxt(is);
+	is.close();
+	return true;
 }
 
 #ifdef MCL_PT

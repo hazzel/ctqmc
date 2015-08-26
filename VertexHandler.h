@@ -26,6 +26,28 @@ struct Node
 		: Site(site), Tau(tau), Worm(worm)
 	{}
 	
+	void Serialize(std::ostream& os)
+	{
+		os << Site << ';' << Tau << ';' << Worm;
+	}
+	
+	void Serialize(std::istream& is)
+	{
+		std::string line, token;
+		is >> line;
+		std::istringstream ss(line);
+
+		std::getline(ss, token, ';');
+		std::istringstream con(token);
+		con >> Site;
+		std::getline(ss, token, ';');
+		con.str(token);
+		con >> Tau;
+		std::getline(ss, token, ';');
+		con.str(token);
+		con >> Worm;
+	}
+	
 	Index_t Site;
 	Value_t Tau;
 	bool Worm;
@@ -913,6 +935,25 @@ class VertexHandler
 		{
 			d.read(nodes);
 			d.read(wormNodes);
+		}
+		
+		void SerializeTxt(std::istream& is)
+		{
+			int_t n;
+			is >> n;
+			for (int_t i = 0; i < n; ++i)
+			{
+				node_t node;
+				node.Serialize(is);
+				nodes.push_back(node);
+			}
+			is >> n;
+			for (int_t i = 0; i < n; ++i)
+			{
+				std::size_t s;
+				is >> s;
+				wormNodes.push_back(s);
+			}
 		}
 	private:
 		ConfigSpace_t& configSpace;

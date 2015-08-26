@@ -8,6 +8,7 @@
 #include <cmath>
 #include <numeric>
 #include <cstdint>
+#include <fstream>
 #include "LookUpTable.h"
 #include "Eigen/Dense"
 #include "measurements.h"
@@ -401,6 +402,21 @@ class UpdateHandler
 		void Serialize(idump& d)
 		{
 			vertexHandler.Serialize(d);
+			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
+			dmatrix_t g(k, k);
+			vertexHandler.PropagatorMatrix(g);
+			if (k > G.rows())
+			{
+				G.resize(k, k);
+				invG.resize(k, k);
+			}
+			G.topLeftCorner(k, k) = g;
+			StabilizeInvG();
+		}
+		
+		void SerializeTxt(std::istream& is)
+		{
+			vertexHandler.SerializeTxt(is);
 			uint_t k = 2 * (vertexHandler.Vertices() + vertexHandler.Worms());
 			dmatrix_t g(k, k);
 			vertexHandler.PropagatorMatrix(g);
