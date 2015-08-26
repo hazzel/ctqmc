@@ -1,4 +1,5 @@
 #pragma once
+#include <sstream>
 #include <algorithm>
 #include <cmath>
 #include <array>
@@ -26,6 +27,45 @@ inline bool DirExists(const std::string& name)
 		return 1;
 	else
 		return 0;
+}
+
+template<class ContainerT>
+void tokenize(const std::string& str, ContainerT& tokens, const std::string& delimiters = " ", bool trimEmpty = false)
+{
+	std::string::size_type pos, lastPos = 0;
+
+	typedef ContainerT Base;
+	typedef typename Base::value_type ValueType;
+	typedef typename ValueType::size_type SizeType;
+
+	while(true)
+	{
+		pos = str.find_first_of(delimiters, lastPos);
+		if(pos == std::string::npos)
+		{
+			pos = str.length();
+
+			if(pos != lastPos || !trimEmpty)
+				tokens.push_back(ValueType(str.data()+lastPos, (SizeType)pos-lastPos ));
+
+			break;
+		}
+		else
+		{
+			if(pos != lastPos || !trimEmpty)
+				tokens.push_back(ValueType(str.data()+lastPos, (SizeType)pos-lastPos ));
+		}
+
+		lastPos = pos + 1;
+	}
+}
+
+template<typename T>
+T ConvertString(const std::string& str)
+{
+	T num;
+	std::istringstream(str) >> num;
+	return num;
 }
 
 template<typename RNG, typename Int_t = int64_t>
@@ -185,8 +225,8 @@ class GeometryBase
 				{
 					is.read((char*)&maxDistance, sizeof(maxDistance));
 					is.read((char*)&nSites, sizeof(nSites));
-					this->numNeighborhood.resize(this->maxDistance + 1, 0);
-					this->numDistance.resize(this->maxDistance + 1, 0);
+					numNeighborhood.resize(this->maxDistance + 1, 0);
+					numDistance.resize(this->maxDistance + 1, 0);
 					
 					for (int_t i = 0; i < nSites; ++i)
 					{
@@ -210,7 +250,51 @@ class GeometryBase
 					}
 					is.close();
 					CountNeighborhood();
+					for (int_t i = 0; i <= maxDistance; ++i)
+					{
+						std::cout << numDistance[i] << std::endl;
+					}
 				}
+			}
+		}
+		
+		void ReadFromTxt(const std::string& filename)
+		{
+			std::ifstream is(filename.c_str(), std::ifstream::binary);
+			if (is.is_open())
+			{
+				std::string content;
+				std::getline(is, content);
+				is.close();
+				std::vector<std::string> vec;
+				tokenize(content, vec, ";", true);
+				maxDistance = ConvertString<int_t>(vec[0]);
+				nSites = ConvertString<int_t>(vec[1]);
+				numNeighborhood.resize(maxDistance + 1, 0);
+				numDistance.resize(maxDistance + 1, 0);
+				int_t n = 2;
+				
+				for (int_t i = 0; i < nSites; ++i)
+				{
+					for (int_t j = 0; j < nSites; ++j)
+					{
+						distanceMap(i, j) = ConvertString<int_t>(vec[n]);
+						++n;
+					}
+					for (int_t j = 0; j < nDirections; ++j)
+					{
+						neighborList[i][j] = ConvertString<int_t>(vec[n]);
+						++n;
+					}
+					distanceHistogram[i] = ConvertString<int_t>(vec[n]);
+					++n;
+				}
+				for (int_t i = 0; i <= maxDistance; ++i)
+				{
+					numNeighborhood[i] = ConvertString<int_t>(vec[n]);
+					++n;
+				}
+				CountNeighborhood();
 			}
 		}
 	protected:

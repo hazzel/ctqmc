@@ -34,7 +34,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 			this->distanceHistogram.resize(this->nSites, 0);
 			if (this->fileIO && FileExists(filename))
 			{
-				this->ReadFromFile(filename);
+				this->ReadFromTxt(filename + ".txt");
 				//std::cout << "Distance Histogram:" << std::endl;
 				//for (int_t i = 0; i <= this->maxDistance; ++i)
 				//	std::cout << i << " : " << this->distanceHistogram[i] << std::endl;
