@@ -237,15 +237,11 @@ class VertexHandler
 				uint_t nsite;
 				if (N == 1)
 				{
-					nsite = configSpace.lattice->FromDistance(site, nhoodDist, configSpace.rng);
+					//nsite = configSpace.lattice->FromDistance(site, nhoodDist, configSpace.rng);
+					nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
 				}
 				else if(N == 2)
 				{
-					//if (i == r)
-					//	nsite = configSpace.lattice->FromDistance(site, nhoodDist, configSpace.rng);
-					//else
-					//	nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
-					//nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
 					nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
 				}
 				nodeBuffer[i] = node_t(nsite, tau, true);
