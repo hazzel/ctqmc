@@ -130,11 +130,11 @@ class ConfigSpace
 				{
 					uint_t m = lattice->NeighborhoodCount(nhoodDist);
 					preFactor /= lattice->Sites() * m * m * m * beta * zeta4;
-					if (dist <= nhoodDist)
-						return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
-					else
-						return false;
 				}
+				if (dist <= nhoodDist)
+					return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
+				else
+					return false;
 			}
 			else
 			{

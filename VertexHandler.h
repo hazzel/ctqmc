@@ -237,8 +237,8 @@ class VertexHandler
 				uint_t nsite;
 				if (N == 1)
 				{
-					//nsite = configSpace.lattice->FromDistance(site, nhoodDist, configSpace.rng);
-					nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
+					nsite = configSpace.lattice->FromDistance(site, nhoodDist, configSpace.rng);
+					//nsite = configSpace.lattice->FromNeighborhood(site, nhoodDist, configSpace.rng);
 				}
 				else if(N == 2)
 				{
