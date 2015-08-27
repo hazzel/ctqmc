@@ -299,11 +299,6 @@ class ConfigSpace
 						++cnt[index];
 					}
 				}
-				if (t % (nTimeBins / 10) == 0)
-				{
-					std::cout << ".";
-					std::cout.flush();
-				}
 			}
 		}
 		
@@ -365,6 +360,8 @@ class ConfigSpace
 		{
 			L = l;
 			lattice->Resize(l, rng);
+			if (lattice->Sites() == 0)
+				std::cout << "Error! Number of lattice sites cannot be zero." << std::endl;
 			hoppingMatrix.resize(lattice->Sites(), lattice->Sites());
 		}
 		
