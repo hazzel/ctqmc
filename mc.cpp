@@ -176,7 +176,7 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	therm_name_depr = "therm-L" + ToString(L) + "-V" + ToString(configSpace.V) + "-T" + ToString(T) + "-" + geometry;
 	therm_name = therm_name_depr + "-N" + ToString(nThermalize);
 	therm_path = path + "thermalization/";
-	std::vector<std::string> files = GlobFile(therm_path + therm_name + "/*");
+	std::vector<std::string> files = GlobFile(therm_path + therm_name + "/*.txt");
 	if (FileExists(therm_path + therm_name_depr) && (!DirExists(therm_path + therm_name)))
 		files.push_back(therm_path + therm_name_depr);
 	if (sweep == 0 && (!do_therm) && files.size() > 0 && nOptimizationSteps == 0)
