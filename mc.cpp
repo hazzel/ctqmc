@@ -519,7 +519,7 @@ void CLASSNAME::PrintAcceptanceMatrix(std::ostream& out)
 	}
 	out << "Total updates accepted: " << acceptedUpdates.sum() << " (" << acceptedUpdates.sum() / proposedUpdates.sum() * 100.0 << " %)" << std::endl;
 	out << "Total updates proposed: " << proposedUpdates.sum() << std::endl;
-	std::cout << "Accepted sites:" << std::endl;
+	out << "Accepted sites:" << std::endl;
 	for (int_t i = 0; i < propSites.size(); ++i)
 	{
 		out << "Site " << i << "(Dist = " << configSpace.lattice->Distance(0, i) << "): " << static_cast<value_t>(accSites[i]) / static_cast<value_t>(propSites[i]) << " (" << propSites[i] << ")" << std::endl;
