@@ -69,24 +69,28 @@ class ConfigSpace
 			value_t preFactor = proposeRatio;
 			if (isWorm)
 			{
-				//int_t dist = rng() * (lattice->MaxDistance() + 1);
-				int_t dist = nhoodDist;
+				int_t dist;
 				if (state == StateType::Z && N == 1)
 				{
-					//uint_t m = lattice->DistanceCount(dist);
-					//preFactor *= (lattice->MaxDistance() + 1.) * zeta2 * lattice->Sites() * m * beta;
-					uint_t m = lattice->NeighborhoodCount(dist);
-					preFactor *= zeta2 * lattice->Sites() * m * beta;
+					int_t dist = rng() * (lattice->MaxDistance() + 1);
+					uint_t m = lattice->DistanceCount(dist);
+					preFactor *= (lattice->MaxDistance() + 1.) * zeta2 * lattice->Sites() * m * beta;
+					
+					//uint_t m = lattice->NeighborhoodCount(dist);
+					//preFactor *= zeta2 * lattice->Sites() * m * beta;
 				}
 				else if (state == StateType::W2 && N == 1)
 				{
-					//uint_t m = lattice->DistanceCount(dist);
-					//preFactor *= (lattice->MaxDistance() + 1.) * lattice->Sites() * m * zeta4 / zeta2;
-					uint_t m = lattice->NeighborhoodCount(dist);
-					preFactor *= lattice->Sites() * m * zeta4 / zeta2;
+					int_t dist = rng() * (lattice->MaxDistance() + 1);
+					uint_t m = lattice->DistanceCount(dist);
+					preFactor *= (lattice->MaxDistance() + 1.) * lattice->Sites() * m * zeta4 / zeta2;
+
+					//uint_t m = lattice->NeighborhoodCount(dist);
+					//preFactor *= lattice->Sites() * m * zeta4 / zeta2;
 				}
 				else if (state == StateType::Z && N == 2)
 				{
+					dist = nhoodDist;
 					uint_t m = lattice->NeighborhoodCount(dist);
 					preFactor *= lattice->Sites() * m * m * m * beta * zeta4;
 				}
@@ -114,27 +118,29 @@ class ConfigSpace
 				int_t dist = updateHandler.GetVertexHandler().template WormIndexBufferDistance<N>();
 				if (state == StateType::W2 && N == 1)
 				{
-					//uint_t m = lattice->DistanceCount(dist);
-					//preFactor *= 1.0 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m * beta * zeta2);
-					uint_t m = lattice->NeighborhoodCount(nhoodDist);
-					preFactor *= 1.0 / (lattice->Sites() * m * beta * zeta2);
+					uint_t m = lattice->DistanceCount(dist);
+					preFactor *= 1.0 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m * beta * zeta2);
+					
+					//uint_t m = lattice->NeighborhoodCount(nhoodDist);
+					//preFactor *= 1.0 / (lattice->Sites() * m * beta * zeta2);
 				}
 				else if (state == StateType::W4 && N == 1)
 				{
-					//uint_t m = lattice->DistanceCount(dist);
-					//preFactor *= zeta2 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m * zeta4);
-					uint_t m = lattice->NeighborhoodCount(nhoodDist);
-					preFactor *= zeta2 / (lattice->Sites() * m * zeta4);
+					uint_t m = lattice->DistanceCount(dist);
+					preFactor *= zeta2 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m * zeta4);
+					
+					//uint_t m = lattice->NeighborhoodCount(nhoodDist);
+					//preFactor *= zeta2 / (lattice->Sites() * m * zeta4);
 				}
 				else if (state == StateType::W4 && N == 2)
 				{
 					uint_t m = lattice->NeighborhoodCount(nhoodDist);
 					preFactor /= lattice->Sites() * m * m * m * beta * zeta4;
+					if (dist <= nhoodDist)
+						return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
+					else
+						return false;
 				}
-				if (dist <= nhoodDist)
-					return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
-				else
-					return false;
 			}
 			else
 			{
