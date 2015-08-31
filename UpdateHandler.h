@@ -174,7 +174,6 @@ class UpdateHandler
 					vertexHandler.PermuteProgagatorMatrix(G, isWorm);
 				}
 				vertexHandler.RemoveBufferedVertices2(isWorm);
-				StabilizeInvG();
 				return true;
 			}
 			else
