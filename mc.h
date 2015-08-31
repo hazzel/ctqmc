@@ -179,4 +179,6 @@ class CLASSNAME
 		bool annealing = false;
 		value_t startT = 5.0;
 		value_t finalT;
+		std::vector<int_t> propSites;
+		std::vector<int_t> accSites;
 };

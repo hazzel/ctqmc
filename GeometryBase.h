@@ -254,7 +254,7 @@ class GeometryBase
 		
 		void CountNeighborhood()
 		{
-			int_t i = 0;
+			int_t i = 27;
 			for (int_t j = 0; j <= maxDistance; ++j)
 			{
 				numNeighborhood[j] = 0;

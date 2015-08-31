@@ -174,6 +174,8 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	}
 	
 	BuildUpdateWeightMatrix();
+	propSites.resize(configSpace.lattice->Sites(), 0);
+	accSites.resize(configSpace.lattice->Sites(), 0);
 	//ProfilerStart("gperf/mc.prof");
 }
 
@@ -364,23 +366,23 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 	
 	/*
 	//Z<->W2 LEI
-	proposeProbabilityMatrix <<	2.05 / 10.0	,	1.30 / 10.0	,	1.65 / 10.0,
-															2.05 / 10.0	,	1.30 / 10.0	,	1.65 / 10.0,
-															1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
-															1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
-															0.4 / 10.0	,	0.25 / 10.0	,	0.5 / 10.0,
-															0.4 / 10.0	,	0.25 / 10.0	,	0.5 / 10.0,
-															0.4 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
-															0.4 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
-															1.3 / 10.0	,	0.0					,	0.0,
-															0.0					,	1.8 / 10.0	,	0.0, 
+	proposeProbabilityMatrix <<	1.0 / 10.0	,	1. / 10.0	,	1.65 / 10.0,
+															1.0 / 10.0	,	1. / 10.0	,	1.65 / 10.0,
+															0.5 / 10.0	,	0. / 10.0	,	1.0 / 10.0,
+															0.5 / 10.0	,	0. / 10.0	,	1.0 / 10.0,
+															0.0 / 10.0	,	0. / 10.0	,	0.5 / 10.0,
+															0.0 / 10.0	,	0. / 10.0	,	0.5 / 10.0,
+															0.0 / 10.0	,	0. / 10.0	,	0.25 / 10.0,
+															0.0 / 10.0	,	0. / 10.0	,	0.25 / 10.0,
+															7.0 / 10.0	,	0.0					,	0.0,
+															0.0					,	6.0 / 10.0	,	0.0, 
 															0.0 / 10.0	,	0.0					,	0.0,
 															0.0					,	0.0					,	0.0 / 10.0,
-															0.0					,	0.6 / 10.0	,	0.0,
-															0.0					,	0.0					,	1.2 / 10.0,
+															0.0					,	0.0 / 10.0	,	0.0,
+															0.0					,	0.0					,	0.0 / 10.0,
 															0.0					,	0.0 / 10.0	,	0.0 / 10.0,
 															0.0					,	2.0 / 10.0	,	2.0 / 10.0;
-			*/
+*/
 
 
 	//ALL TRANSITIONS LEI
@@ -517,6 +519,11 @@ void CLASSNAME::PrintAcceptanceMatrix(std::ostream& out)
 	}
 	out << "Total updates accepted: " << acceptedUpdates.sum() << " (" << acceptedUpdates.sum() / proposedUpdates.sum() * 100.0 << " %)" << std::endl;
 	out << "Total updates proposed: " << proposedUpdates.sum() << std::endl;
+	std::cout << "Accepted sites:" << std::endl;
+	for (int_t i = 0; i < propSites.size(); ++i)
+	{
+		out << "Site " << i << "(Dist = " << configSpace.lattice->Distance(0, i) << "): " << static_cast<value_t>(accSites[i]) / static_cast<value_t>(propSites[i]) << " (" << propSites[i] << ")" << std::endl;
+	}
 }
 
 void CLASSNAME::do_update()
@@ -624,8 +631,25 @@ void CLASSNAME::do_update()
 		{
 			value_t proposeRatio = proposeProbabilityMatrix(UpdateType::W2toZ, StateType::W2) / proposeProbabilityMatrix(UpdateType::ZtoW2, StateType::Z);
 			bool result;
+			int_t site = -1;
 			if (configSpace.rng() < 0.5)
+			{
 				result = configSpace.AddRandomVertices<1>(proposeRatio, true);
+				/*
+				int_t s1 = configSpace.updateHandler.GetVertexHandler().GetNodeBuffer()[0].Site;
+				int_t s2 = configSpace.updateHandler.GetVertexHandler().GetNodeBuffer()[1].Site;
+				if (s1 == 0)
+				{
+					site = s2;
+					propSites[s2] += 1;
+				}
+				if (s2 == 0)
+				{
+					site = s1;
+					propSites[s1] += 1;
+				}
+				*/
+			}
 			else
 				result = configSpace.OpenUpdate<1>(proposeRatio);
 			if (result)
@@ -633,6 +657,8 @@ void CLASSNAME::do_update()
 				acceptedUpdates(UpdateType::ZtoW2, state) += 1.0;
 				configSpace.state = StateType::W2;
 				++rebuildCnt;
+				if (site >= 0)
+					accSites[site] += 1;
 			}
 			proposedUpdates(UpdateType::ZtoW2, state) += 1.0;
 		}

@@ -207,6 +207,11 @@ class VertexHandler
 				return (configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[0]]].Site, nodes[wormNodes[indexBuffer[1]]].Site) == distance) && (configSpace.lattice->Distance(nodes[wormNodes[indexBuffer[2]]].Site, nodes[wormNodes[indexBuffer[3]]].Site) == distance);
 			}
 		}
+
+		std::vector<node_t>& GetNodeBuffer()
+		{
+			return nodeBuffer;
+		}
 		
 		template<int_t N>
 		void AddRandomVerticesToBuffer()
@@ -248,7 +253,6 @@ class VertexHandler
 			}
 			nodeBufferEnd = nodeBuffer.begin() + 2 * N;
 		}
-		
 		
 		void RemoveBufferedVertices(bool isWorm)
 		{
