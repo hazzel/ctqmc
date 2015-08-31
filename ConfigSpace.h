@@ -395,6 +395,14 @@ class ConfigSpace
 			updateHandler.Serialize(d);
 		}
 		
+		void SerializeTxt(std::istream& is)
+		{
+			std::string s;
+			is >> s;
+			state = static_cast<StateType>(ConvertString<int_t>(s));
+			updateHandler.SerializeTxt(is);
+		}
+		
 		value_t AdditionFactorialRatio(uint_t k, uint_t n)
 		{
 			if (k <= 0 || n <= 0)
