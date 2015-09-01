@@ -38,14 +38,17 @@ struct Node
 		std::istringstream ss(line);
 
 		std::getline(ss, token, ';');
-		std::istringstream con(token);
-		con >> Site;
+		Site = std::atoi(token.c_str());
+		std::cout << token << " -> " << Site << std::endl;
 		std::getline(ss, token, ';');
-		con.str(token);
-		con >> Tau;
+		Tau = std::atof(token.c_str());
 		std::getline(ss, token, ';');
-		con.str(token);
-		con >> Worm;
+		if (token == "0")
+			Worm = false;
+		else if(token == "1")
+			Worm = true;
+		else
+			std::cout << "Error in node serialization." << std::endl;
 	}
 	
 	Index_t Site;
