@@ -39,7 +39,6 @@ struct Node
 
 		std::getline(ss, token, ';');
 		Site = std::atoi(token.c_str());
-		std::cout << token << " -> " << Site << std::endl;
 		std::getline(ss, token, ';');
 		Tau = std::atof(token.c_str());
 		std::getline(ss, token, ';');
