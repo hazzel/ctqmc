@@ -389,9 +389,7 @@ class ConfigSpace
 		
 		void Serialize(idump& d)
 		{
-			std::cout << "configspace read" << std::endl;
 			d.read(state);
-			std::cout << state << std::endl;
 			updateHandler.Serialize(d);
 		}
 		
