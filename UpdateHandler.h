@@ -215,7 +215,6 @@ class UpdateHandler
 			}
 		}
 		
-		
 		template<int_t W>
 		bool ShiftWorm()
 		{

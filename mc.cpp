@@ -264,6 +264,7 @@ void CLASSNAME::write(const std::string& dir)
 	f << ( sweep > nThermalize ? sweep-nThermalize : 0 ) << std::endl;
 	f.close();
 
+	/*
 	std::ofstream ostream;
 	#ifdef MCL_PT
 		ostream.open(dir+"exporderhist.para"+std::to_string(myrep+1)+".txt");
@@ -277,10 +278,10 @@ void CLASSNAME::write(const std::string& dir)
 			ostream << i << " " << GetWithDef(exporderHistZ, i, 0) << " " << GetWithDef(exporderHistW2, i, 0) << std::endl;
 		ostream.close();
 	#endif
-	
-	ostream.open((dir+"probabilities.txt").c_str());
-	PrintAcceptanceMatrix(ostream);
-	ostream.close();
+	*/
+	//ostream.open((dir+"probabilities.txt").c_str());
+	//PrintAcceptanceMatrix(ostream);
+	//ostream.close();
 }
 void CLASSNAME::write_state(const std::string& dir)
 {
@@ -391,14 +392,14 @@ void CLASSNAME::BuildUpdateWeightMatrix()
 
 
 	//ALL TRANSITIONS LEI
-	proposeProbabilityMatrix <<	2.0 / 10.0	,	1.30 / 10.0	,	1.25 / 10.0,
-															2.0 / 10.0	,	1.30 / 10.0	,	1.25 / 10.0,
+	proposeProbabilityMatrix <<	2.15 / 10.0	,	1.45 / 10.0	,	1.65 / 10.0,
+															2.15 / 10.0	,	1.45 / 10.0	,	1.65 / 10.0,
 															1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
 															1.5 / 10.0	,	1.0 / 10.0	,	1.0 / 10.0,
-															0.25 / 10.0	,	0.25 / 10.0	,	0.5 / 10.0,
-															0.25 / 10.0	,	0.25 / 10.0	,	0.5 / 10.0,
 															0.25 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
 															0.25 / 10.0	,	0.25 / 10.0	,	0.25 / 10.0,
+															0.1 / 10.0	,	0.1 / 10.0	,	0.1 / 10.0,
+															0.1 / 10.0	,	0.1 / 10.0	,	0.1 / 10.0,
 															1.2 / 10.0	,	0.0					,	0.0,
 															0.0					,	1.8 / 10.0	,	0.0, 
 															0.8 / 10.0	,	0.0					,	0.0,
