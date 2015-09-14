@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <vector>
 #include <array>
+#include <algorithm>
 #include <list>
 #include <utility>
 #include <cmath>
@@ -15,6 +16,7 @@
 #include "types.h"
 #include "ConfigSpace.h"
 #include "UpdateHandler.h"
+
 
 template<typename Index_t, typename Value_t>
 struct Node
@@ -439,6 +441,8 @@ class VertexHandler
 			indexBufferEnd = indexBuffer.begin() + 2 * N;
 		}
 
+		int myrandom (int i) { return std::rand()%i;}
+
 		void ShiftWormToBuffer()
 		{
 			uint_t l = wormNodes.size();
@@ -479,6 +483,8 @@ class VertexHandler
 				tau += configSpace.beta;
 			for (uint_t i = 0; i < l; ++i)
 				nodeBuffer[i].Tau = tau;
+
+			std::random_shuffle ( nodeBuffer.begin(), nodeBufferEnd);
 		}
 
 		template<int_t W>

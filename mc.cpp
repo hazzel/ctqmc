@@ -176,7 +176,11 @@ CLASSNAME::CLASSNAME(const std::string& dir)
 	therm_name_depr = "therm-L" + ToString(L) + "-V" + ToString(configSpace.V) + "-T" + ToString(T) + "-" + geometry;
 	therm_name = therm_name_depr + "-N" + ToString(nThermalize);
 	therm_path = path + "thermalization/";
+	#ifdef MCL_JUQUEEN
 	std::vector<std::string> files = GlobFile(therm_path + therm_name + "/*.txt");
+	#else
+	std::vector<std::string> files = GlobFile(therm_path + therm_name + "/*-[0-9]");
+	#endif
 	if (FileExists(therm_path + therm_name_depr) && (!DirExists(therm_path + therm_name)))
 		files.push_back(therm_path + therm_name_depr);
 	if (sweep == 0 && (!do_therm) && files.size() > 0 && nOptimizationSteps == 0)
@@ -264,8 +268,8 @@ void CLASSNAME::write(const std::string& dir)
 	f << ( sweep > nThermalize ? sweep-nThermalize : 0 ) << std::endl;
 	f.close();
 
-	/*
 	std::ofstream ostream;
+	/*
 	#ifdef MCL_PT
 		ostream.open(dir+"exporderhist.para"+std::to_string(myrep+1)+".txt");
 		for (uint_t i = 0; i < std::max(exporderHistZ[myrep].size(), exporderHistW2[myrep].size()); ++i)
@@ -279,9 +283,9 @@ void CLASSNAME::write(const std::string& dir)
 		ostream.close();
 	#endif
 	*/
-	//ostream.open((dir+"probabilities.txt").c_str());
-	//PrintAcceptanceMatrix(ostream);
-	//ostream.close();
+	ostream.open((dir+"probabilities.txt").c_str());
+	PrintAcceptanceMatrix(ostream);
+	ostream.close();
 }
 void CLASSNAME::write_state(const std::string& dir)
 {
@@ -320,10 +324,22 @@ bool CLASSNAME::read(const std::string& dir)
 }
 bool CLASSNAME::read_state(const std::string& dir)
 {
+	#ifdef MCL_JUQUEEN
 	std::ifstream is(dir);
 	configSpace.SerializeTxt(is);
 	is.close();
 	return true;
+	#else
+	idump d(dir);
+	if (!d) 
+		return false;
+	else
+	{
+		configSpace.Serialize(d);
+		d.close();
+		return true;
+	}
+	#endif
 }
 
 #ifdef MCL_PT

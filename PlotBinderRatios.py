@@ -15,13 +15,13 @@ for l in range(len(L)):
 	#filelist.append(glob.glob("plot_rhom_V2.0-T*/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_rhom_V2.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.355/*L" + L[l] + "*.out"))
-	filelist.append(glob.glob("plot/plot_hex_V1.5/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot/plot_hex_V1.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot/plot_hex_V1.625/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot_hex_V1.75/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot/plot_hex_V1.875/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot/plot_hex_V2.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot/plot_hex_V2.0-T*/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot_hex_V2.25/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot/plot_hex_V2.25/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot/plot_hex_V2.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot/plot_hex_V3.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot/plot_hex_V3.5/*L" + L[l] + "*.out"))
@@ -29,11 +29,13 @@ for l in range(len(L)):
 	#filelist.append(glob.glob("plot_hex_T0.08/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot/plot_rhom_V1.5/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot/plot_rhom_V1.625/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot/plot_rhom_V1.75/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot/plot_rhom_V1.875/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot/plot_rhom_V1.75/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot/plot_rhom_V1.8125/*L" + L[l] + "*.out"))
+	#filelist.append(glob.glob("plot/plot_rhom_V1.9375/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot/plot_rhom_V1.875/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot/plot_rhom_V2.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot/plot_rhom_V2.125/*L" + L[l] + "*.out"))
-	#filelist.append(glob.glob("plot/plot_rhom_V2.5/*L" + L[l] + "*.out"))
+	filelist.append(glob.glob("plot/plot_rhom_V2.5/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot/plot_rhom_V3.0/*L" + L[l] + "*.out"))
 	#filelist.append(glob.glob("plot/plot_rhom_V1.355/*L" + L[l] + "*.out"))
 	for f in range(len(filelist)):
@@ -50,11 +52,12 @@ for l in range(len(L)):
 				continue
 			plist = ParseParameters(filelist[f][i])[0]
 			elist = ParseEvalables(filelist[f][i])[0]
+			#x.append((float(plist["T"]) - 0.46)/0.46 * float(L[l]))
 			x.append(float(plist["T"]))
 			yB.append( ArrangePlot(elist, "Binder")[0][0] )
 			yBerr.append( ArrangePlot(elist, "Binder")[1][0] )
-			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(l)**0.25)
-			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(l)**0.25)
+			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**0.25)
+			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**0.25)
 			yB = [i for j, i, k in sorted(zip(x, yB, yBerr))]
 			yBerr = [k for j, i, k in sorted(zip(x, yB, yBerr))]
 			yM2 = [i for j, i, k in sorted(zip(x, yM2, yM2err))]
