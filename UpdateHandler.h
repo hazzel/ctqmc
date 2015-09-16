@@ -99,7 +99,7 @@ class UpdateHandler
 			}
 			if (force)
 				acceptRatio = 1.0;
-			if (configSpace.rng() < acceptRatio)
+			if (configSpace.rng() < std::fabs(acceptRatio))
 			{
 				dmatrix_t S = invS.inverse();
 				if (k > 0)
@@ -152,7 +152,7 @@ class UpdateHandler
 				std::cout << "RemoveVertices(" << N << "): AcceptRatio" << acceptRatio << std::endl;
 				std::cout << "IsWorm: " << isWorm << ", Vertices: " << vertexHandler.Vertices() << ", Worms: " << vertexHandler.Worms() << std::endl;
 			}
-			if (configSpace.rng() < acceptRatio)
+			if (configSpace.rng() < std::fabs(acceptRatio))
 			{
 				if (k != n)
 				{
@@ -255,7 +255,7 @@ class UpdateHandler
 			{
 				std::cout << "WormShift: AcceptRatio: " << acceptRatio << std::endl;
 			}
-			if (configSpace.rng() < acceptRatio)
+			if (configSpace.rng() < std::fabs(acceptRatio))
 			{
 				/*
 				Eigen::Matrix<value_t, l, l, Eigen::ColMajor> S = shiftedInvS.inverse();

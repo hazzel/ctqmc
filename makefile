@@ -48,7 +48,7 @@ ifeq ($(MCLL_SYSTEM_INFO), rwthcluster)
 	LDFLAGS = -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -openmp
 	SUPERLP = 
 else ifeq ($(MCLL_SYSTEM_INFO), juqueen)
-	CFLAGS  = -O3 -std=c++0x $(DEFINES)
+	CFLAGS  = -O3 -std=c++0x -DMCL_JUQUEEN $(DEFINES)
 	INCLUDE = -I$(MCLL) -I$(APPMCLL) -I$(HOME)/eigen/ -I$(HOME)/gperftools-2.4/install/include
 	LDFLAGS = 
 	SUPERLP =

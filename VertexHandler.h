@@ -17,7 +17,6 @@
 #include "ConfigSpace.h"
 #include "UpdateHandler.h"
 
-
 template<typename Index_t, typename Value_t>
 struct Node
 {
@@ -440,8 +439,6 @@ class VertexHandler
 			}
 			indexBufferEnd = indexBuffer.begin() + 2 * N;
 		}
-
-		int myrandom (int i) { return std::rand()%i;}
 
 		void ShiftWormToBuffer()
 		{

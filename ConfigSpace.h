@@ -79,16 +79,16 @@ class ConfigSpace
 					//uint_t m = lattice->DistanceCount(dist);
 					//preFactor *= (lattice->MaxDistance() + 1.) * zeta2 * lattice->Sites() * m * beta;
 					uint_t m = lattice->NeighborhoodCount(dist);
-					//preFactor *= zeta2 * lattice->Sites() * m * beta;
-					preFactor *= zeta2 * (double)(m) / (double)(lattice->Sites());
+					preFactor *= zeta2 * lattice->Sites() * m * beta;
+					//preFactor *= zeta2 * (double)(m) / (double)(lattice->Sites());
 				}
 				else if (state == W2 && N == 1)
 				{
 					//uint_t m = lattice->DistanceCount(dist);
 					//preFactor *= (lattice->MaxDistance() + 1.) * lattice->Sites() * m * zeta4 / zeta2;
 					uint_t m = lattice->NeighborhoodCount(dist);
-					//preFactor *= lattice->Sites() * m * zeta4 / zeta2;
-					preFactor *= (double)(m) / (double)(lattice->Sites()) * zeta4 / zeta2;
+					preFactor *= lattice->Sites() * m * zeta4 / zeta2;
+					//preFactor *= (double)(m) / (double)(lattice->Sites()) * zeta4 / zeta2;
 				}
 				else if (state == Z && N == 2)
 				{
@@ -97,8 +97,8 @@ class ConfigSpace
 					//preFactor *= (lattice->MaxDistance() + 1.) * lattice->Sites() * m1 * m2 * m2 * beta * zeta4;
 
 					uint_t m = lattice->NeighborhoodCount(dist);
-					//preFactor *= lattice->Sites() * m * m * m * beta * zeta4;
-					preFactor *= std::pow((double)(m) / (double)(lattice->Sites()), 3.) * zeta4;
+					preFactor *= lattice->Sites() * m * m * m * beta * zeta4;
+					//preFactor *= std::pow((double)(m) / (double)(lattice->Sites()), 3.) * zeta4;
 				}
 				updateHandler.GetVertexHandler().template AddRandomWormsToBuffer<N>(dist);
 				preFactor *= updateHandler.GetVertexHandler().VertexBufferParity();
@@ -127,16 +127,16 @@ class ConfigSpace
 					//uint_t m = lattice->DistanceCount(dist);
 					//preFactor *= 1.0 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m * beta * zeta2);
 					uint_t m = lattice->NeighborhoodCount(nhoodDist);
-					//preFactor *= 1.0 / (lattice->Sites() * m * beta * zeta2);
-					preFactor /= zeta2 * (double)(m) / (double)(lattice->Sites());
+					preFactor *= 1.0 / (lattice->Sites() * m * beta * zeta2);
+					//preFactor /= zeta2 * (double)(m) / (double)(lattice->Sites());
 				}
 				else if (state == W4 && N == 1)
 				{
 					//uint_t m = lattice->DistanceCount(dist);
 					//preFactor *= zeta2 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m * zeta4);
 					uint_t m = lattice->NeighborhoodCount(nhoodDist);
-					//preFactor *= zeta2 / (lattice->Sites() * m * zeta4);
-					preFactor /= (double)(m) / (double)(lattice->Sites()) * zeta4 / zeta2;
+					preFactor *= zeta2 / (lattice->Sites() * m * zeta4);
+					//preFactor /= (double)(m) / (double)(lattice->Sites()) * zeta4 / zeta2;
 				}
 				else if (state == W4 && N == 2)
 				{
@@ -145,8 +145,8 @@ class ConfigSpace
 					//preFactor *= 1.0 / ((lattice->MaxDistance() + 1.) * lattice->Sites() * m1 * m2 * m2 * beta * zeta4);
 					//int_t d = rng() * (lattice->MaxDistance() + 1);
 					uint_t m = lattice->NeighborhoodCount(nhoodDist);
-					//preFactor /= lattice->Sites() * m * m * m * beta * zeta4;
-					preFactor /= std::pow((double)(m) / (double)(lattice->Sites()), 3.) * zeta4;
+					preFactor /= lattice->Sites() * m * m * m * beta * zeta4;
+					//preFactor /= std::pow((double)(m) / (double)(lattice->Sites()), 3.) * zeta4;
 				}
 				if (dist <= nhoodDist)
 						return updateHandler.template RemoveVertices<N>(preFactor, isWorm);
@@ -384,6 +384,7 @@ class ConfigSpace
 			beta = 1.0 / T;
 			dtau = beta / (2 * static_cast<value_t>(nTimeBins));
 			infinTau = dtau / 1000000000.0;
+			//infinTau = 0.;
 		}
 		
 		void Serialize(odump& d)
