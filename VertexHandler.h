@@ -709,8 +709,8 @@ class VertexHandler
 			}
 		}
 		
-		template<typename U, typename V>
-		void WoodburyShiftRowsCols(U& u, V& v)
+		template<typename U_t, typename V_t>
+		void WoodburyShiftRowsCols(U_t& u, V_t& v)
 		{
 			uint_t k = nodes.size();
 			uint_t l = wormNodes.size();
@@ -755,8 +755,8 @@ class VertexHandler
 							u(j, i) = shiftedU - U;
 						}
 						value_t shiftedV = shiftedU * (configSpace.lattice->Sublattice(nodes[j].Site) == configSpace.lattice->Sublattice(nodeBuffer[i].Site) ? -1.0 : 1.0);
-						value_t uv = U * (configSpace.lattice->Sublattice(nodes[j].Site) == configSpace.lattice->Sublattice(nodes[wormNodes[i]].Site) ? -1.0 : 1.0);
-						v(i, j) = shiftedV - uv;
+						value_t V = U * (configSpace.lattice->Sublattice(nodes[j].Site) == configSpace.lattice->Sublattice(nodes[wormNodes[i]].Site) ? -1.0 : 1.0);
+						v(i, j) = shiftedV - V;
 					}
 					else
 					{
