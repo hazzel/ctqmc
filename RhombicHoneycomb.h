@@ -194,7 +194,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 						this->distanceMap(i, j) = this->SimulateDistance(i, j, rng);
 						this->distanceMap(j, i) = this->distanceMap(i, j);
 						cnt += 2;
-						//std::cout << cnt << std::endl;
+						std::cout << cnt << std::endl;
 					}
 				}
 				if (this->distanceMap(i, i) < 0)
@@ -210,7 +210,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 			if (i == j)
 				return 0;
 			int_t shortestPath = 2 * std::sqrt(this->nSites);
-			int_t nRuns = 10000 * this->nSites;
+			int_t nRuns = 100 * this->nSites;
 			for (int_t n = 0; n < nRuns; ++n)
 			{
 				int_t path = 0;
