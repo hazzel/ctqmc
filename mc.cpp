@@ -770,7 +770,7 @@ void CLASSNAME::do_update()
 		}
 	}
 	++sweep;
-	if (sweep % 50000 == 0)
+	if (sweep % 100 == 0)
 		std::cout << "sweep : " << sweep << " , ( " << static_cast<double>(sweep - nThermalize) * 100. / static_cast<double>(nMeasurements) << " % )" << std::endl;
 
 	if (nZetaOptimization < nOptimizationSteps)
