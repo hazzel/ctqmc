@@ -755,8 +755,8 @@ class VertexHandler
 							u(j, i) = shiftedU - U;
 						}
 						value_t shiftedV = shiftedU * (configSpace.lattice->Sublattice(nodes[j].Site) == configSpace.lattice->Sublattice(nodeBuffer[i].Site) ? -1.0 : 1.0);
-						value_t V = U * (configSpace.lattice->Sublattice(nodes[j].Site) == configSpace.lattice->Sublattice(nodes[wormNodes[i]].Site) ? -1.0 : 1.0);
-						v(i, j) = shiftedV - V;
+						value_t uv = U * (configSpace.lattice->Sublattice(nodes[j].Site) == configSpace.lattice->Sublattice(nodes[wormNodes[i]].Site) ? -1.0 : 1.0);
+						v(i, j) = shiftedV - uv;
 					}
 					else
 					{
