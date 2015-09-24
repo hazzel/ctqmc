@@ -210,7 +210,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 			if (i == j)
 				return 0;
 			int_t shortestPath = 2 * std::sqrt(this->nSites);
-			int_t nRuns = 1000 * this->nSites;
+			int_t nRuns = 5000 * this->nSites;
 			for (int_t n = 0; n < nRuns; ++n)
 			{
 				int_t path = 0;
