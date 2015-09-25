@@ -250,10 +250,10 @@ class GeometryBase
 					}
 					is.close();
 					CountNeighborhood();
-					for (int_t i = 0; i <= maxDistance; ++i)
-					{
-						std::cout << numDistance[i] << std::endl;
-					}
+					//for (int_t i = 0; i <= maxDistance; ++i)
+					//{
+					//	std::cout << numDistance[i] << std::endl;
+					//}
 				}
 			}
 		}

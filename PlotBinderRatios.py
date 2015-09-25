@@ -38,7 +38,7 @@ for l in range(len(L)):
 	filelist.append(glob.glob("plot/plot_rhom_V2.5/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot/plot_rhom_V3.0/*L" + L[l] + "*.out"))
 	filelist.append(glob.glob("plot/plot_rhom_V1.355/*L" + L[l] + "*.out"))
-	flag = "c"
+	flag = "m2"
 	ze = 1.45
 	
 	for f in range(len(filelist)):
@@ -65,8 +65,8 @@ for l in range(len(L)):
 				x.append(float(plist["T"]))
 			yB.append( ArrangePlot(elist, "Binder")[0][0] )
 			yBerr.append( ArrangePlot(elist, "Binder")[1][0] )
-			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**0.25)
-			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**0.25)
+			yM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**0.)
+			yM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**0.)
 			ycM2.append( ArrangePlot(elist, "M2")[0][0] * float(L[l])**ze)
 			ycM2err.append( ArrangePlot(elist, "M2")[1][0] * float(L[l])**ze)
 			yB = [i for j, i, k in sorted(zip(x, yB, yBerr))]

@@ -37,7 +37,7 @@ class RhombicHoneycomb : public GeometryBase<RNG, Int_t>
 				#ifdef MCL_JUQUEEN
 				this->ReadFromTxt(filename + ".txt");
 				#else
-				this->ReadFromFile(filename + ".txt");
+				this->ReadFromFile(filename);
 				#endif
 				//std::cout << "Distance Histogram:" << std::endl;
 				//for (int_t i = 0; i <= this->maxDistance; ++i)

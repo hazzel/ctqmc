@@ -252,6 +252,7 @@ void CLASSNAME::write(const std::string& dir)
 	d.write(sweep);
 	//std::cout << "write sweep: " << sweep << std::endl;
 	d.write(rebuildCnt);
+	/*
 	for (uint_t i = 0; i < nUpdateType; ++i)
 	{
 		for (uint_t j = 0; j < nStateType; ++j)
@@ -261,6 +262,7 @@ void CLASSNAME::write(const std::string& dir)
 			d.write(proposedUpdates(i, j));
 		}
 	}
+	*/
 	configSpace.Serialize(d);
 	d.close();
 	seed_write(dir+"seed");
@@ -307,6 +309,7 @@ bool CLASSNAME::read(const std::string& dir)
 		random_read(d);
 		d.read(sweep);
 		d.read(rebuildCnt);
+		/*
 		for (uint_t i = 0; i < nUpdateType; ++i)
 		{
 			for (uint_t j = 0; j < nStateType; ++j)
@@ -316,6 +319,7 @@ bool CLASSNAME::read(const std::string& dir)
 				d.read(proposedUpdates(i, j));
 			}
 		}
+		*/
 		configSpace.Serialize(d);
 		d.close();
 		//std::cout << "read sweep: " << sweep << " , pertorder:" << configSpace.updateHandler.GetVertexHandler().Vertices() << std::endl;
